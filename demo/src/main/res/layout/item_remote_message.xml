@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="1dp"
+    android:paddingBottom="1dp"
+    android:gravity="bottom">
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:visibility="gone"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginBottom="1dp"
+        android:id="@+id/imageAvatar"/>
+
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="40dp">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="80dp"
+            android:background="@drawable/bubble_remote">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="left">
+
+                <TextView
+                    android:layout_alignParentLeft="true"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingLeft="4dp"
+                    android:paddingTop="2dp"
+                    android:visibility="gone"
+                    android:textColor="#00B663"
+                    android:textSize="12sp"
+                    android:id="@+id/nameTV"/>
+
+            </RelativeLayout>
+
+            <com.webimapp.android.demo.client.util.TightTextView
+                android:id="@+id/textViewMessage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start"
+                android:paddingLeft="4dp"
+                android:paddingRight="4dp"
+                android:paddingBottom="1dp"
+                android:textSize="16sp"
+                android:autoLink="all"
+                android:gravity="start"
+                android:linksClickable="true"
+                android:textIsSelectable="true"
+                android:visibility="gone"/>
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/fileThumb"
+                android:visibility="gone"/>
+
+            <TextView
+                android:layout_alignParentRight="true"
+                android:id="@+id/messageTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:singleLine="true"
+                android:paddingLeft="4dp"
+                android:textSize="12sp"
+                android:textColor="#9BA9B2"
+                />
+
+        </LinearLayout>
+
+    </FrameLayout>
+
+</LinearLayout>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <EditTextPreference
+        android:key="account"
+        android:inputType="textUri"
+        android:defaultValue="demo"
+        android:summary="@string/prefs_account_summary"
+        android:title="@string/prefs_account_title">
+    </EditTextPreference>
+    <EditTextPreference
+        android:key="location"
+        android:defaultValue="mobile"
+        android:summary="@string/prefs_location_summary"
+        android:title="@string/prefs_location_title">
+    </EditTextPreference>
+    <CheckBoxPreference
+        android:key="gcm"
+        android:defaultValue="true"
+        android:summary="@string/prefs_notifications_summary"
+        android:title="@string/prefs_notifications_title">
+    </CheckBoxPreference>
+</PreferenceScreen>

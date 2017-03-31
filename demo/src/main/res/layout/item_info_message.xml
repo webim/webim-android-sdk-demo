@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:paddingLeft="4dp"
+    android:paddingRight="4dp"
+    android:foregroundGravity="center" >
+
+    <TextView
+        android:id="@+id/textViewMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:autoLink="all"
+        android:gravity="center"
+        android:linksClickable="true"
+        android:textSize="12sp"
+        android:textStyle="italic"
+        android:textColor="#566067"
+        android:textIsSelectable="true" />
+
+</FrameLayout>

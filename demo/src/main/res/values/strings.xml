@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Webim демо-чат</string>
+    <string name="action_settings">Настройки</string>
+    <string name="first_screen_text">
+        Добро пожаловать в демо-приложение Webim! Для того чтобы начать чат, нажмите кнопку в правом нижнем углу экрана.
+        Принять чат со стороны оператора вы можете на странице
+        demo.webim.ru (Данные для входа: Email: o@webim.ru, Пароль: password).
+        Исходный код данного приложения вы можете найти по адресу github.com/webim/webim-android-sdk-demo
+    </string>
+	<string name="message">Сообщение…</string>
+    <string name="empty_chat_text">Введите сообщение, чтобы начать чат с оператором</string>
+    <string name="content_desc_send_message">send message</string>
+    <string name="rate_operator_button">Оценить</string>
+    <string name="rate_operator_title">Оценить оператора?</string>
+    <string name="file_chooser_title">Выберите файл для загрузки</string>
+    <string name="file_chooser_not_found">Для загрузки файла, пожалуйста, установите файловый менеджер</string>
+    <string name="file_selection_failed">Не удалось выбрать файл</string>
+    <string name="file_upload_failed_size">Не удалось загрузить файл: превышен максимальный размер файла</string>
+    <string name="file_upload_failed_type">Не удалось загрузить файл: типа файла не разрешен сервером</string>
+    <string name="file_upload_message_text">Отправка файла…</string>
+    <string name="file_send">Отправил(а) файл:\n</string>
+    <string name="error_user_banned_header">Вы забанены оператором</string>
+    <string name="error_user_banned_desc">Вы не можете использовать чат, так как были забанены оператором</string>
+    <string name="error_account_blocked_header">Webim-аккаунт заблокирован</string>
+    <string name="error_account_blocked_desc">
+        Вы не можете использовать чат, так как заблокирован webim-аккаунт организации, в которую вы пытаетесь обратиться. Попробуйте обратиться позже.
+    </string>
+    <string name="error_unknown_header">Неизвестная ошибка</string>
+    <string name="error_unknown_desc">
+        Вы не можете использовать чат, так как возникла неизвестная ошибка.
+        Наши разработчики уже оповещены об этой проблеме и исправят ее в ближайшее время. Детали: %s
+    </string>
+    <string name="push_operator_accepted">Оператор %1$s присоединился к диалогу.</string>
+    <string name="push_operator_message">%1$s: %2$s</string>
+    <string name="push_operator_file">%1$s отправил(а) файл %2$s</string>
+    <string name="prefs_notifications_summary">Включить GCM пуш-уведомления для новых сообщений от оператора</string>
+    <string name="prefs_notifications_title">Уведомления</string>
+    <string name="prefs_account_title">Аккаунт</string>
+    <string name="prefs_account_summary">Имя Webim аккаунта или полный адрес сервера (например, \'demo\' или \'https://demo.webim.ru\')</string>
+    <string name="prefs_location_summary">location</string>
+    <string name="prefs_location_title">location</string>
+
+    <string name="typing">пишет…</string>
+</resources>

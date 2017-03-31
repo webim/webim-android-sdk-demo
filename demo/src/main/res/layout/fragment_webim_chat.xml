@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context="com.webimapp.android.demo.client.WebimChatActivity">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/linLayEnterMessage"
+        android:layout_alignParentTop="true"
+        android:layout_alignWithParentIfMissing="true"
+        android:layout_centerHorizontal="true"
+        android:paddingRight="2dp"
+        android:paddingLeft="2dp">
+
+        <ListView
+            android:id="@+id/listViewChat"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="false"
+            android:divider="@null"
+            android:dividerHeight="0dp"
+            android:transcriptMode="alwaysScroll" />
+
+        <ProgressBar
+            android:id="@+id/loadingSpinner"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/emptyHistoryView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/empty_chat_text"
+            android:visibility="gone" />
+
+    </FrameLayout>
+
+    <LinearLayout
+        android:id="@+id/linLayEnterMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignWithParentIfMissing="true"
+        android:layout_centerHorizontal="true"
+        android:background="#FFFFFF" >
+
+        <ImageButton
+            android:id="@+id/imageButtonAttachFile"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.05"
+            android:paddingTop="8dp"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:paddingBottom="4dp"
+            android:gravity="bottom"
+            android:scaleType="center"
+            android:src="@drawable/content_new_attachment"
+            android:background="@null"
+            android:visibility="visible" />
+
+        <!-- Dummy item to prevent AutoCompleteTextView from receiving focus -->
+        <LinearLayout
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:layout_width="0px"
+            android:layout_height="0px"
+            tools:ignore="UselessLeaf"/>
+
+        <EditText
+            android:id="@+id/editTextChatMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="12dp"
+            android:ems="10"
+            android:hint="@string/message"
+            android:imeOptions="flagNoExtractUi"
+            android:maxLines="4"
+            android:minLines="1"
+            android:maxLength="2000"
+            android:scrollHorizontally="false"
+            android:singleLine="false"
+            android:inputType="textCapSentences"
+            android:background="@android:color/transparent"
+            android:nextFocusUp="@id/editTextChatMessage"
+            android:nextFocusLeft="@id/editTextChatMessage" />
+
+        <ImageButton
+            android:id="@+id/imageButtonSendMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.05"
+            android:paddingTop="8dp"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:paddingBottom="4dp"
+            android:gravity="bottom"
+            android:scaleType="center"
+            android:src="@drawable/social_send_now"
+            android:background="@null"
+            android:tint="@color/colorAccent"
+            android:visibility="visible"
+            android:contentDescription="@string/content_desc_send_message"/>
+
+    </LinearLayout>
+</RelativeLayout>

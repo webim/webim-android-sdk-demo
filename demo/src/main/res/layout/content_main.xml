@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mainActivityContent"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="16dp"
+    android:paddingLeft="16dp"
+    android:paddingRight="16dp"
+    android:paddingTop="16dp"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context="com.webimapp.android.demo.client.MainActivity"
+    tools:showIn="@layout/activity_main"
+    android:background="@drawable/bg_webim_scaled">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:linksClickable="true"
+        android:autoLink="web"
+        android:textIsSelectable="true"
+        android:textColor="#000"
+        android:textSize="16sp"
+        android:lineSpacingMultiplier="1.35"
+        android:text="@string/first_screen_text" />
+</RelativeLayout>
