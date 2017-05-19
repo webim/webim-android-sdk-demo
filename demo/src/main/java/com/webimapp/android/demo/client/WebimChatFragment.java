@@ -323,7 +323,7 @@ public class WebimChatFragment extends Fragment {
         }
 
         @Override
-        public void messageAdded(@Nullable Message before, Message message) {
+        public void messageAdded(@Nullable Message before, @NonNull Message message) {
             int ind = before == null ? messages.size() : messages.lastIndexOf(new WebimMessageListItem(before));
             if(ind < 0)
                 messages.add(new WebimMessageListItem(message));
@@ -333,13 +333,13 @@ public class WebimChatFragment extends Fragment {
         }
 
         @Override
-        public void messageRemoved(Message message) {
+        public void messageRemoved(@NonNull Message message) {
             messages.remove(new WebimMessageListItem(message));
             adapter.notifyDataSetChanged();
         }
 
         @Override
-        public void messageChanged(Message from, Message to) {
+        public void messageChanged(@NonNull Message from, @NonNull Message to) {
             int ind = messages.lastIndexOf(new WebimMessageListItem(from));
             if(ind != -1)
                 messages.set(ind, new WebimMessageListItem(to));
