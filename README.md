@@ -1,26 +1,26 @@
 # Webim SDK demo
 [ ![Download](https://api.bintray.com/packages/webim/maven/WebimSdkAndroid/images/download.svg) ](https://bintray.com/webim/maven/WebimSdkAndroid/_latestVersion)
-Приложение, демонстрирующее возможности *Webim Android SDK*. Данное приложение опубликовано в [Google Play](https://play.google.com/store/apps/details?id=ru.webim.demo.client).
+Application demonstrates capabilities of *Webim Android SDK*. This application is published on [Google Play](https://play.google.com/store/apps/details?id=ru.webim.demo.client).
 
-[Онлайн консультант Webim](https://webim.ru) — это многофункциональный сервис для консультирования посетителей вашего сайта через всплывающее окно чата — его можно бесплатно скачать и установить в виде универсального скрипта или CMS модуля на нужные страницы, а кроме того интегрировать в фирменное мобильное приложение. Библиотека *Webim Android SDK* предоставляет разработчикам мобильных приложений на платформе Google Android средства для интеграции в эти приложения чата между их пользователями и операторами компании-разработчика на основе технологий, применяющихся в онлайн консультанте Вебим.
+[Webim online consultant](https://webim.ru) is a multifunctional service for consulting vistors of your site using pop-up chat — it can be freely downloaded and installed as a universal script or CMS module on required web pages and can also be integrated into a mobile trading application. *Webim Android SDK* library provides developers of Google Android mobile applications with tools for integration a chat between users and operators of a developer company into those applications based on technologies used in Webim online consultant.
 
-Данное приложение создано с целью демонстрации, с одной стороны, возможностей нашего SDK, с другой - того, как правильно наш SDK использовать. Во время интеграции чата в ваше собственное приложение, ориентируйтесь на это демо-приложение - оно значительно упростит вам интеграцию.
+On the one hand this application was created to demonstrate capabilities of our SDK, on the other hand to show how to use our SDK correctly. While integrating chat into your own application be guided by this demo application - it can greatly simplify the integration.
 
-## Установка SDK
-Поддерживается Android версии  4.+ (Android API 15+)
-Чтобы начать использовать *Webim Android SDK*, добавьте зависимость в build.gradle вашего приложения
+## SDK Installation
+Supported Android 4.+ (Android API 15+) versions
+To start using *Webim Android SDK* add a dependency to build.gradle of your application.
 ```
-compile 'com.webimapp.sdk:webimclientsdkandroid:3.0.2'
+compile 'com.webimapp.sdk:webimclientsdkandroid:3.0.3'
 ```
-А также добавьте в AndroidManifest.xml следующие разрешения:
+Also add to AndroidManifest.xml the following permissions:
 ```
 <uses-permission android:name="android.permission.INTERNET"/>
 ```
 
-## Использование
-Публичный API находится в пакете com.webimapp.android.sdk и только в нем. Все вложенные пакеты служат исключительно для внутренних нужд SDK
+## Usage
+The public API is only in com.webimapp.android.sdk package. All the nested packages are used exclusively for SDK internal needs.
 ### WebimSession
-Для начала работы с чатом необходимо получить объект WebimSession.
+To get started with the chat, you need to get WebimSession object.
 ```java
 WebimSession sessoin = Webim.newSessionBuilder()
     .setContext(context) // Activity ot Application
@@ -29,23 +29,23 @@ WebimSession sessoin = Webim.newSessionBuilder()
     .setLocation("mobile") // Use "mobile" if in doubt
     .build()
 ```
-Для этого необходимо определиться с [размещением](http://webim.ru/pro/help/help-terms/#location) и аккаунтом в сервисе Webim. Метод `Webim.newSessionBuilder()` возвращает builder object, содержащий большое количество методов конфигурации сессии. Подробнее о каждом из них читайте в javadoc.
+For this you need to decide on a [location] (http://webim.ru/pro/help/help-terms/#location) and an account of Webim service. `Webim.newSessionBuilder()` method returns builder object containing large number of session configuration methods. Read more about each of them in javadoc.
 
-Метод `build()` должен вызываться из потока (Thread), имеющего ассоциированный объект `android.os.Looper` (обычно это main thread). Далее любая работа с сессией должна выполняться из того же потока, в контексте которого сессия была создана (при вызове любого метода сессии проверяется, из какого потока он был вызван). Все коллбэки будут также выполнены в контексте потока, в котором была создана сессия.
+`build()` method must be called from the thread having `android.os.Looper` associated object (usually it is the main thread). Further, any work with the session must be performed from the same thread in which context the session was created (at a call of any session method it is checked which thread it was called from). All the callbacks are also performed in context of the same thread the session was created in.
 
-WebimSession содержит методы для управления сетью: `resume()`, `pause()`, `destroy()`. Изначально сессия создается приостановленной, т.е. чтобы начать ее использовать, первым делом необходимо вызвать `resume()`. `pause()` вновь приостанавливает сессию, т.е останавливает использование сетевых ресурсов. Метод `destroy()`, в свою очередь полностью освобождает все ресурсы, занимаемые сессией, и после его вызова восстановление сессии невозможно (при вызове любого метода сессии бросается `IllegalStateException`). Методы `destroy()` и `pause()` разрешается вызывает на разрушенной сессии (при этом никаких действий не выполняется). Это сделано для интеграции с жизненным циклом Activity. Рекомендуется вызывать `pause()` из `Activity.onStop()`, `resume()` - из `Activity.onStart()`, `destroy()` - из `Activity.onDestroy()`.
+Webim session contains methods for managing the network: `resume()`, `pause()`, `destroy()`.Initially, the session is created paused, i.e. to start using it, the first thing you need to do is to call `resume()`. `pause()` again suspends the session, i.e. stops use of network resources. `destroy()` method, for its part, completely releases all the resources occupied by the session and after its call session recovery is impossible (when calling any session method it is dropped `IllegalStateException`). `destroy()` and `pause()` methods are allowed to call on the destroyed session (no action is performed).This is done for integration with the Activity lifecycle. It is recommended to call `pause()` from `Activity.onStop()`, `resume()` from `Activity.onStart()`, `destroy()` from `Activity.onDestroy()`.
 
-Метод `getStream()` возвращает объект `MessageStream`, при помощи которого производится вся остальная работа с чатом.
+`getStream()` method returns `MessageStream` object, all the rest of work with a chat is done by using it.
 
-### Просмотр истории сообщений
-SDK позволяет просматривать историю сообщений и отслеживать изменение истории (редактирование/удаление сообщений). Для этого используется объект `MessageTracker` возвращаемый методом `MessageStream.newMessageTracker(MessageListener)`.
-При каждом вызове `MessageTracker.getNextMessages(int, GetMessagesCallback)` коллбэк получает следующую порцию сообщений выше по истории. При этом `MessageTracker` сохраняет запрошенный интервал сообщений и отслеживает изменения в этом интервале. Эти изменения передаются объекту, реализующему интерфейс `MessageListener`, который необходмо передать методу `MessageStream.newMessageTracker(MessageListener)` при создании объекта `MessageTracker`. Также `MessageListener` будет получать новые сообщения.
+### View message history
+SDK allows to view a message history and track history changes (editing/deleting messages). For this, it is used object `MessageTracker` returned by `MessageStream.newMessageTracker(MessageListener)` method.
+At each call of `MessageTracker.getNextMessages(int, GetMessagesCallback)` callback gets the next batch of the messages above in the history. At the same time `MessageTracker` saves the requested interval of the messages and tracks changes in this interval. These changes are transmitted to an object implementing `MessageListener` interface which is necessary to transmit to `MessageStream.newMessageTracker(MessageListener)` method when creating `MessageTracker` object. `MessageListener` will also receive new messages.
 
-### Отправка сообщений
-Для отправки сообщений используется метод `MessageStream.sendMessage(String)`. При этом отправляемое сообщение будет сразу же получено в `MessageListener.messageAdded` (при наличии активного `MessageTracker`). После подтверждения приема сообщения сервером будет вызван метод `MessageListener.messageChanged` уже с актуальным сообщением. 
+### Sending messages
+To send messages `MessageStream.sendMessage(String)` method is used. At the same time the message to be sent is immediately received at `MessageListener.messageAdded` (if there is an active `MessageTracker`). After confirmation of receiving the message the server calls a `MessageListener.messageChanged` method with an already current message.
 
-### Работа с push-notifications
-Для начала необходимо сконфигурировать сессию для работы с пуш-уведомлениями. Для этого при создании сессии необходимо вызвать метод `SessionBuilder.setPushSystem(PushSystem.GCM)`. В результате этого вебим-сервис будет отправлять пуш-уведомления для вашего устройства. Принятые пуши проходят мимо нашего SDK, и в своем приложении вы должны принимать их самостоятельно. Пример вы можете посмотреть в демо-приложении. После того как пуш принят, вы должны сравнить поле `from` с `Webim.getGcmSenderId()`, и если они совпадают, значит этот пуш отправлен сервисом вебим. Далее, для десериализации данных пуша используется метод `Webim.parseGcmPushNotification(Bundle)`
+### Working with push-notifications
+At the beginning you must configure a session to work with push-notifications. For this, you must call `SessionBuilder.setPushSystem(PushSystem.GCM)` method. As a result Webim service will send push notifications to your device. Received pushes pass our SDK by unnoticed and in your application you must accept them by yourself. An example you can watch in the demo-appplication. After a push is received you must compare the field `from` with `Webim.getGcmSenderId()`and if they match, it means this push was sent by Webim service. Then to deserialize push data `Webim.parseGcmPushNotification(Bundle)`method is used.
 ```java
 if(intent.getStringExtra("from").equals(Webim.getGcmSenderId())) {
     WebimPushNotification push = Webim.parseGcmPushNotification(intent.getExtras());
@@ -54,18 +54,3 @@ if(intent.getStringExtra("from").equals(Webim.getGcmSenderId())) {
     // process your application push-notification
 }
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
