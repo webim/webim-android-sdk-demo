@@ -10,7 +10,7 @@ On the one hand this application was created to demonstrate capabilities of our 
 Supported Android 4.+ (Android API 15+) versions
 To start using *Webim Android SDK* add a dependency to build.gradle of your application.
 ```
-compile 'com.webimapp.sdk:webimclientsdkandroid:3.0.3'
+compile 'com.webimapp.sdk:webimclientsdkandroid:3.1.0'
 ```
 Also add to AndroidManifest.xml the following permissions:
 ```

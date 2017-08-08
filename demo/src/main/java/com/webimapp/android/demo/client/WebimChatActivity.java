@@ -16,6 +16,7 @@ import com.webimapp.android.sdk.WebimError;
 public class WebimChatActivity extends AppCompatActivity implements FatalErrorHandler {
     private static boolean active;
     public static final String DEFAULT_ACCOUNT_NAME = "demo";
+    public static final String DEFAULT_LOCATION = "mobile";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,7 +31,7 @@ public class WebimChatActivity extends AppCompatActivity implements FatalErrorHa
                 .setContext(this)
                 .setErrorHandler(this)
                 .setAccountName(sharedPref.getString("account", DEFAULT_ACCOUNT_NAME))
-                .setLocation(sharedPref.getString("location", "mobile"))
+                .setLocation(sharedPref.getString("location", DEFAULT_LOCATION))
                 .setPushSystem(sharedPref.getBoolean("gcm", true) ? Webim.PushSystem.GCM : Webim.PushSystem.NONE)
                 .setDebugLogsEnabled(BuildConfig.DEBUG)
 //                .setVisitorFieldsJson("{\"id\":\"0\",\"crc\":\"50a070fcb175a176a56ffa3a285e94b0\"}")
