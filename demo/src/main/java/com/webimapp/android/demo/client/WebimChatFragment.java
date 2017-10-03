@@ -12,6 +12,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -23,10 +24,12 @@ import android.widget.AbsListView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RatingBar;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.webimapp.android.demo.client.items.ListItem;
 import com.webimapp.android.demo.client.items.WebimMessageListItem;
 import com.webimapp.android.demo.client.util.CombinedScrollListener;
@@ -107,20 +110,40 @@ public class WebimChatFragment extends Fragment {
         super.onDetach();
     }
 
-    private void initOperatorState(View v) {
+    private void initOperatorState(final View v) {
+        ((AppCompatActivity)getActivity()).setSupportActionBar((Toolbar) v.findViewById(R.id.toolbar));
         final ActionBar actionBar = ((AppCompatActivity)getActivity()).getSupportActionBar();
-        if(actionBar != null) {
-            session.getStream().setOperatorTypingListener(new MessageStream.OperatorTypingListener() {
-                @Override
-                public void onOperatorTypingStateChanged(boolean isTyping) {
-                    if (isTyping) {
-                        actionBar.setSubtitle(R.string.typing);
-                    } else {
-                        actionBar.setSubtitle("");
-                    }
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        actionBar.setDisplayShowHomeEnabled(true);
+        v.findViewById(R.id.action_bar_subtitle).setVisibility(View.GONE);
+        session.getStream().setOperatorTypingListener(new MessageStream.OperatorTypingListener() {
+            @Override
+            public void onOperatorTypingStateChanged(boolean isTyping) {
+                if (isTyping) {
+                    v.findViewById(R.id.action_bar_subtitle).setVisibility(View.VISIBLE);
+                } else {
+                    v.findViewById(R.id.action_bar_subtitle).setVisibility(View.GONE);
                 }
-            });
-        }
+            }
+        });
+
+        setOperatorAvatar(v, session.getStream().getCurrentOperator());
+        
+        session.getStream().setCurrentOperatorChangeListener(new MessageStream.CurrentOperatorChangeListener() {
+            @Override
+            public void onOperatorChanged(@Nullable Operator oldOperator, @Nullable Operator newOperator) {
+                setOperatorAvatar(v, newOperator);
+            }
+        });
+
+    }
+
+    private void setOperatorAvatar(View v, @Nullable Operator operator) {
+        if (operator != null && operator.getAvatarUrl() != null) {
+            Glide.with(getContext()).load(operator.getAvatarUrl()).into((ImageView) v.findViewById(R.id.imageAvatar));
+            v.findViewById(R.id.imageAvatar).setVisibility(View.VISIBLE);
+        } else
+            v.findViewById(R.id.imageAvatar).setVisibility(View.GONE);
     }
 
     private void initListView(View v) {

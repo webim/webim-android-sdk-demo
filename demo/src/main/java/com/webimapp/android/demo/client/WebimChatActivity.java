@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Menu;
 import android.view.View;
 
 import com.crashlytics.android.Crashlytics;
@@ -42,6 +43,13 @@ public class WebimChatActivity extends AppCompatActivity implements FatalErrorHa
                 .beginTransaction()
                 .add(R.id.webimChatContainer, fragment)
                 .commit();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_chat, menu);
+        return true;
     }
 
     @Override
