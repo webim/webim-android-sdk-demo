@@ -67,10 +67,17 @@
         android:layout_centerHorizontal="true"
         android:paddingRight="2dp"
         android:paddingLeft="2dp">
-
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/downButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="@dimen/fab_margin"
+            android:src="@android:drawable/arrow_down_float"
+            app:backgroundTint="@color/common_google_signin_btn_text_dark_default" />
         <ProgressBar
             android:id="@+id/loadingSpinner"
-            style="?android:attr/progressBarStyleLarge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"

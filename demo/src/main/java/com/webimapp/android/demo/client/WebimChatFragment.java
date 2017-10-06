@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.app.ActionBar;
@@ -147,9 +148,32 @@ public class WebimChatFragment extends Fragment {
     }
 
     private void initListView(View v) {
-        ListView listViewChat = (ListView) v.findViewById(R.id.listViewChat);
+        final ListView listViewChat = (ListView) v.findViewById(R.id.listViewChat);
         listViewChat.setEmptyView(v.findViewById(R.id.loadingSpinner));
         listController = ListController.install(getContext(), listViewChat, session.getStream());
+        final FloatingActionButton button = (FloatingActionButton) v.findViewById(R.id.downButton);
+        AbsListView.OnScrollListener scrollListener = new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView absListView, int i) {
+            }
+
+            @Override
+            public void onScroll(AbsListView absListView, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                if (totalItemCount - firstVisibleItem > visibleItemCount + 1) {
+                    button.setVisibility(View.VISIBLE);
+                } else {
+                    button.setVisibility(View.GONE);
+                }
+            }
+        };
+        listViewChat.setOnScrollListener(scrollListener);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                button.setVisibility(View.GONE);
+                listViewChat.setSelection(listViewChat.getMaxScrollAmount());
+            }
+        });
     }
 
     private void initEditText(View v) {
