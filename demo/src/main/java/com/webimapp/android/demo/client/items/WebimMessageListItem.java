@@ -25,6 +25,7 @@ import jp.wasabeef.glide.transformations.RoundedCornersTransformation;
 
 public class WebimMessageListItem extends ListItem {
     private static final int THUMB_SIZE = 300; // Should be the same as in the server configuration
+    private static final int NUMBER_OF_MS_IN_DAY = 1000 * 60 * 60 * 24;
     private final @NonNull Message message;
     private final ViewType viewType;
 
@@ -65,7 +66,7 @@ public class WebimMessageListItem extends ListItem {
     }
 
     @Override
-    public View getView(final MessagesAdapter adapter, @Nullable View convertView, ViewGroup parent) {
+    public View getView(final MessagesAdapter adapter, @Nullable View convertView, ViewGroup parent, ListItem prev) {
         int layoutId = getLayout();
 
         View view = convertView;
@@ -81,7 +82,7 @@ public class WebimMessageListItem extends ListItem {
         }
         if(view == null)
             view = adapter.getInflater().inflate(layoutId, parent, false);
-        return message.getSendStatus() == Message.SendStatus.SENDING ? getSendingMessageView(adapter, view) : getRealMessageView(adapter, view);
+        return message.getSendStatus() == Message.SendStatus.SENDING ? getSendingMessageView(adapter, view) : getRealMessageView(adapter, view, prev);
     }
 
     public View getSendingMessageView(final MessagesAdapter adapter, @NonNull View view) {
@@ -123,8 +124,18 @@ public class WebimMessageListItem extends ListItem {
         return view;
     }
 
-    public View getRealMessageView(final MessagesAdapter adapter, @NonNull View view) {
+    public View getRealMessageView(final MessagesAdapter adapter, @NonNull View view, @Nullable ListItem prev) {
         view.setTag(R.id.webimMessage, message);
+        TextView date = (TextView) view.findViewById(R.id.dateView);
+        if (date != null) {
+            if (prev == null || (message.getTime() / NUMBER_OF_MS_IN_DAY != ((WebimMessageListItem) prev).getMessage().getTime() / NUMBER_OF_MS_IN_DAY)) {
+                date.setText(adapter.getLongDateFormat().format(message.getTime()));
+                date.setVisibility(View.VISIBLE);
+            } else {
+                date.setVisibility(View.GONE);
+            }
+        }
+
         TextView messageTextView = (TextView) view.findViewById(R.id.textViewMessage);
         messageTextView.setVisibility(View.VISIBLE);
 

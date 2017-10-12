@@ -22,6 +22,7 @@ public class MessagesAdapter extends BaseAdapter {
     private final Context context;
     private final @Nullable OnClickListener onAvatarClickListener;
     private final java.text.DateFormat dateFormat;
+    private final java.text.DateFormat longDateFormat;
 
     public MessagesAdapter(Context context, List<ListItem> list) {
         this(context, list, null);
@@ -33,6 +34,7 @@ public class MessagesAdapter extends BaseAdapter {
         this.inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         this.onAvatarClickListener = listener;
         this.dateFormat = DateFormat.getTimeFormat(context);
+        this.longDateFormat = DateFormat.getLongDateFormat(context);
     }
 
     @Override
@@ -45,7 +47,7 @@ public class MessagesAdapter extends BaseAdapter {
             if(((ListItem)tag).getViewType() != item.getViewType())
                 convertView = null;
         }
-        View view = item.getView(this, convertView, parent);
+        View view = item.getView(this, convertView, parent, position == 0 ? null : list.get(position - 1));
         view.setTag(R.id.listItem, item);
         return view;
     }
@@ -96,5 +98,9 @@ public class MessagesAdapter extends BaseAdapter {
 
     public java.text.DateFormat getDateFormat() {
         return dateFormat;
+    }
+
+    public java.text.DateFormat getLongDateFormat() {
+        return longDateFormat;
     }
 }

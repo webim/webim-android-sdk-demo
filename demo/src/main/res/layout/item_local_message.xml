@@ -1,20 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:paddingTop="1dp"
-    android:paddingBottom="1dp"
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:id="@+id/dateView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_weight="1"
+        android:layout_toRightOf="@+id/textViewMessage"
+        android:textAlignment="center"
+        android:visibility="gone" />
+
+
+    <LinearLayout
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="right" >
+    android:gravity="right"
+    android:orientation="horizontal"
+    android:paddingBottom="1dp"
+    android:paddingTop="1dp">
 
     <FrameLayout
         android:layout_width="wrap_content"
-        android:minWidth="40dp"
         android:layout_height="match_parent"
-        android:gravity="right">
+        android:gravity="right"
+        android:minWidth="40dp">
 
         <ProgressBar
-            style="?android:attr/progressBarStyleSmall"
             android:id="@+id/sendingProgress"
+            style="?android:attr/progressBarStyleSmall"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical|right"
@@ -24,47 +41,48 @@
     </FrameLayout>
 
     <LinearLayout
-        android:orientation="vertical"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/bubble_local">
+        android:layout_below="@+id/dateView"
+        android:background="@drawable/bubble_local"
+        android:orientation="vertical">
 
         <com.webimapp.android.demo.client.util.TightTextView
             android:id="@+id/textViewMessage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="right"
-            android:paddingLeft="6dp"
-            android:paddingRight="6dp"
-            android:paddingTop="3dp"
-            android:paddingBottom="1dp"
-            android:textSize="16sp"
             android:autoLink="all"
             android:gravity="start"
             android:linksClickable="true"
-            android:textIsSelectable="true"
+            android:paddingBottom="1dp"
+            android:paddingLeft="6dp"
+            android:paddingRight="6dp"
+            android:paddingTop="3dp"
             android:textColor="#000"
-            android:visibility="gone"/>
+            android:textIsSelectable="true"
+            android:textSize="16sp"
+            android:visibility="gone" />
 
         <ImageView
+            android:id="@+id/fileThumb"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingTop="2dp"
-            android:id="@+id/fileThumb"
             android:layout_gravity="right"
-            android:visibility="gone"/>
+            android:paddingTop="2dp"
+            android:visibility="gone" />
 
         <TextView
             android:id="@+id/messageTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="right"
-            android:singleLine="true"
             android:paddingRight="4dp"
-            android:textSize="12sp"
+            android:singleLine="true"
             android:textColor="#9BA9B2"
-            />
+            android:textSize="12sp" />
 
     </LinearLayout>
 
+    </LinearLayout>
 </LinearLayout>
