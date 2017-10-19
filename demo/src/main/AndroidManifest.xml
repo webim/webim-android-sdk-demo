@@ -3,8 +3,11 @@
     package="com.webimapp.android.demo.client" >
 
     <uses-permission android:name="android.permission.INTERNET" />
+
     <!-- Read External Storage to select and send files -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <!-- Write External Storage to save files -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <!-- Permission to vibrate -->
     <uses-permission android:name="android.permission.VIBRATE" />

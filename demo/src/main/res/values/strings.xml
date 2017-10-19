@@ -42,4 +42,8 @@
     <string name="prefs_location_title">location</string>
 
     <string name="typing">пишет…</string>
+    <string name="open_in_browser">Открыть в браузере</string>
+    <string name="copy_url">Копировать ссылку</string>
+    <string name="save_image">Сохранить изображение</string>
+    <string name="options_for_image">Опции</string>
 </resources>
