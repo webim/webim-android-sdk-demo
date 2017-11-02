@@ -34,13 +34,19 @@ import jp.wasabeef.glide.transformations.RoundedCornersTransformation;
 
 public class WebimMessageListItem extends ListItem {
     private static final int THUMB_SIZE = 300; // Should be the same as in the server configuration
+
+    private static final long MILLIS_IN_MINUTE = 1000 * 60;
+
     private static final int NUMBER_OF_MS_IN_DAY = 1000 * 60 * 60 * 24;
+
     private final @NonNull Message message;
     private final ViewType viewType;
+    private boolean headerVisible;
 
     public WebimMessageListItem(@NonNull Message message) {
         this.message = message;
         this.viewType = computeItemType(message);
+        this.headerVisible = true;
     }
 
     @Override
@@ -75,20 +81,24 @@ public class WebimMessageListItem extends ListItem {
     }
 
     @Override
-    public View getView(final MessagesAdapter adapter, @Nullable View convertView, ViewGroup parent, ListItem prev) {
-        int layoutId = getLayout();
+    public View getView(final MessagesAdapter adapter, @Nullable View convertView, ViewGroup parent, @Nullable ListItem prev) {
 
+        int layoutId = getLayout();
+        boolean newHeaderVisible = true;
+        if (prev != null)
+            newHeaderVisible = !(prev.getViewType() == viewType && message.getTime() / MILLIS_IN_MINUTE == ((WebimMessageListItem) prev).getMessage().getTime() / MILLIS_IN_MINUTE);
         View view = convertView;
         if(convertView != null) {
             Object tag = convertView.getTag(R.id.webimMessage);
             if(tag != null) {
-                if(tag == message)
+                if(tag == message && newHeaderVisible == headerVisible)
                     return convertView;
                 Message.Type type = ((Message)tag).getType();
                 if(type == Message.Type.FILE_FROM_OPERATOR || type == Message.Type.FILE_FROM_VISITOR)
                     view = null;
             }
         }
+        headerVisible = newHeaderVisible;
         if(view == null)
             view = adapter.getInflater().inflate(layoutId, parent, false);
         return message.getSendStatus() == Message.SendStatus.SENDING ? getSendingMessageView(adapter, view) : getRealMessageView(adapter, view, prev);
@@ -170,7 +180,7 @@ public class WebimMessageListItem extends ListItem {
         }
         TextView senderName = (TextView) view.findViewById(R.id.nameTV);
         if (senderName != null) {
-            senderName.setVisibility(View.VISIBLE);
+            senderName.setVisibility(headerVisible ? View.VISIBLE : View.GONE);
             senderName.setText(message.getSenderName());
         }
         switch (message.getType()) {
@@ -278,9 +288,9 @@ public class WebimMessageListItem extends ListItem {
         if(sendingProgress != null)
             sendingProgress.setVisibility(View.GONE);
         TextView messageTime = (TextView) view.findViewById(R.id.messageTime);
-        if(messageTime != null){
+        if(messageTime != null) {
             messageTime.setText(adapter.getDateFormat().format(message.getTime()));
-            messageTime.setVisibility(View.VISIBLE);
+            messageTime.setVisibility(headerVisible ? View.VISIBLE : View.GONE);
         }
         return view;
     }

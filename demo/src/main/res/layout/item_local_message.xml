@@ -47,6 +47,16 @@
         android:background="@drawable/bubble_local"
         android:orientation="vertical">
 
+        <TextView
+            android:id="@+id/messageTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:paddingRight="4dp"
+            android:singleLine="true"
+            android:textColor="#9BA9B2"
+            android:textSize="12sp" />
+
         <com.webimapp.android.demo.client.util.TightTextView
             android:id="@+id/textViewMessage"
             android:layout_width="wrap_content"
@@ -71,16 +81,6 @@
             android:layout_gravity="right"
             android:paddingTop="2dp"
             android:visibility="gone" />
-
-        <TextView
-            android:id="@+id/messageTime"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="right"
-            android:paddingRight="4dp"
-            android:singleLine="true"
-            android:textColor="#9BA9B2"
-            android:textSize="12sp" />
 
     </LinearLayout>
 
