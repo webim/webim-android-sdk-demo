@@ -67,6 +67,7 @@ public class WebimChatFragment extends Fragment {
     public void setWebimSession(WebimSession session) {
         if(this.session != null)
             throw new IllegalStateException("Webim session is already set");
+
         this.session = session;
     }
 
@@ -136,7 +137,6 @@ public class WebimChatFragment extends Fragment {
                 setOperatorAvatar(v, newOperator);
             }
         });
-
     }
 
     private void setOperatorAvatar(View v, @Nullable Operator operator) {
