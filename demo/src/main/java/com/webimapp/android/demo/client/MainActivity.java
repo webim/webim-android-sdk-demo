@@ -19,14 +19,17 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(!BuildConfig.DEBUG)
+        if (!BuildConfig.DEBUG) {
             Fabric.with(this, new Crashlytics());
+        }
         setContentView(R.layout.activity_main);
 
         View v = findViewById(R.id.mainActivityContent);
-        if(v != null)
-            v.setBackgroundResource(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE ? R.drawable.bg_webim_scaled_land : R.drawable.bg_webim_scaled);
-
+        if (v != null) {
+            v.setBackgroundResource(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE
+                    ? R.drawable.bg_webim_scaled_land
+                    : R.drawable.bg_webim_scaled);
+        }
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 

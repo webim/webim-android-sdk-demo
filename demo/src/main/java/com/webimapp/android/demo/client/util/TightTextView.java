@@ -30,16 +30,19 @@ public class TightTextView extends TextView {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
         int specModeW = MeasureSpec.getMode(widthMeasureSpec);
-        if(specModeW != MeasureSpec.EXACTLY) {
+        if (specModeW != MeasureSpec.EXACTLY) {
             Layout layout = getLayout();
             int linesCount = layout.getLineCount();
             if (linesCount > 1) {
                 float textRealMaxWidth = 0;
-                for(int n = 0; n < linesCount; ++n)
+                for (int n = 0; n < linesCount; ++n) {
                     textRealMaxWidth = Math.max(textRealMaxWidth, layout.getLineWidth(n));
-                int w = (int)Math.ceil(textRealMaxWidth) + getCompoundPaddingLeft() + getCompoundPaddingRight();
-                if(w < getMeasuredWidth())
+                }
+                int w = (int) Math.ceil(textRealMaxWidth)
+                        + getCompoundPaddingLeft() + getCompoundPaddingRight();
+                if (w < getMeasuredWidth()) {
                     setMeasuredDimension(w, getMeasuredHeight());
+                }
             }
         }
     }

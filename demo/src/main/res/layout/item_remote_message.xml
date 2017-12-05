@@ -82,7 +82,7 @@
                 android:autoLink="all"
                 android:gravity="start"
                 android:linksClickable="true"
-                android:textIsSelectable="true"
+                android:textIsSelectable="false"
                 android:visibility="gone"/>
 
             <ImageView

@@ -11,15 +11,20 @@ import android.widget.TextView;
 public class ErrorFragment extends Fragment {
     @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater,
+                             ViewGroup container,
+                             Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_error, container, false);
         Bundle args = getArguments();
         ((TextView) v.findViewById(R.id.errorHeader)).setText(args.getInt("h"));
-        ((TextView) v.findViewById(R.id.errorDesc)).setText(getResources().getString(args.getInt("d"), (Object[])args.getStringArray("a")));
+        ((TextView) v.findViewById(R.id.errorDesc)).setText(getResources()
+                .getString(args.getInt("d"), (Object[]) args.getStringArray("a")));
         return v;
     }
 
-    public static ErrorFragment newInstance(int errorHeaderId, int errorDescId, String... formatArgs) {
+    public static ErrorFragment newInstance(int errorHeaderId,
+                                            int errorDescId,
+                                            String... formatArgs) {
         Bundle args = new Bundle();
         args.putInt("h", errorHeaderId);
         args.putInt("d", errorDescId);

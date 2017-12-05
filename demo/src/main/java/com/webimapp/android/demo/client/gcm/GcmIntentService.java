@@ -30,43 +30,51 @@ import com.webimapp.android.sdk.WebimPushNotification;
 public class GcmIntentService extends IntentService {
     private static final int NOTIFICATION_ID = "Webim".hashCode(); // Change to any number you want
 
-	public GcmIntentService() {
-		super("GCM push handler");
-	}
-	
+    public GcmIntentService() {
+        super("GCM push handler");
+    }
+
     @Override
     protected void onHandleIntent(Intent intent) {
         Bundle extras = intent.getExtras();
         String senderId = intent.getStringExtra("from");
-        if (senderId.equals(Webim.getGcmSenderId())){
-        	if(!WebimChatActivity.isActive())
-                onPushMessage(getApplicationContext(), Webim.parseGcmPushNotification(extras), WebimChatActivity.class);
+        if (senderId.equals(Webim.getGcmSenderId())) {
+            if (!WebimChatActivity.isActive()) {
+                onPushMessage(getApplicationContext(),
+                        Webim.parseGcmPushNotification(extras), WebimChatActivity.class);
+            }
         } else {
-	       // Your push logic 
+            // Your push logic
         }
         // Release the wake lock provided by the WakefulBroadcastReceiver.
         GcmBroadcastReceiver.completeWakefulIntent(intent);
     }
 
-    private static void onPushMessage(Context context, @Nullable WebimPushNotification push, Class<? extends Activity> clazz) {
-        if(push == null)
+    private static void onPushMessage(Context context,
+                                      @Nullable WebimPushNotification push,
+                                      Class<? extends Activity> clazz) {
+        if (push == null) {
             return;
-        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        }
+        NotificationManager notificationManager =
+                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         String event = push.getEvent();
         if (event.equals("add")) {
             String message = getMessageFromPush(context, push);
-            if(message == null)
+            if (message == null) {
                 return;
+            }
             generateNotification(context, message, notificationManager, clazz);
         } else if (event.equals("del")) {
             notificationManager.cancel(NOTIFICATION_ID);
         }
     }
 
-    private static @Nullable String getMessageFromPush(@NonNull Context context, @NonNull WebimPushNotification push) {
+    private static @Nullable
+    String getMessageFromPush(@NonNull Context context, @NonNull WebimPushNotification push) {
         try {
             String format;
-            switch(push.getType()){
+            switch (push.getType()) {
                 case OPERATOR_ACCEPTED:
                     format = context.getResources().getString(R.string.push_operator_accepted);
                     break;
@@ -81,18 +89,24 @@ public class GcmIntentService extends IntentService {
             }
 
             return String.format(format, push.getParams().toArray());
-        } catch (Exception ignore) { }
+        } catch (Exception ignore) {
+        }
 
         return null;
     }
 
-    private static void generateNotification(Context context, String message, NotificationManager notificationManager, Class<? extends Activity> cls) {
+    private static void generateNotification(Context context,
+                                             String message,
+                                             NotificationManager notificationManager,
+                                             Class<? extends Activity> cls) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
         Resources res = context.getResources();
         if (cls != null) {
             Intent notificationIntent = new Intent(context, cls);
-            notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            PendingIntent contentIntent = PendingIntent.getActivity(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+            notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            PendingIntent contentIntent = PendingIntent.getActivity(context,
+                    0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
             builder.setContentIntent(contentIntent);
         }
         builder.setSmallIcon(R.drawable.ic_notify)
@@ -106,7 +120,8 @@ public class GcmIntentService extends IntentService {
                 .setStyle(new NotificationCompat.BigTextStyle()
                         .bigText(message))
                 .setDefaults(Notification.DEFAULT_VIBRATE)
-                .setSound(Uri.parse("android.resource://" + context.getPackageName() + "/" + R.raw.newmessageoperator));
+                .setSound(Uri.parse("android.resource://"
+                        + context.getPackageName() + "/" + R.raw.newmessageoperator));
         Notification notification = builder.build();
         notificationManager.notify(NOTIFICATION_ID, notification);
     }

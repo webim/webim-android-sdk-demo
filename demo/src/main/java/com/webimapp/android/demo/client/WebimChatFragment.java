@@ -65,8 +65,9 @@ public class WebimChatFragment extends Fragment {
     }
 
     public void setWebimSession(WebimSession session) {
-        if(this.session != null)
+        if (this.session != null) {
             throw new IllegalStateException("Webim session is already set");
+        }
 
         this.session = session;
     }
@@ -74,8 +75,9 @@ public class WebimChatFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        if(this.session == null)
+        if (this.session == null) {
             throw new IllegalStateException("this.session == null; Use setWebimSession before");
+        }
         View v = inflater.inflate(R.layout.fragment_webim_chat, container, false);
         initOperatorState(v);
         initListView(v);
@@ -106,15 +108,16 @@ public class WebimChatFragment extends Fragment {
 
     @Override
     public void onDetach() {
-        final ActionBar actionBar = ((AppCompatActivity)getActivity()).getSupportActionBar();
-        if(actionBar != null)
+        final ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+        if (actionBar != null) {
             actionBar.setSubtitle("");
+        }
         super.onDetach();
     }
 
     private void initOperatorState(final View v) {
-        ((AppCompatActivity)getActivity()).setSupportActionBar((Toolbar) v.findViewById(R.id.toolbar));
-        final ActionBar actionBar = ((AppCompatActivity)getActivity()).getSupportActionBar();
+        ((AppCompatActivity) getActivity()).setSupportActionBar((Toolbar) v.findViewById(R.id.toolbar));
+        final ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setDisplayShowHomeEnabled(true);
         v.findViewById(R.id.action_bar_subtitle).setVisibility(View.GONE);
@@ -130,10 +133,11 @@ public class WebimChatFragment extends Fragment {
         });
 
         setOperatorAvatar(v, session.getStream().getCurrentOperator());
-        
+
         session.getStream().setCurrentOperatorChangeListener(new MessageStream.CurrentOperatorChangeListener() {
             @Override
-            public void onOperatorChanged(@Nullable Operator oldOperator, @Nullable Operator newOperator) {
+            public void onOperatorChanged(@Nullable Operator oldOperator,
+                                          @Nullable Operator newOperator) {
                 setOperatorAvatar(v, newOperator);
             }
         });
@@ -150,30 +154,7 @@ public class WebimChatFragment extends Fragment {
     private void initListView(View v) {
         final ListView listViewChat = (ListView) v.findViewById(R.id.listViewChat);
         listViewChat.setEmptyView(v.findViewById(R.id.loadingSpinner));
-        listController = ListController.install(getContext(), listViewChat, session.getStream());
-        final FloatingActionButton button = (FloatingActionButton) v.findViewById(R.id.downButton);
-        AbsListView.OnScrollListener scrollListener = new AbsListView.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(AbsListView absListView, int i) {
-            }
-
-            @Override
-            public void onScroll(AbsListView absListView, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-                if (totalItemCount - firstVisibleItem > visibleItemCount + 1) {
-                    button.setVisibility(View.VISIBLE);
-                } else {
-                    button.setVisibility(View.GONE);
-                }
-            }
-        };
-        listViewChat.setOnScrollListener(scrollListener);
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                button.setVisibility(View.GONE);
-                listViewChat.setSelection(listViewChat.getMaxScrollAmount());
-            }
-        });
+        listController = ListController.install(getContext(), listViewChat, session.getStream(), v);
     }
 
     private void initEditText(View v) {
@@ -205,11 +186,10 @@ public class WebimChatFragment extends Fragment {
                 String message = editTextMessage.getText().toString();
                 editTextMessage.getText().clear();
                 message = message.trim();
-                if(!message.isEmpty())
-                {
-                    if(BuildConfig.DEBUG && message.equals("##CLOSE")) {
+                if (!message.isEmpty()) {
+                    if (BuildConfig.DEBUG && message.equals("##CLOSE")) {
                         session.getStream().closeChat();
-                    } else if(BuildConfig.DEBUG && message.equals("##OPEN")) {
+                    } else if (BuildConfig.DEBUG && message.equals("##OPEN")) {
                         session.getStream().startChat();
                     } else {
                         session.getStream().sendMessage(message);
@@ -231,8 +211,8 @@ public class WebimChatFragment extends Fragment {
 
                 try {
                     startActivityForResult(
-                            Intent.createChooser(intent, getContext().getString(R.string.file_chooser_title)),
-                            FILE_SELECT_CODE);
+                            Intent.createChooser(intent,
+                                    getContext().getString(R.string.file_chooser_title)), FILE_SELECT_CODE);
                 } catch (android.content.ActivityNotFoundException e) {
                     Toast.makeText(getContext(), getContext().getString(R.string.file_chooser_not_found),
                             Toast.LENGTH_SHORT).show();
@@ -248,26 +228,32 @@ public class WebimChatFragment extends Fragment {
                 if (resultCode == Activity.RESULT_OK) {
                     Uri uri = data.getData();
                     String mime = getActivity().getContentResolver().getType(uri);
-                    String extension = mime == null ? null : MimeTypeMap.getSingleton().getExtensionFromMimeType(mime);
-                    String name = extension == null ? null : uri.getLastPathSegment() + "." + extension;
+                    String extension = mime == null
+                            ? null
+                            : MimeTypeMap.getSingleton().getExtensionFromMimeType(mime);
+                    String name = extension == null
+                            ? null
+                            : uri.getLastPathSegment() + "." + extension;
                     File file = null;
                     try {
                         InputStream inp = getActivity().getContentResolver().openInputStream(uri);
-                        if(inp == null) {
+                        if (inp == null) {
                             file = null;
                         } else {
-                            file = File.createTempFile("webim", extension, getActivity().getCacheDir());
+                            file = File.createTempFile("webim",
+                                    extension, getActivity().getCacheDir());
                             writeFully(file, inp);
                         }
-                    } catch(IOException e) {
+                    } catch (IOException e) {
                         Log.e("WEBIM", "failed to copy selected file", e);
                         file.delete();
                         file = null;
                     }
 
-                    if(file != null && name != null) {
+                    if (file != null && name != null) {
                         final File fileToUpload = file;
-                        session.getStream().sendFile(fileToUpload, name, mime, new MessageStream.SendFileCallback() {
+                        session.getStream().sendFile(fileToUpload,
+                                name, mime, new MessageStream.SendFileCallback() {
                             @Override
                             public void onProgress(@NonNull Message.Id id, long sentBytes) {
 
@@ -279,19 +265,23 @@ public class WebimChatFragment extends Fragment {
                             }
 
                             @Override
-                            public void onFailure(@NonNull Message.Id id, @NonNull WebimError<SendFileError> error) {
+                            public void onFailure(@NonNull Message.Id id,
+                                                  @NonNull WebimError<SendFileError> error) {
                                 fileToUpload.delete();
                                 Toast.makeText(getContext(), getContext().getString(
-                                        error.getErrorType() == SendFileError.FILE_SIZE_EXCEEDED ? R.string.file_upload_failed_size : R.string.file_upload_failed_type),
+                                        error.getErrorType() == SendFileError.FILE_SIZE_EXCEEDED
+                                                ? R.string.file_upload_failed_size
+                                                : R.string.file_upload_failed_type),
                                         Toast.LENGTH_SHORT).show();
                             }
                         });
                         break;
                     }
                 }
-                if(resultCode != Activity.RESULT_CANCELED)
+                if (resultCode != Activity.RESULT_CANCELED) {
                     Toast.makeText(getContext(), getContext().getString(R.string.file_selection_failed),
                             Toast.LENGTH_SHORT).show();
+                }
                 break;
         }
         super.onActivityResult(requestCode, resultCode, data);
@@ -302,12 +292,13 @@ public class WebimChatFragment extends Fragment {
         OutputStream out = null;
         try {
             out = new FileOutputStream(to);
-            for(int read; (read = from.read(buffer)) != -1;)
+            for (int read; (read = from.read(buffer)) != -1; )
                 out.write(buffer, 0, read);
         } finally {
             from.close();
-            if(out != null)
+            if (out != null) {
                 out.close();
+            }
         }
     }
 
@@ -321,17 +312,25 @@ public class WebimChatFragment extends Fragment {
 
         private boolean requestingMessages;
 
-        public static ListController install(Context context, ListView listViewChat, MessageStream chat) {
-            return new ListController(context, chat, listViewChat);
+        public static ListController install(Context context,
+                                             ListView listViewChat,
+                                             MessageStream chat,
+                                             View view) {
+            return new ListController(context, chat, listViewChat, view);
         }
 
-        private ListController(Context context, MessageStream stream, ListView listViewChat) {
+        private ListController(Context context,
+                               MessageStream stream,
+                               final ListView listViewChat,
+                               View view) {
             this.listViewChat = listViewChat;
             listViewChat.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
             listViewChat.setStackFromBottom(true);
-            this.adapter = new MessagesAdapter(context, messages, new ShowRateDialogOnAvatarClickListener(context, stream));
+            this.adapter = new MessagesAdapter(context,
+                    messages, new ShowRateDialogOnAvatarClickListener(context, stream));
             listViewChat.setAdapter(adapter);
             tracker = stream.newMessageTracker(this);
+            final FloatingActionButton button = (FloatingActionButton) view.findViewById(R.id.downButton);
             scrollListener = new EndlessScrollListener(10) {
                 @Override
                 public void onLoadMore(int totalItemsCount) {
@@ -339,8 +338,16 @@ public class WebimChatFragment extends Fragment {
                 }
             };
             scrollListener.setLoading(true);
+            scrollListener.setButton(button);
             requestMore();
             listViewChat.setOnScrollListener(new CombinedScrollListener(new NormalTranscriptModeScrollListener(), scrollListener));
+            button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    button.setVisibility(View.GONE);
+                    listViewChat.setSelection(listViewChat.getMaxScrollAmount());
+                }
+            });
         }
 
         private void requestMore() {
@@ -349,21 +356,22 @@ public class WebimChatFragment extends Fragment {
                 @Override
                 public void receive(@NonNull List<? extends Message> received) {
                     requestingMessages = false;
-                    if(received.size() != 0) {
+                    if (received.size() != 0) {
                         scrollListener.setLoading(false);
                         // Scroll position fix
                         int index = listViewChat.getFirstVisiblePosition();
                         View v = listViewChat.getChildAt(listViewChat.getHeaderViewsCount());
                         int topOffset = (v == null) ? 0 : v.getTop();
                         List<ListItem> items = new ArrayList<>(received.size());
-                            for(Message msg : received)
+                        for (Message msg : received)
                             items.add(new WebimMessageListItem(msg));
                         messages.addAll(0, items);
                         adapter.notifyDataSetChanged();
                         listViewChat.setSelectionFromTop(index + received.size(), topOffset);
                     } else {
                         listViewChat.getEmptyView().setVisibility(View.GONE);
-                        listViewChat.setEmptyView(((ViewGroup) listViewChat.getParent()).findViewById(R.id.emptyHistoryView));
+                        listViewChat.setEmptyView(((ViewGroup) listViewChat.getParent())
+                                .findViewById(R.id.emptyHistoryView));
                     }
                 }
             });
@@ -371,11 +379,15 @@ public class WebimChatFragment extends Fragment {
 
         @Override
         public void messageAdded(@Nullable Message before, @NonNull Message message) {
-            int ind = before == null ? messages.size() : messages.lastIndexOf(new WebimMessageListItem(before));
-            if(ind < 0)
+            int ind = before == null
+                    ? messages.size()
+                    : messages.lastIndexOf(new WebimMessageListItem(before));
+            if (ind < 0) {
                 messages.add(new WebimMessageListItem(message));
-            else
+            }
+            else {
                 messages.add(ind, new WebimMessageListItem(message));
+            }
             adapter.notifyDataSetChanged();
         }
 
@@ -388,8 +400,9 @@ public class WebimChatFragment extends Fragment {
         @Override
         public void messageChanged(@NonNull Message from, @NonNull Message to) {
             int ind = messages.lastIndexOf(new WebimMessageListItem(from));
-            if(ind != -1)
+            if (ind != -1) {
                 messages.set(ind, new WebimMessageListItem(to));
+            }
             adapter.notifyDataSetChanged();
         }
 
@@ -397,11 +410,12 @@ public class WebimChatFragment extends Fragment {
         public void allMessagesRemoved() {
             messages.clear();
             adapter.notifyDataSetChanged();
-            if(!requestingMessages)
+            if (!requestingMessages) {
                 requestMore();
+            }
         }
     }
-    
+
     private static class ShowRateDialogOnAvatarClickListener implements View.OnClickListener {
         private final Context context;
         private final MessageStream stream;
@@ -414,14 +428,16 @@ public class WebimChatFragment extends Fragment {
         @Override
         public void onClick(View view) {
             Message item = (Message) view.getTag(R.id.webimMessage);
-            if (item != null)
+            if (item != null) {
                 showRateDialog(item);
+            }
         }
 
         private void showRateDialog(Message item) {
             final Operator.Id operatorId = item.getOperatorId();
-            if(operatorId == null)
+            if (operatorId == null) {
                 return;
+            }
             showRateDialog(operatorId);
         }
 
@@ -431,8 +447,9 @@ public class WebimChatFragment extends Fragment {
             builder.setTitle(R.string.rate_operator_title);
             View view = View.inflate(context, R.layout.rating_bar, null);
             final RatingBar bar = (RatingBar) view.findViewById(R.id.ratingBar);
-            if(rating != 0)
+            if (rating != 0) {
                 bar.setRating(rating);
+            }
             Button button = (Button) view.findViewById(R.id.ratingBarButton);
             builder.setView(view);
             final AlertDialog dialog = builder.create();
@@ -441,8 +458,9 @@ public class WebimChatFragment extends Fragment {
                 @Override
                 public void onClick(View v) {
                     dialog.dismiss();
-                    if(bar.getRating() != 0)
+                    if (bar.getRating() != 0) {
                         stream.rateOperator(operatorId, (int) bar.getRating());
+                    }
                 }
             });
         }

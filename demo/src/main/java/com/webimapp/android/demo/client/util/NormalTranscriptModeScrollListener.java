@@ -23,7 +23,7 @@ public class NormalTranscriptModeScrollListener implements AbsListView.OnScrollL
                 view.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
                 isScrollingBottom = true;
             }
-        } else if(!isScrollingBottom) {
+        } else if (!isScrollingBottom) {
             if (view.getTranscriptMode() != AbsListView.TRANSCRIPT_MODE_DISABLED)
                 view.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_DISABLED);
         }

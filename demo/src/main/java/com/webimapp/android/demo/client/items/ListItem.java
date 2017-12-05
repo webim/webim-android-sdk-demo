@@ -19,5 +19,7 @@ public abstract class ListItem {
     public abstract ViewType getViewType();
 
     /** @see android.widget.Adapter#getView(int, View, ViewGroup) */
-    public abstract View getView(MessagesAdapter adapter, @Nullable View convertView, ViewGroup parent, ListItem prev);
+    public abstract View getView(MessagesAdapter adapter,
+                                 @Nullable View convertView,
+                                 ViewGroup parent, ListItem prev);
 }

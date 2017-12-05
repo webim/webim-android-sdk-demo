@@ -55,8 +55,9 @@ public class WebimMessageListItem extends ListItem {
     }
 
     private static ViewType computeItemType(Message message) {
-        if(message.getSendStatus() == Message.SendStatus.SENDING)
+        if (message.getSendStatus() == Message.SendStatus.SENDING) {
             return ViewType.VISITOR;
+        }
         switch (message.getType()) {
             case OPERATOR:
                 return ViewType.OPERATOR;
@@ -67,9 +68,15 @@ public class WebimMessageListItem extends ListItem {
             case OPERATOR_BUSY:
                 return ViewType.INFO_OPERATOR_BUSY;
             case FILE_FROM_VISITOR:
-                return message.getAttachment() == null || message.getAttachment().getImageInfo() != null ? ViewType.VISITOR : ViewType.FILE_FROM_VISITOR;
+                return message.getAttachment() == null
+                        || message.getAttachment().getImageInfo() != null
+                        ? ViewType.VISITOR
+                        : ViewType.FILE_FROM_VISITOR;
             case FILE_FROM_OPERATOR:
-                return message.getAttachment() == null || message.getAttachment().getImageInfo() != null ? ViewType.OPERATOR : ViewType.FILE_FROM_OPERATOR;
+                return message.getAttachment() == null
+                        || message.getAttachment().getImageInfo() != null
+                        ? ViewType.OPERATOR
+                        : ViewType.FILE_FROM_OPERATOR;
             default:
                 return ViewType.INFO;
         }
@@ -81,34 +88,48 @@ public class WebimMessageListItem extends ListItem {
     }
 
     @Override
-    public View getView(final MessagesAdapter adapter, @Nullable View convertView, ViewGroup parent, @Nullable ListItem prev) {
-
+    public View getView(final MessagesAdapter adapter,
+                        @Nullable View convertView,
+                        ViewGroup parent,
+                        @Nullable ListItem prev) {
         int layoutId = getLayout();
         boolean newHeaderVisible = true;
-        if (prev != null)
-            newHeaderVisible = !(prev.getViewType() == viewType && message.getTime() / MILLIS_IN_MINUTE == ((WebimMessageListItem) prev).getMessage().getTime() / MILLIS_IN_MINUTE);
+        if (prev != null) {
+            newHeaderVisible = !(prev.getViewType() == viewType
+                    && message.getTime() / MILLIS_IN_MINUTE == ((WebimMessageListItem) prev).getMessage().getTime() / MILLIS_IN_MINUTE);
+        }
         View view = convertView;
-        if(convertView != null) {
+        if (convertView != null) {
             Object tag = convertView.getTag(R.id.webimMessage);
-            if(tag != null) {
-                if(tag == message && newHeaderVisible == headerVisible)
+            if (tag != null) {
+                if (tag == message && newHeaderVisible == headerVisible) {
                     return convertView;
-                Message.Type type = ((Message)tag).getType();
-                if(type == Message.Type.FILE_FROM_OPERATOR || type == Message.Type.FILE_FROM_VISITOR)
+                }
+                Message.Type type = ((Message) tag).getType();
+                if (type == Message.Type.FILE_FROM_OPERATOR
+                        || type == Message.Type.FILE_FROM_VISITOR) {
                     view = null;
+                }
             }
         }
         headerVisible = newHeaderVisible;
-        if(view == null)
+        if (view == null) {
             view = adapter.getInflater().inflate(layoutId, parent, false);
-        return message.getSendStatus() == Message.SendStatus.SENDING ? getSendingMessageView(adapter, view) : getRealMessageView(adapter, view, prev);
+        }
+        view.setClickable(true);
+        return message.getSendStatus() == Message.SendStatus.SENDING
+                ? getSendingMessageView(adapter, view)
+                : getRealMessageView(adapter, view, prev);
     }
 
     public View getSendingMessageView(final MessagesAdapter adapter, @NonNull View view) {
-        if(message.getType() == Message.Type.FILE_FROM_OPERATOR || message.getType() == Message.Type.FILE_FROM_VISITOR)
+        if (message.getType() == Message.Type.FILE_FROM_OPERATOR
+                || message.getType() == Message.Type.FILE_FROM_VISITOR) {
             return getSendingFileMessageView(adapter, view);
-        else
+        }
+        else {
             return getSendingTextMessageView(adapter, view);
+        }
     }
 
     public View getSendingTextMessageView(final MessagesAdapter adapter, @NonNull View view) {
@@ -116,14 +137,17 @@ public class WebimMessageListItem extends ListItem {
         messageTextView.setVisibility(View.VISIBLE);
         messageTextView.setText(message.getText());
         View sendingProgress = view.findViewById(R.id.sendingProgress);
-        if(sendingProgress != null)
+        if (sendingProgress != null) {
             sendingProgress.setVisibility(View.VISIBLE);
+        }
         TextView messageTime = (TextView) view.findViewById(R.id.messageTime);
-        if(messageTime != null)
+        if (messageTime != null) {
             messageTime.setVisibility(View.GONE);
+        }
         final ImageView thumb = (ImageView) view.findViewById(R.id.fileThumb);
-        if(thumb != null)
+        if (thumb != null) {
             thumb.setVisibility(View.GONE);
+        }
         return view;
     }
 
@@ -132,18 +156,23 @@ public class WebimMessageListItem extends ListItem {
         messageTextView.setVisibility(View.VISIBLE);
         messageTextView.setText(R.string.file_upload_message_text);
         View sendingProgress = view.findViewById(R.id.sendingProgress);
-        if(sendingProgress != null)
+        if (sendingProgress != null) {
             sendingProgress.setVisibility(View.VISIBLE);
+        }
         TextView messageTime = (TextView) view.findViewById(R.id.messageTime);
-        if(messageTime != null)
+        if (messageTime != null) {
             messageTime.setVisibility(View.GONE);
+        }
         final ImageView thumb = (ImageView) view.findViewById(R.id.fileThumb);
-        if(thumb != null)
+        if (thumb != null) {
             thumb.setVisibility(View.GONE);
+        }
         return view;
     }
 
-    public View getRealMessageView(final MessagesAdapter adapter, @NonNull View view, @Nullable ListItem prev) {
+    public View getRealMessageView(final MessagesAdapter adapter,
+                                   @NonNull View view,
+                                   @Nullable ListItem prev) {
         view.setTag(R.id.webimMessage, message);
         TextView date = (TextView) view.findViewById(R.id.dateView);
         if (date != null) {
@@ -161,10 +190,10 @@ public class WebimMessageListItem extends ListItem {
         ImageView avatar = (ImageView) view.findViewById(R.id.imageAvatar);
         if (avatar != null) {
             String avatarUrl = message.getSenderAvatarUrl();
-            if(avatarUrl != null) {
+            if (avatarUrl != null) {
                 avatar.setVisibility(View.VISIBLE);
                 avatar.setTag(R.id.webimMessage, message);
-                if(!avatarUrl.equals(avatar.getTag(R.id.avatarUrl))) {
+                if (!avatarUrl.equals(avatar.getTag(R.id.avatarUrl))) {
                     avatar.setTag(null);
                     Glide.with(adapter.getContext())
                             .load(avatarUrl)
@@ -185,16 +214,17 @@ public class WebimMessageListItem extends ListItem {
         }
         switch (message.getType()) {
             case FILE_FROM_OPERATOR:
-                if(senderName != null)
+                if (senderName != null) {
                     senderName.setVisibility(View.GONE);
+                }
             case FILE_FROM_VISITOR:
                 Message.Attachment attachment = message.getAttachment();
-                if(attachment == null) {
+                if (attachment == null) {
                     messageTextView.setText(message.getText());
                 } else {
                     final Message.ImageInfo imageInfo = attachment.getImageInfo();
                     final String fileUrl = attachment.getUrl();
-                    if(imageInfo != null) {
+                    if (imageInfo != null) {
                         final ImageView thumb = (ImageView) view.findViewById(R.id.fileThumb);
                         thumb.setVisibility(View.VISIBLE);
                         setViewSize(thumb, getThumbSize(imageInfo));
@@ -277,18 +307,47 @@ public class WebimMessageListItem extends ListItem {
                         });
                         break;
                     }
-                    setMessageAsLink(adapter.getContext(), view, messageTextView, message.getText(), fileUrl);
+                    setMessageAsLink(adapter.getContext(), view,
+                            messageTextView, message.getText(), fileUrl);
                 }
                 break;
             default:
                 messageTextView.setText(message.getText());
+                view.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(view.getContext());
+                        View v = View.inflate(view.getContext(), R.layout.copy_message, null);
+                        builder.setView(v);
+                        final AlertDialog dialog = builder.create();
+                        dialog.show();
+                        Button copyMessage = (Button) v.findViewById(R.id.copy_message_button);
+                        copyMessage.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                ClipData clip =
+                                        ClipData.newPlainText("message", message.getText());
+                                ClipboardManager clipboard =
+                                        (ClipboardManager) view.getContext().getSystemService(Context.CLIPBOARD_SERVICE);
+                                if (clipboard != null) {
+                                    clipboard.setPrimaryClip(clip);
+                                    showMessage("Сообщение сохранено.", view);
+                                } else {
+                                    showMessage("Не удалось скопировать сообщение.", view);
+                                }
+                                dialog.cancel();
+                            }
+                        });
+                    }
+                });
                 break;
         }
         View sendingProgress = view.findViewById(R.id.sendingProgress);
-        if(sendingProgress != null)
+        if (sendingProgress != null) {
             sendingProgress.setVisibility(View.GONE);
+        }
         TextView messageTime = (TextView) view.findViewById(R.id.messageTime);
-        if(messageTime != null) {
+        if (messageTime != null) {
             messageTime.setText(adapter.getDateFormat().format(message.getTime()));
             messageTime.setVisibility(headerVisible ? View.VISIBLE : View.GONE);
         }
@@ -296,7 +355,8 @@ public class WebimMessageListItem extends ListItem {
     }
 
     private void showMessage(String message, View view) {
-        Toast toast = Toast.makeText(view.getContext().getApplicationContext(), message, Toast.LENGTH_SHORT);
+        Toast toast = Toast.makeText(view.getContext().getApplicationContext(),
+                message, Toast.LENGTH_SHORT);
         toast.show();
     }
 
@@ -321,7 +381,7 @@ public class WebimMessageListItem extends ListItem {
     private static Size getThumbSize(Message.ImageInfo imageInfo) {
         int width = imageInfo.getWidth();
         int height = imageInfo.getHeight();
-        if(height > width) {
+        if (height > width) {
             width = THUMB_SIZE * width / height;
             height = THUMB_SIZE;
         } else {
@@ -332,14 +392,23 @@ public class WebimMessageListItem extends ListItem {
     }
 
     private static void setViewSize(ImageView view, Size size) {
-        if(view.getParent() instanceof FrameLayout)
-            view.setLayoutParams(new FrameLayout.LayoutParams(size.getWidth(), size.getHeight(), Gravity.END));
-        else
-            view.setLayoutParams(new LinearLayout.LayoutParams(size.getWidth(), size.getHeight(), Gravity.END));
+        if (view.getParent() instanceof FrameLayout) {
+            view.setLayoutParams(new FrameLayout.LayoutParams(size.getWidth(),
+                    size.getHeight(), Gravity.END));
+        }
+        else {
+            view.setLayoutParams(new LinearLayout.LayoutParams(size.getWidth(),
+                    size.getHeight(), Gravity.END));
+        }
     }
 
-    private void setMessageAsLink(final Context context, final View view, final TextView textView, final String text, final String url) {
-        textView.setText(Html.fromHtml(context.getResources().getString(R.string.file_send) + "<a href=\"" + url + "\">" + text + "</a>"));
+    private void setMessageAsLink(final Context context,
+                                  final View view,
+                                  final TextView textView,
+                                  final String text,
+                                  final String url) {
+        textView.setText(Html.fromHtml(context.getResources().getString(R.string.file_send)
+                + "<a href=\"" + url + "\">" + text + "</a>"));
         textView.setMovementMethod(LinkMovementMethod.getInstance());
         ImageView redirect = (ImageView) view.findViewById(R.id.imageViewOpenFile);
         redirect.setOnClickListener(new View.OnClickListener() {
@@ -355,8 +424,9 @@ public class WebimMessageListItem extends ListItem {
     }
 
     private int getLayout() {
-        if(message.getSendStatus() == Message.SendStatus.SENDING)
+        if (message.getSendStatus() == Message.SendStatus.SENDING) {
             return R.layout.item_local_message;
+        }
         switch (message.getType()) {
             case OPERATOR:
                 return R.layout.item_remote_message;
@@ -367,9 +437,15 @@ public class WebimMessageListItem extends ListItem {
             case OPERATOR_BUSY:
                 return R.layout.item_op_busy_message;
             case FILE_FROM_VISITOR:
-                return message.getAttachment() == null || message.getAttachment().getImageInfo() != null ? R.layout.item_local_message : R.layout.item_send_file;
+                return message.getAttachment() == null
+                        || message.getAttachment().getImageInfo() != null
+                        ? R.layout.item_local_message
+                        : R.layout.item_send_file;
             case FILE_FROM_OPERATOR:
-                return message.getAttachment() == null || message.getAttachment().getImageInfo() != null ? R.layout.item_remote_message : R.layout.item_recieve_file;
+                return message.getAttachment() == null
+                        || message.getAttachment().getImageInfo() != null
+                        ? R.layout.item_remote_message
+                        : R.layout.item_recieve_file;
             default:
                 return R.layout.item_info_message;
         }
@@ -377,8 +453,12 @@ public class WebimMessageListItem extends ListItem {
 
     @Override
     public boolean equals(Object o) {
-        if(this == o) return true;
-        if(o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         WebimMessageListItem that = (WebimMessageListItem) o;
 

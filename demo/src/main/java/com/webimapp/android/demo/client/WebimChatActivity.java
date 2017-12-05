@@ -33,7 +33,9 @@ public class WebimChatActivity extends AppCompatActivity implements FatalErrorHa
                 .setErrorHandler(this)
                 .setAccountName(sharedPref.getString("account", DEFAULT_ACCOUNT_NAME))
                 .setLocation(sharedPref.getString("location", DEFAULT_LOCATION))
-                .setPushSystem(sharedPref.getBoolean("gcm", true) ? Webim.PushSystem.GCM : Webim.PushSystem.NONE)
+                .setPushSystem(sharedPref.getBoolean("gcm", true)
+                        ? Webim.PushSystem.GCM
+                        : Webim.PushSystem.NONE)
                 .setDebugLogsEnabled(BuildConfig.DEBUG)
 //                .setVisitorFieldsJson("{\"id\":\"0\",\"crc\":\"50a070fcb175a176a56ffa3a285e94b0\"}")
 //                .setVisitorDataPreferences(getSharedPreferences("test2", Context.MODE_PRIVATE))
@@ -60,20 +62,27 @@ public class WebimChatActivity extends AppCompatActivity implements FatalErrorHa
 
     private void updateBackground(Configuration newConfig) {
         View v = findViewById(R.id.webimChatContainer);
-        if(v != null)
-            v.setBackgroundResource(newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE ? R.drawable.bg_webim_scaled_land : R.drawable.bg_webim_scaled);
+        if (v != null) {
+            v.setBackgroundResource(newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+                    ? R.drawable.bg_webim_scaled_land
+                    : R.drawable.bg_webim_scaled);
+        }
     }
 
     @Override
     public void onError(@NonNull WebimError<FatalErrorType> error) {
-        switch(error.getErrorType()) {
+        switch (error.getErrorType()) {
             default:
-                if(!BuildConfig.DEBUG)
-                    Crashlytics.logException(new Throwable("Handled unknown webim error: " + error.getErrorString()));
-                showError(R.string.error_unknown_header, R.string.error_unknown_desc, error.getErrorString());
+                if (!BuildConfig.DEBUG) {
+                    Crashlytics.logException(new Throwable("Handled unknown webim error: "
+                            + error.getErrorString()));
+                }
+                showError(R.string.error_unknown_header,
+                        R.string.error_unknown_desc, error.getErrorString());
                 break;
             case ACCOUNT_BLOCKED:
-                showError(R.string.error_account_blocked_header, R.string.error_account_blocked_desc);
+                showError(R.string.error_account_blocked_header,
+                        R.string.error_account_blocked_desc);
                 break;
             case VISITOR_BANNED:
                 showError(R.string.error_user_banned_header, R.string.error_user_banned_desc);
@@ -84,7 +93,8 @@ public class WebimChatActivity extends AppCompatActivity implements FatalErrorHa
     private void showError(int errorHeaderId, int errorDescId, String... args) {
         getSupportFragmentManager()
                 .beginTransaction()
-                .replace(R.id.webimChatContainer, ErrorFragment.newInstance(errorHeaderId, errorDescId, args))
+                .replace(R.id.webimChatContainer,
+                        ErrorFragment.newInstance(errorHeaderId, errorDescId, args))
                 .commit();
     }
 

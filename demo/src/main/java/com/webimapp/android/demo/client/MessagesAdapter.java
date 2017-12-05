@@ -28,7 +28,9 @@ public class MessagesAdapter extends BaseAdapter {
         this(context, list, null);
     }
 
-    public MessagesAdapter(Context context, List<ListItem> list, @Nullable OnClickListener listener) {
+    public MessagesAdapter(Context context,
+                           List<ListItem> list,
+                           @Nullable OnClickListener listener) {
         this.context = context;
         this.list = list;
         this.inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -40,14 +42,17 @@ public class MessagesAdapter extends BaseAdapter {
     @Override
     public View getView(int position, @Nullable View convertView, ViewGroup parent) {
         ListItem item = list.get(position);
-        if(convertView != null) {
+        if (convertView != null) {
             Object tag = convertView.getTag(R.id.listItem);
-            if(tag == item)
+            if (tag == item) {
                 return convertView;
-            if(((ListItem)tag).getViewType() != item.getViewType())
+            }
+            if (((ListItem) tag).getViewType() != item.getViewType()) {
                 convertView = null;
+            }
         }
-        View view = item.getView(this, convertView, parent, position == 0 ? null : list.get(position - 1));
+        View view = item.getView(this, convertView,
+                parent, position == 0 ? null : list.get(position - 1));
         view.setTag(R.id.listItem, item);
         return view;
     }
