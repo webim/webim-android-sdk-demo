@@ -292,8 +292,9 @@ public class WebimChatFragment extends Fragment {
         OutputStream out = null;
         try {
             out = new FileOutputStream(to);
-            for (int read; (read = from.read(buffer)) != -1; )
+            for (int read; (read = from.read(buffer)) != -1; ) {
                 out.write(buffer, 0, read);
+            }
         } finally {
             from.close();
             if (out != null) {
@@ -363,8 +364,9 @@ public class WebimChatFragment extends Fragment {
                         View v = listViewChat.getChildAt(listViewChat.getHeaderViewsCount());
                         int topOffset = (v == null) ? 0 : v.getTop();
                         List<ListItem> items = new ArrayList<>(received.size());
-                        for (Message msg : received)
+                        for (Message msg : received) {
                             items.add(new WebimMessageListItem(msg));
+                        }
                         messages.addAll(0, items);
                         adapter.notifyDataSetChanged();
                         listViewChat.setSelectionFromTop(index + received.size(), topOffset);
