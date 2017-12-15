@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 
@@ -14,7 +13,6 @@ import com.crashlytics.android.Crashlytics;
 import com.webimapp.android.sdk.FatalErrorHandler;
 import com.webimapp.android.sdk.Webim;
 import com.webimapp.android.sdk.WebimError;
-import com.webimapp.android.sdk.ProvidedAuthorizationTokenStateListener;
 
 public class WebimChatActivity extends AppCompatActivity implements FatalErrorHandler {
     private static boolean active;
