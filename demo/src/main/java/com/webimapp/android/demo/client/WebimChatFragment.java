@@ -461,7 +461,11 @@ public class WebimChatFragment extends Fragment {
                 public void onClick(View v) {
                     dialog.dismiss();
                     if (bar.getRating() != 0) {
-                        stream.rateOperator(operatorId, (int) bar.getRating());
+                        stream.rateOperator(
+                                operatorId,
+                                (int) bar.getRating(),
+                                null
+                        );
                     }
                 }
             });
