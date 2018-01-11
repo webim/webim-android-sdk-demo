@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 
@@ -13,6 +14,7 @@ import com.crashlytics.android.Crashlytics;
 import com.webimapp.android.sdk.FatalErrorHandler;
 import com.webimapp.android.sdk.Webim;
 import com.webimapp.android.sdk.WebimError;
+import com.webimapp.android.sdk.WebimLog;
 
 public class WebimChatActivity extends AppCompatActivity implements FatalErrorHandler {
     private static boolean active;
@@ -38,6 +40,14 @@ public class WebimChatActivity extends AppCompatActivity implements FatalErrorHa
                         : Webim.PushSystem.NONE)
                 .setDebugLogsEnabled(BuildConfig.DEBUG)
                 .setClearVisitorData(false)
+                .setLogger(BuildConfig.DEBUG
+                        ? new WebimLog() {
+                                @Override
+                                public void log(String log) {
+                                    Log.i("WebimLog", log);
+                                }
+                        }
+                        : null)
                 //.setVisitorFieldsJson("{\"id\":\"1234567890987654321\",\"display_name\":\"Никита\",\"crc\":\"ffadeb6aa3c788200824e311b9aa44cb\"}")
                 //.setVisitorDataPreferences(getSharedPreferences("test2", Context.MODE_PRIVATE))
                 .build());
