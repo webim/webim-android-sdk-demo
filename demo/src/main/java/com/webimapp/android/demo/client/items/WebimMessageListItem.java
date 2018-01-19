@@ -1,16 +1,20 @@
 package com.webimapp.android.demo.client.items;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DownloadManager;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
 import android.view.Gravity;
@@ -96,7 +100,8 @@ public class WebimMessageListItem extends ListItem {
         boolean newHeaderVisible = true;
         if (prev != null) {
             newHeaderVisible = !(prev.getViewType() == viewType
-                    && message.getTime() / MILLIS_IN_MINUTE == ((WebimMessageListItem) prev).getMessage().getTime() / MILLIS_IN_MINUTE);
+                    && message.getTime() / MILLIS_IN_MINUTE
+                    == ((WebimMessageListItem) prev).getMessage().getTime() / MILLIS_IN_MINUTE);
         }
         View view = convertView;
         if (convertView != null) {
@@ -176,7 +181,9 @@ public class WebimMessageListItem extends ListItem {
         view.setTag(R.id.webimMessage, message);
         TextView date = (TextView) view.findViewById(R.id.dateView);
         if (date != null) {
-            if (prev == null || (message.getTime() / NUMBER_OF_MS_IN_DAY != ((WebimMessageListItem) prev).getMessage().getTime() / NUMBER_OF_MS_IN_DAY)) {
+            if (prev == null
+                    || (message.getTime() / NUMBER_OF_MS_IN_DAY
+                    != ((WebimMessageListItem) prev).getMessage().getTime() / NUMBER_OF_MS_IN_DAY)) {
                 date.setText(adapter.getLongDateFormat().format(message.getTime()));
                 date.setVisibility(View.VISIBLE);
             } else {
@@ -232,7 +239,8 @@ public class WebimMessageListItem extends ListItem {
                         Glide.with(adapter.getContext())
                                 .load(imageInfo.getThumbUrl())
                                 .diskCacheStrategy(DiskCacheStrategy.SOURCE)
-                                .bitmapTransform(new RoundedCornersTransformation(adapter.getContext(), 8, 0))
+                                .bitmapTransform(new RoundedCornersTransformation(
+                                        adapter.getContext(), 8, 0))
                                 .into(thumb);
                         thumb.setOnClickListener(new View.OnClickListener() {
                             @Override
@@ -242,6 +250,8 @@ public class WebimMessageListItem extends ListItem {
                                 final WebView image = (WebView) view.findViewById(R.id.imageView);
                                 image.getSettings().setSupportZoom(true);
                                 image.getSettings().setBuiltInZoomControls(true);
+                                image.getSettings().setLoadWithOverviewMode(true);
+                                image.getSettings().setUseWideViewPort(true);
                                 image.setPadding(0, 0, 0, 0);
                                 image.setScrollbarFadingEnabled(true);
                                 image.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
@@ -254,8 +264,11 @@ public class WebimMessageListItem extends ListItem {
                                 options.setOnClickListener(new View.OnClickListener() {
                                     @Override
                                     public void onClick(View view) {
-                                        AlertDialog.Builder builder = new AlertDialog.Builder(view.getContext());
-                                        View v = View.inflate(view.getContext(), R.layout.buttons_for_image, null);
+                                        AlertDialog.Builder builder
+                                                = new AlertDialog.Builder(view.getContext());
+                                        View v = View.inflate(view.getContext(),
+                                                R.layout.buttons_for_image,
+                                                null);
                                         builder.setView(v);
                                         final AlertDialog dialog = builder.create();
                                         dialog.show();
@@ -274,30 +287,43 @@ public class WebimMessageListItem extends ListItem {
                                         copyURI.setOnClickListener(new View.OnClickListener() {
                                             @Override
                                             public void onClick(View view) {
-                                                ClipData clip = ClipData.newUri(view.getContext().getContentResolver(), "URI", Uri.parse(fileUrl));
-                                                ClipboardManager clipboard = (ClipboardManager) view.getContext().getSystemService(Context.CLIPBOARD_SERVICE);
+                                                ClipData clip = ClipData.newUri(
+                                                        view.getContext().getContentResolver(),
+                                                        "URI",
+                                                        Uri.parse(fileUrl));
+                                                ClipboardManager clipboard
+                                                        = (ClipboardManager) view.getContext()
+                                                        .getSystemService(Context.CLIPBOARD_SERVICE);
                                                 clipboard.setPrimaryClip(clip);
                                             }
                                         });
 
-                                        final Button saveImage = (Button) v.findViewById(R.id.save_button);
+                                        final Button saveImage
+                                                = (Button) v.findViewById(R.id.save_button);
                                         saveImage.setOnClickListener(new View.OnClickListener() {
                                             @Override
                                             public void onClick(View view) {
-                                                showMessage("Загрузка файла...", view);
-                                                DownloadManager.Request request = new DownloadManager.Request(Uri.parse(fileUrl));
-                                                Long time = System.currentTimeMillis();
-                                                request.setTitle("image_" + time);
-
-                                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                                                if (Build.VERSION.SDK_INT >= 23
+                                                        && ActivityCompat.checkSelfPermission(view.getContext(),
+                                                        Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                                                        != PackageManager.PERMISSION_GRANTED) {
+                                                    ActivityCompat.requestPermissions(
+                                                            (Activity) view.getContext(),
+                                                            new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                                                            1);
+                                                } else {
+                                                    showMessage("Загрузка файла...", view);
+                                                    DownloadManager.Request request
+                                                            = new DownloadManager.Request(Uri.parse(fileUrl));
+                                                    Long time = System.currentTimeMillis();
+                                                    request.setTitle("image_" + time);
                                                     request.allowScanningByMediaScanner();
                                                     request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                                                    request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "image_" + time + ".jpg");
+                                                    DownloadManager manager = (DownloadManager) view.getContext().getSystemService(Context.DOWNLOAD_SERVICE);
+                                                    manager.enqueue(request);
+                                                    showMessage("Файл image_" + time + ".jpg сохранён.", view);
                                                 }
-                                                request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "image_" + time + ".jpg");
-
-                                                DownloadManager manager = (DownloadManager) view.getContext().getSystemService(Context.DOWNLOAD_SERVICE);
-                                                manager.enqueue(request);
-                                                showMessage("Файл image_" + time + ".jpg сохранён.", view);
                                             }
                                         });
 
