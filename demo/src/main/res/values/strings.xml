@@ -8,7 +8,7 @@
         demo.webim.ru (Данные для входа: Email: o@webim.ru, Пароль: password).
         Исходный код данного приложения вы можете найти по адресу github.com/webim/webim-android-sdk-demo
     </string>
-	<string name="message">Сообщение…</string>
+    <string name="message">Сообщение…</string>
     <string name="empty_chat_text">Введите сообщение, чтобы начать чат с оператором</string>
     <string name="content_desc_send_message">send message</string>
     <string name="rate_operator_button">Оценить</string>
@@ -31,9 +31,10 @@
         Вы не можете использовать чат, так как возникла неизвестная ошибка.
         Наши разработчики уже оповещены об этой проблеме и исправят ее в ближайшее время. Детали: %s
     </string>
+    <string name="push_contact_information">Оператор запросил контактные данные.</string>
     <string name="push_operator_accepted">Оператор %1$s присоединился к диалогу.</string>
-    <string name="push_operator_message">%1$s: %2$s</string>
     <string name="push_operator_file">%1$s отправил(а) файл %2$s</string>
+    <string name="push_operator_message">%1$s: %2$s</string>
     <string name="prefs_notifications_summary">Включить GCM пуш-уведомления для новых сообщений от оператора</string>
     <string name="prefs_notifications_title">Уведомления</string>
     <string name="prefs_account_title">Аккаунт</string>

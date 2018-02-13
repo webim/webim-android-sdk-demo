@@ -70,27 +70,30 @@ public class GcmIntentService extends IntentService {
         }
     }
 
-    private static @Nullable
-    String getMessageFromPush(@NonNull Context context, @NonNull WebimPushNotification push) {
+    @Nullable
+    private static String getMessageFromPush(@NonNull Context context,
+                                             @NonNull WebimPushNotification push) {
         try {
             String format;
             switch (push.getType()) {
+                case CONTACT_INFORMATION_REQUEST:
+                    format = context.getResources().getString(R.string.push_contact_information);
+                    break;
                 case OPERATOR_ACCEPTED:
                     format = context.getResources().getString(R.string.push_operator_accepted);
                     break;
-                case OPERATOR_MESSAGE:
-                    format = context.getResources().getString(R.string.push_operator_message);
-                    break;
                 case OPERATOR_FILE:
                     format = context.getResources().getString(R.string.push_operator_file);
+                    break;
+                case OPERATOR_MESSAGE:
+                    format = context.getResources().getString(R.string.push_operator_message);
                     break;
                 default:
                     return null;
             }
 
             return String.format(format, push.getParams().toArray());
-        } catch (Exception ignore) {
-        }
+        } catch (Exception ignore) { }
 
         return null;
     }

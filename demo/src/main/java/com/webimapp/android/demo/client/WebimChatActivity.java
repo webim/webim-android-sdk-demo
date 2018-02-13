@@ -38,7 +38,6 @@ public class WebimChatActivity extends AppCompatActivity implements FatalErrorHa
                 .setPushSystem(sharedPref.getBoolean("gcm", true)
                         ? Webim.PushSystem.GCM
                         : Webim.PushSystem.NONE)
-                .setDebugLogsEnabled(BuildConfig.DEBUG)
                 .setClearVisitorData(false)
                 .setLogger(BuildConfig.DEBUG
                         ? new WebimLog() {
@@ -47,7 +46,8 @@ public class WebimChatActivity extends AppCompatActivity implements FatalErrorHa
                                     Log.i("WebimLog", log);
                                 }
                         }
-                        : null)
+                        : null,
+                        Webim.SessionBuilder.WebimLogVerbosityLevel.VERBOSE)
                 //.setVisitorFieldsJson("{\"id\":\"1234567890987654321\",\"display_name\":\"Никита\",\"crc\":\"ffadeb6aa3c788200824e311b9aa44cb\"}")
                 //.setVisitorDataPreferences(getSharedPreferences("test2", Context.MODE_PRIVATE))
                 .build());
