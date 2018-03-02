@@ -43,7 +43,7 @@ public class WebimChatActivity extends AppCompatActivity implements FatalErrorHa
                         ? new WebimLog() {
                                 @Override
                                 public void log(String log) {
-                                    Log.i("WebimLog", log);
+                                    Log.i("WEBIM LOG", log);
                                 }
                         }
                         : null,
