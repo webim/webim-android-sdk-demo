@@ -15,7 +15,7 @@
         android:title="@string/prefs_location_title">
     </EditTextPreference>
     <CheckBoxPreference
-        android:key="gcm"
+        android:key="fcm"
         android:defaultValue="true"
         android:summary="@string/prefs_notifications_summary"
         android:title="@string/prefs_notifications_title">

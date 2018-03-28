@@ -9,7 +9,7 @@ buildscript {
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.2'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:1.4.1'
         classpath 'org.codehaus.groovy:groovy-android-gradle-plugin:1.1.0'
-
+        classpath 'com.google.gms:google-services:3.2.0' // google-services plugin
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
     }
@@ -18,6 +18,9 @@ buildscript {
 allprojects {
     repositories {
         jcenter()
+        repositories {
+            maven { url "https://maven.google.com" }
+        }
     }
 }
 

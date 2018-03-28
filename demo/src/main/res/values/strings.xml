@@ -35,7 +35,7 @@
     <string name="push_operator_accepted">Оператор %1$s присоединился к диалогу.</string>
     <string name="push_operator_file">%1$s отправил(а) файл %2$s</string>
     <string name="push_operator_message">%1$s: %2$s</string>
-    <string name="prefs_notifications_summary">Включить GCM пуш-уведомления для новых сообщений от оператора</string>
+    <string name="prefs_notifications_summary">Включить FCM пуш-уведомления для новых сообщений от оператора</string>
     <string name="prefs_notifications_title">Уведомления</string>
     <string name="prefs_account_title">Аккаунт</string>
     <string name="prefs_account_summary">Имя Webim аккаунта или полный адрес сервера (например, \'demo\' или \'https://demo.webim.ru\')</string>

@@ -11,6 +11,7 @@ import android.view.Menu;
 import android.view.View;
 
 import com.crashlytics.android.Crashlytics;
+import com.google.firebase.iid.FirebaseInstanceId;
 import com.webimapp.android.sdk.FatalErrorHandler;
 import com.webimapp.android.sdk.Webim;
 import com.webimapp.android.sdk.WebimError;
@@ -35,9 +36,10 @@ public class WebimChatActivity extends AppCompatActivity implements FatalErrorHa
                 .setErrorHandler(this)
                 .setAccountName(sharedPref.getString("account", DEFAULT_ACCOUNT_NAME))
                 .setLocation(sharedPref.getString("location", DEFAULT_LOCATION))
-                .setPushSystem(sharedPref.getBoolean("gcm", true)
-                        ? Webim.PushSystem.GCM
-                        : Webim.PushSystem.NONE)
+                .setPushSystem(Webim.PushSystem.FCM)
+                .setPushToken(sharedPref.getBoolean("fcm", true)
+                        ? FirebaseInstanceId.getInstance().getToken()
+                        : "none")
                 .setClearVisitorData(false)
                 .setLogger(BuildConfig.DEBUG
                         ? new WebimLog() {
