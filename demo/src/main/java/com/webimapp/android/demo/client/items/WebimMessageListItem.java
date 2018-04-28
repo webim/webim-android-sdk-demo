@@ -1,27 +1,20 @@
 package com.webimapp.android.demo.client.items;
 
-import android.Manifest;
-import android.app.Activity;
+
 import android.app.AlertDialog;
-import android.app.DownloadManager;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
-import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.WebView;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -30,6 +23,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.webimapp.android.demo.client.ImageActivity;
 import com.webimapp.android.demo.client.MessagesAdapter;
 import com.webimapp.android.demo.client.R;
 import com.webimapp.android.sdk.Message;
@@ -176,7 +170,7 @@ public class WebimMessageListItem extends ListItem {
     }
 
     public View getRealMessageView(final MessagesAdapter adapter,
-                                   @NonNull View view,
+                                   @NonNull final View view,
                                    @Nullable ListItem prev) {
         view.setTag(R.id.webimMessage, message);
         TextView date = (TextView) view.findViewById(R.id.dateView);
@@ -232,103 +226,23 @@ public class WebimMessageListItem extends ListItem {
                     final Message.ImageInfo imageInfo = attachment.getImageInfo();
                     final String fileUrl = attachment.getUrl();
                     if (imageInfo != null) {
-                        final ImageView thumb = (ImageView) view.findViewById(R.id.fileThumb);
-                        thumb.setVisibility(View.VISIBLE);
-                        setViewSize(thumb, getThumbSize(imageInfo));
+                        final ImageView thumbView = (ImageView) view.findViewById(R.id.fileThumb);
+                        thumbView.setVisibility(View.VISIBLE);
+                        setViewSize(thumbView, getThumbSize(imageInfo));
                         messageTextView.setVisibility(View.GONE);
                         Glide.with(adapter.getContext())
                                 .load(imageInfo.getThumbUrl())
                                 .diskCacheStrategy(DiskCacheStrategy.SOURCE)
                                 .bitmapTransform(new RoundedCornersTransformation(
                                         adapter.getContext(), 8, 0))
-                                .into(thumb);
-                        thumb.setOnClickListener(new View.OnClickListener() {
+                                .into(thumbView);
+
+                        thumbView.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
-                                AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
-                                View view = View.inflate(v.getContext(), R.layout.image_bar, null);
-                                final WebView image = (WebView) view.findViewById(R.id.imageView);
-                                image.getSettings().setSupportZoom(true);
-                                image.getSettings().setBuiltInZoomControls(true);
-                                image.getSettings().setLoadWithOverviewMode(true);
-                                image.getSettings().setUseWideViewPort(true);
-                                image.setPadding(0, 0, 0, 0);
-                                image.setScrollbarFadingEnabled(true);
-                                image.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
-                                image.loadUrl(fileUrl);
-                                builder.setView(view);
-                                final AlertDialog dialog = builder.create();
-                                dialog.show();
-
-                                Button options = (Button) view.findViewById(R.id.options_button);
-                                options.setOnClickListener(new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View view) {
-                                        AlertDialog.Builder builder
-                                                = new AlertDialog.Builder(view.getContext());
-                                        View v = View.inflate(view.getContext(),
-                                                R.layout.buttons_for_image,
-                                                null);
-                                        builder.setView(v);
-                                        final AlertDialog dialog = builder.create();
-                                        dialog.show();
-
-                                        Button browser = (Button) v.findViewById(R.id.browser_button);
-                                        browser.setOnClickListener(new View.OnClickListener() {
-                                            @Override
-                                            public void onClick(View view) {
-                                                Uri uri = Uri.parse(fileUrl);
-                                                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                                                adapter.getContext().startActivity(intent);
-                                            }
-                                        });
-
-                                        Button copyURI = (Button) v.findViewById(R.id.copy_button);
-                                        copyURI.setOnClickListener(new View.OnClickListener() {
-                                            @Override
-                                            public void onClick(View view) {
-                                                ClipData clip = ClipData.newUri(
-                                                        view.getContext().getContentResolver(),
-                                                        "URI",
-                                                        Uri.parse(fileUrl));
-                                                ClipboardManager clipboard
-                                                        = (ClipboardManager) view.getContext()
-                                                        .getSystemService(Context.CLIPBOARD_SERVICE);
-                                                clipboard.setPrimaryClip(clip);
-                                            }
-                                        });
-
-                                        final Button saveImage
-                                                = (Button) v.findViewById(R.id.save_button);
-                                        saveImage.setOnClickListener(new View.OnClickListener() {
-                                            @Override
-                                            public void onClick(View view) {
-                                                if (Build.VERSION.SDK_INT >= 23
-                                                        && ActivityCompat.checkSelfPermission(view.getContext(),
-                                                        Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                                                        != PackageManager.PERMISSION_GRANTED) {
-                                                    ActivityCompat.requestPermissions(
-                                                            (Activity) view.getContext(),
-                                                            new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                                                            1);
-                                                } else {
-                                                    showMessage("Загрузка файла...", view);
-                                                    DownloadManager.Request request
-                                                            = new DownloadManager.Request(Uri.parse(fileUrl));
-                                                    Long time = System.currentTimeMillis();
-                                                    request.setTitle("image_" + time);
-                                                    request.allowScanningByMediaScanner();
-                                                    request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-                                                    request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "image_" + time + ".jpg");
-                                                    DownloadManager manager = (DownloadManager) view.getContext().getSystemService(Context.DOWNLOAD_SERVICE);
-                                                    manager.enqueue(request);
-                                                    showMessage("Файл image_" + time + ".jpg сохранён.", view);
-                                                }
-                                            }
-                                        });
-
-                                    }
-                                });
+                                Intent openImgIntent = new Intent(v.getContext(), ImageActivity.class);
+                                openImgIntent.setData(Uri.parse(fileUrl));
+                                v.getContext().startActivity(openImgIntent);
                             }
                         });
                         break;
@@ -341,29 +255,33 @@ public class WebimMessageListItem extends ListItem {
                 messageTextView.setText(message.getText());
                 view.setOnClickListener(new View.OnClickListener() {
                     @Override
-                    public void onClick(View view) {
+                    public void onClick(final View view) {
                         AlertDialog.Builder builder = new AlertDialog.Builder(view.getContext());
-                        View v = View.inflate(view.getContext(), R.layout.copy_message, null);
-                        builder.setView(v);
-                        final AlertDialog dialog = builder.create();
-                        dialog.show();
-                        Button copyMessage = (Button) v.findViewById(R.id.copy_message_button);
-                        copyMessage.setOnClickListener(new View.OnClickListener() {
+                        String[] options = view.getResources()
+                                .getStringArray(R.array.message_actions);
+                        builder.setItems(options, new DialogInterface.OnClickListener() {
                             @Override
-                            public void onClick(View view) {
-                                ClipData clip =
-                                        ClipData.newPlainText("message", message.getText());
-                                ClipboardManager clipboard =
-                                        (ClipboardManager) view.getContext().getSystemService(Context.CLIPBOARD_SERVICE);
-                                if (clipboard != null) {
-                                    clipboard.setPrimaryClip(clip);
-                                    showMessage("Сообщение сохранено.", view);
-                                } else {
-                                    showMessage("Не удалось скопировать сообщение.", view);
+                            public void onClick(DialogInterface dialog, int which) {
+                                switch (which) {
+                                    case 0: // copy
+                                        ClipData clip =
+                                                ClipData.newPlainText("message", message.getText());
+                                        ClipboardManager clipboard =
+                                                (ClipboardManager) view.getContext()
+                                                        .getSystemService(Context.CLIPBOARD_SERVICE);
+                                        if (clipboard != null) {
+                                            clipboard.setPrimaryClip(clip);
+                                            showMessage(view.getResources()
+                                                    .getString(R.string.copied_message), view);
+                                        } else {
+                                            showMessage(view.getResources()
+                                                    .getString(R.string.copy_failed), view);
+                                        }
                                 }
-                                dialog.cancel();
                             }
                         });
+                        AlertDialog dialog = builder.create();
+                        dialog.show();
                     }
                 });
                 break;

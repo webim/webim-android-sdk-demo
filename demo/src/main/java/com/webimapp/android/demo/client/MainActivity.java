@@ -1,7 +1,6 @@
 package com.webimapp.android.demo.client;
 
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -24,12 +23,6 @@ public class MainActivity extends AppCompatActivity {
         }
         setContentView(R.layout.activity_main);
 
-        View v = findViewById(R.id.mainActivityContent);
-        if (v != null) {
-            v.setBackgroundResource(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE
-                    ? R.drawable.bg_webim_scaled_land
-                    : R.drawable.bg_webim_scaled);
-        }
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 

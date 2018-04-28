@@ -7,7 +7,6 @@ import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.Menu;
 import android.view.View;
 
 import com.crashlytics.android.Crashlytics;
@@ -19,6 +18,7 @@ import com.webimapp.android.sdk.WebimLog;
 
 public class WebimChatActivity extends AppCompatActivity implements FatalErrorHandler {
     private static boolean active;
+
     public static final String DEFAULT_ACCOUNT_NAME = "demo";
     public static final String DEFAULT_LOCATION = "mobile";
 
@@ -26,7 +26,6 @@ public class WebimChatActivity extends AppCompatActivity implements FatalErrorHa
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(null); // Prevents fragment recovery (we need to set session)
         setContentView(R.layout.activity_webim_chat);
-        updateBackground(getResources().getConfiguration());
 
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -42,13 +41,13 @@ public class WebimChatActivity extends AppCompatActivity implements FatalErrorHa
                         : "none")
                 .setClearVisitorData(false)
                 .setLogger(BuildConfig.DEBUG
-                        ? new WebimLog() {
-                                @Override
-                                public void log(String log) {
-                                    Log.i("WEBIM LOG", log);
-                                }
+                                ? new WebimLog() {
+                            @Override
+                            public void log(String log) {
+                                Log.i("WEBIM LOG", log);
+                            }
                         }
-                        : null,
+                                : null,
                         Webim.SessionBuilder.WebimLogVerbosityLevel.VERBOSE)
                 //.setVisitorFieldsJson("{\"id\":\"1234567890987654321\",\"display_name\":\"Никита\",\"crc\":\"ffadeb6aa3c788200824e311b9aa44cb\"}")
                 //.setVisitorDataPreferences(getSharedPreferences("test2", Context.MODE_PRIVATE))
@@ -61,25 +60,8 @@ public class WebimChatActivity extends AppCompatActivity implements FatalErrorHa
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_chat, menu);
-        return true;
-    }
-
-    @Override
     public void onConfigurationChanged(Configuration newConfig) {
-        updateBackground(newConfig);
         super.onConfigurationChanged(newConfig);
-    }
-
-    private void updateBackground(Configuration newConfig) {
-        View v = findViewById(R.id.webimChatContainer);
-        if (v != null) {
-            v.setBackgroundResource(newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
-                    ? R.drawable.bg_webim_scaled_land
-                    : R.drawable.bg_webim_scaled);
-        }
     }
 
     @Override

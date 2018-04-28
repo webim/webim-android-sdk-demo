@@ -9,6 +9,11 @@
         Исходный код данного приложения вы можете найти по адресу github.com/webim/webim-android-sdk-demo
     </string>
     <string name="message">Сообщение…</string>
+    <string name="action_close_chat">Закрыть чат</string>
+    <string name="cancel">Отмена</string>
+    <string name="yes">Да</string>
+    <string name="alert_close_chat">Завершить чат?</string>
+    <string name="choose_department">Выберите отдел</string>
     <string name="empty_chat_text">Введите сообщение, чтобы начать чат с оператором</string>
     <string name="content_desc_send_message">send message</string>
     <string name="rate_operator_button">Оценить</string>
@@ -43,9 +48,20 @@
     <string name="prefs_location_title">location</string>
 
     <string name="typing">пишет…</string>
+
+    <string name="options">Опции</string>
     <string name="open_in_browser">Открыть в браузере</string>
     <string name="copy_url">Копировать ссылку</string>
+    <string name="copied_url">Адрес изображения скопирован</string>
     <string name="save_image">Сохранить изображение</string>
-    <string name="options_for_image">Опции</string>
-    <string name="copy_message">Копировать сообщение</string>
+    <string name="saving_image">Загрузка файла...</string>
+    <string name="def_image_name">image_%1$d.jpg</string>
+    <string name="saved_file">Файл %1$s сохранён</string>
+
+    <string-array
+        name="message_actions">
+        <item>Копировать</item>
+    </string-array>
+    <string name="copied_message">Текст сообщения скопирован</string>
+    <string name="copy_failed">Не удалось скопировать сообщение</string>
 </resources>

@@ -52,6 +52,17 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.webimapp.android.demo.client.MainActivity" />
         </activity>
+        <activity
+            android:name="com.webimapp.android.demo.client.ImageActivity"
+            android:launchMode="singleTask"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/AppTheme" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.webimapp.android.demo.client.WebimChatActivity" />
+        </activity>
+
         <!-- [START fcm_default_icon] -->
         <!-- Set custom default icon. This is used when no icon is set for incoming notification messages.
              See README(https://goo.gl/l4GJaQ) for more. -->

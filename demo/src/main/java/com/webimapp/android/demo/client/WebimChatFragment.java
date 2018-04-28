@@ -3,6 +3,7 @@ package com.webimapp.android.demo.client;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -18,16 +19,22 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.MimeTypeMap;
 import android.widget.AbsListView;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RatingBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -36,6 +43,7 @@ import com.webimapp.android.demo.client.items.WebimMessageListItem;
 import com.webimapp.android.demo.client.util.CombinedScrollListener;
 import com.webimapp.android.demo.client.util.EndlessScrollListener;
 import com.webimapp.android.demo.client.util.NormalTranscriptModeScrollListener;
+import com.webimapp.android.sdk.Department;
 import com.webimapp.android.sdk.Message;
 import com.webimapp.android.sdk.MessageListener;
 import com.webimapp.android.sdk.MessageStream;
@@ -61,6 +69,7 @@ public class WebimChatFragment extends Fragment {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        setHasOptionsMenu(true);
         super.onCreate(savedInstanceState);
     }
 
@@ -74,7 +83,9 @@ public class WebimChatFragment extends Fragment {
 
     @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater,
+                             ViewGroup container,
+                             Bundle savedInstanceState) {
         if (this.session == null) {
             throw new IllegalStateException("this.session == null; Use setWebimSession before");
         }
@@ -92,6 +103,7 @@ public class WebimChatFragment extends Fragment {
     public void onStart() {
         super.onStart();
         session.resume();
+        session.getStream().startChat();
     }
 
     @Override
@@ -116,7 +128,8 @@ public class WebimChatFragment extends Fragment {
     }
 
     private void initOperatorState(final View v) {
-        ((AppCompatActivity) getActivity()).setSupportActionBar((Toolbar) v.findViewById(R.id.toolbar));
+        ((AppCompatActivity) getActivity())
+                .setSupportActionBar((Toolbar) v.findViewById(R.id.toolbar));
         final ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setDisplayShowHomeEnabled(true);
@@ -134,21 +147,98 @@ public class WebimChatFragment extends Fragment {
 
         setOperatorAvatar(v, session.getStream().getCurrentOperator());
 
-        session.getStream().setCurrentOperatorChangeListener(new MessageStream.CurrentOperatorChangeListener() {
+        session.getStream().setCurrentOperatorChangeListener(
+                new MessageStream.CurrentOperatorChangeListener() {
+                    @Override
+                    public void onOperatorChanged(@Nullable Operator oldOperator,
+                                                  @Nullable Operator newOperator) {
+                        setOperatorAvatar(v, newOperator);
+                    }
+                });
+
+        session.getStream().setVisitSessionStateListener(new MessageStream.VisitSessionStateListener() {
             @Override
-            public void onOperatorChanged(@Nullable Operator oldOperator,
-                                          @Nullable Operator newOperator) {
-                setOperatorAvatar(v, newOperator);
+            public void onStateChange(@NonNull MessageStream.VisitSessionState previousState,
+                                      @NonNull MessageStream.VisitSessionState newState) {
+                if (newState == MessageStream.VisitSessionState.DEPARTMENT_SELECTION) {
+                    final List<Department> departmentList = session.getStream().getDepartmentList();
+                    final ArrayList<String> departmentNames = new ArrayList<>();
+                    if (departmentList != null) {
+                        for (Department department : departmentList) {
+                            departmentNames.add(department.getName());
+                        }
+                    }
+
+                    AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+                    builder.setTitle(R.string.choose_department)
+                            .setItems(
+                                    departmentNames.toArray(new String[0]),
+                                    new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            session.getStream().startChatWithDepartmentKey(
+                                                    departmentList.get(which).getKey());
+                                        }
+                                    })
+                            .setNegativeButton(
+                                    R.string.cancel,
+                                    new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int id) {
+                                        }
+                                    });
+
+                    final AlertDialog dialog = builder.create();
+                    dialog.show();
+                }
+            }
+        });
+
+        session.getStream().setChatStateListener(new MessageStream.ChatStateListener() {
+            @Override
+            public void onStateChange(@NonNull MessageStream.ChatState oldState, @NonNull MessageStream.ChatState newState) {
+                if (newState == MessageStream.ChatState.CLOSED_BY_OPERATOR) {
+                    Operator op = session.getStream().getCurrentOperator();
+                    if (op != null) {
+                        final Operator.Id operatorId = op.getId();
+                        int rating = session.getStream().getLastOperatorRating(operatorId);
+                        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                        builder.setTitle(R.string.rate_operator_title);
+                        View view = View.inflate(getContext(), R.layout.rating_bar, null);
+                        final RatingBar bar = (RatingBar) view.findViewById(R.id.ratingBar);
+                        if (rating != 0) {
+                            bar.setRating(rating);
+                        }
+                        Button button = (Button) view.findViewById(R.id.ratingBarButton);
+                        builder.setView(view);
+                        final AlertDialog dialog = builder.create();
+                        dialog.show();
+                        button.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                dialog.dismiss();
+                                if (bar.getRating() != 0) {
+                                    session.getStream().rateOperator(
+                                            operatorId, (int) bar.getRating(), null
+                                    );
+                                }
+                            }
+                        });
+                    }
+                }
             }
         });
     }
 
     private void setOperatorAvatar(View v, @Nullable Operator operator) {
         if (operator != null && operator.getAvatarUrl() != null) {
-            Glide.with(getContext()).load(operator.getAvatarUrl()).into((ImageView) v.findViewById(R.id.imageAvatar));
+            Glide.with(getContext())
+                    .load(operator.getAvatarUrl())
+                    .into((ImageView) v.findViewById(R.id.imageAvatar));
             v.findViewById(R.id.imageAvatar).setVisibility(View.VISIBLE);
-        } else
+        } else {
             v.findViewById(R.id.imageAvatar).setVisibility(View.GONE);
+        }
     }
 
     private void initListView(View v) {
@@ -178,8 +268,38 @@ public class WebimChatFragment extends Fragment {
         });
     }
 
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_chat, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_close_chat) {
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+            builder.setMessage(R.string.alert_close_chat)
+                    .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                        }
+                    })
+                    .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            session.getStream().closeChat();
+                        }
+                    });
+            AlertDialog alert = builder.create();
+            alert.show();
+
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
     private void initSendButton(View v) {
-        ImageButton sendButton = (ImageButton) v.findViewById(R.id.imageButtonSendMessage);
+        final ImageButton sendButton = (ImageButton) v.findViewById(R.id.imageButtonSendMessage);
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -187,9 +307,7 @@ public class WebimChatFragment extends Fragment {
                 editTextMessage.getText().clear();
                 message = message.trim();
                 if (!message.isEmpty()) {
-                    if (BuildConfig.DEBUG && message.equals("##CLOSE")) {
-                        session.getStream().closeChat();
-                    } else if (BuildConfig.DEBUG && message.equals("##OPEN")) {
+                    if (BuildConfig.DEBUG && message.equals("##OPEN")) {
                         session.getStream().startChat();
                     } else {
                         session.getStream().sendMessage(message);
@@ -331,7 +449,7 @@ public class WebimChatFragment extends Fragment {
                     messages, new ShowRateDialogOnAvatarClickListener(context, stream));
             listViewChat.setAdapter(adapter);
             tracker = stream.newMessageTracker(this);
-            final FloatingActionButton button = (FloatingActionButton) view.findViewById(R.id.downButton);
+            final FloatingActionButton downButton = (FloatingActionButton) view.findViewById(R.id.downButton);
             scrollListener = new EndlessScrollListener(10) {
                 @Override
                 public void onLoadMore(int totalItemsCount) {
@@ -339,13 +457,16 @@ public class WebimChatFragment extends Fragment {
                 }
             };
             scrollListener.setLoading(true);
-            scrollListener.setButton(button);
+            scrollListener.setButton(downButton);
             requestMore();
-            listViewChat.setOnScrollListener(new CombinedScrollListener(new NormalTranscriptModeScrollListener(), scrollListener));
-            button.setOnClickListener(new View.OnClickListener() {
+            listViewChat.setOnScrollListener(
+                    new CombinedScrollListener(new NormalTranscriptModeScrollListener(),
+                            scrollListener)
+            );
+            downButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    button.setVisibility(View.GONE);
+                    downButton.setVisibility(View.GONE);
                     listViewChat.setSelection(listViewChat.getMaxScrollAmount());
                 }
             });
