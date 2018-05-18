@@ -386,11 +386,22 @@ public class WebimChatFragment extends Fragment {
                             public void onFailure(@NonNull Message.Id id,
                                                   @NonNull WebimError<SendFileError> error) {
                                 fileToUpload.delete();
-                                Toast.makeText(getContext(), getContext().getString(
-                                        error.getErrorType() == SendFileError.FILE_SIZE_EXCEEDED
-                                                ? R.string.file_upload_failed_size
-                                                : R.string.file_upload_failed_type),
-                                        Toast.LENGTH_SHORT).show();
+                                String msg;
+                                switch (error.getErrorType()) {
+                                    case FILE_TYPE_NOT_ALLOWED:
+                                        msg = getContext().getString(
+                                                R.string.file_upload_failed_type);
+                                        break;
+                                    case FILE_SIZE_EXCEEDED:
+                                        msg = getContext().getString(
+                                                R.string.file_upload_failed_size);
+                                        break;
+                                    case UPLOADED_FILE_NOT_FOUND:
+                                    default:
+                                        msg = getContext().getString(
+                                                R.string.file_upload_failed_unknown);
+                                }
+                                Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
                             }
                         });
                         break;

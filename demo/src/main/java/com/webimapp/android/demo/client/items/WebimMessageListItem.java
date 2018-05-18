@@ -57,6 +57,7 @@ public class WebimMessageListItem extends ListItem {
             return ViewType.VISITOR;
         }
         switch (message.getType()) {
+            case CONTACT_REQUEST:
             case OPERATOR:
                 return ViewType.OPERATOR;
             case VISITOR:
@@ -372,6 +373,7 @@ public class WebimMessageListItem extends ListItem {
             return R.layout.item_local_message;
         }
         switch (message.getType()) {
+            case CONTACT_REQUEST:
             case OPERATOR:
                 return R.layout.item_remote_message;
             case VISITOR:
