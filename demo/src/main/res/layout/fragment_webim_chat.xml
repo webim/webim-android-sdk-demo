@@ -25,18 +25,17 @@
             app:popupTheme="@style/AppTheme.PopupOverlay" >
 
             <ImageView
-                android:id="@+id/imageAvatar"
+                android:id="@+id/sender_photo"
                 android:visibility="gone"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:layout_marginBottom="1dp"
-                />
+                android:layout_marginBottom="1dp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:orientation="vertical"
-                android:layout_toRightOf="@id/imageAvatar">
+                android:layout_toRightOf="@id/sender_photo">
 
                 <TextView
                     android:id="@+id/action_bar_title"
@@ -58,19 +57,19 @@
             </LinearLayout>
 
         </android.support.v7.widget.Toolbar>
-
     </android.support.design.widget.AppBarLayout>
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/linLayEnterMessage"
-        android:layout_below="@+id/appBar"
+        android:layout_below="@id/appBar"
         android:layout_alignParentTop="false"
         android:layout_alignWithParentIfMissing="false"
         android:layout_centerHorizontal="true"
         android:paddingRight="2dp"
         android:paddingLeft="2dp">
+
         <android.support.design.widget.FloatingActionButton
             android:id="@+id/downButton"
             android:layout_width="wrap_content"
@@ -78,10 +77,12 @@
             style="?android:attr/borderlessButtonStyle"
             android:layout_gravity="bottom|end"
             android:layout_margin="@dimen/fab_margin"
+            android:visibility="gone"
             android:src="@drawable/arrow_drop_down"
             app:backgroundTint="@color/common_google_signin_btn_text_dark_default" />
+
         <ProgressBar
-            android:id="@+id/loadingSpinner"
+            android:id="@+id/loading_spinner"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
@@ -95,19 +96,18 @@
             android:text="@string/empty_chat_text"
             android:visibility="gone" />
 
-        <ListView
-            android:id="@+id/listViewChat"
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/chat_recycler_view"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:clickable="false"
-            android:divider="@null"
-            android:dividerHeight="0dp"
-            android:transcriptMode="alwaysScroll" />
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="4dp">
+        </android.support.v7.widget.RecyclerView>
 
     </FrameLayout>
 
     <LinearLayout
-        android:id="@+id/linLayEnterMessage"
+        android:id="@id/linLayEnterMessage"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
@@ -115,7 +115,7 @@
         android:layout_alignParentRight="true"
         android:layout_alignWithParentIfMissing="true"
         android:layout_centerHorizontal="true"
-        android:background="#FFFFFF" >
+        android:background="@color/white" >
 
         <ImageButton
             android:id="@+id/imageButtonAttachFile"
@@ -174,7 +174,23 @@
             android:src="@drawable/social_send_now"
             android:background="@null"
             android:tint="@color/colorAccent"
-            android:visibility="visible"
+            android:contentDescription="@string/content_desc_send_message"/>
+
+        <ImageButton
+            android:id="@+id/imageButtonAcceptChanges"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.05"
+            android:paddingTop="8dp"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:paddingBottom="4dp"
+            android:gravity="bottom"
+            android:scaleType="center"
+            android:src="@drawable/baseline_check_circle_black_24dp"
+            android:background="@null"
+            android:tint="@color/colorAccent"
+            android:visibility="gone"
             android:contentDescription="@string/content_desc_send_message"/>
 
     </LinearLayout>

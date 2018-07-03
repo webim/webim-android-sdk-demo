@@ -7,7 +7,6 @@ import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.View;
 
 import com.crashlytics.android.Crashlytics;
 import com.google.firebase.iid.FirebaseInstanceId;
@@ -21,6 +20,8 @@ public class WebimChatActivity extends AppCompatActivity implements FatalErrorHa
 
     public static final String DEFAULT_ACCOUNT_NAME = "demo";
     public static final String DEFAULT_LOCATION = "mobile";
+
+    private static String previousAccount;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,7 +40,8 @@ public class WebimChatActivity extends AppCompatActivity implements FatalErrorHa
                 .setPushToken(sharedPref.getBoolean("fcm", true)
                         ? FirebaseInstanceId.getInstance().getToken()
                         : "none")
-                .setClearVisitorData(false)
+                .setClearVisitorData(previousAccount == null ||
+                        !previousAccount.equals(sharedPref.getString("account", DEFAULT_ACCOUNT_NAME)))
                 .setLogger(BuildConfig.DEBUG
                                 ? new WebimLog() {
                             @Override
@@ -49,9 +51,11 @@ public class WebimChatActivity extends AppCompatActivity implements FatalErrorHa
                         }
                                 : null,
                         Webim.SessionBuilder.WebimLogVerbosityLevel.VERBOSE)
-                //.setVisitorFieldsJson("{\"id\":\"1234567890987654321\",\"display_name\":\"Никита\",\"crc\":\"ffadeb6aa3c788200824e311b9aa44cb\"}")
-                //.setVisitorDataPreferences(getSharedPreferences("test2", Context.MODE_PRIVATE))
+//                .setVisitorFieldsJson("{\"id\":\"1234567890987654321\",\"display_name\":\"Никита\",\"crc\":\"ffadeb6aa3c788200824e311b9aa44cb\"}")
+//                .setVisitorDataPreferences(getSharedPreferences("test2", Context.MODE_PRIVATE))
                 .build());
+
+        previousAccount = sharedPref.getString("account", DEFAULT_ACCOUNT_NAME);
 
         getSupportFragmentManager()
                 .beginTransaction()

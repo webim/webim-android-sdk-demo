@@ -55,12 +55,20 @@
     <string name="copy_url">Копировать ссылку</string>
     <string name="copied_url">Адрес изображения скопирован</string>
     <string name="save_image">Сохранить изображение</string>
-    <string name="saving_image">Загрузка файла...</string>
+    <string name="saving_image">Загрузка файла %1$s…</string>
     <string name="def_image_name">image_%1$d.jpg</string>
     <string name="saved_file">Файл %1$s сохранён</string>
+    <string name="saving_failed">Не удалось загрузить файл</string>
+
+    <string name="rate_operator">Оценить оператора</string>
+    <string name="close_chat">Завершить чат</string>
 
     <string-array
-        name="message_actions">
+        name="received_message_actions">
+        <item>Копировать</item>
+    </string-array>
+    <string-array
+        name="sent_message_actions">
         <item>Копировать</item>
     </string-array>
     <string name="copied_message">Текст сообщения скопирован</string>

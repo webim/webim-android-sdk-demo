@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_marginTop="2dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:id="@+id/text_message_date"
+        android:text="nov 12"
+        android:textSize="12sp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:textAlignment="center"
+        android:visibility="gone" />
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/sender_photo"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_below="@id/text_message_date"
+        android:layout_marginLeft="4dp"
+        android:layout_alignParentLeft="true" />
+
+    <TextView
+        android:id="@+id/sender_name"
+        android:text="John Doe"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"
+        android:layout_marginLeft="4dp"
+        android:layout_toRightOf="@id/sender_photo"
+        android:layout_alignBottom="@id/sender_photo" />
+
+    <LinearLayout
+        android:id="@+id/message_body"
+        android:orientation="vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/incoming_msg"
+        android:layout_below="@id/sender_name"
+        android:layout_marginLeft="@dimen/chat_sent_message_margin">
+
+        <ImageView
+            android:id="@+id/attached_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="2dp" />
+
+        <TextView
+            android:id="@+id/text_message_body"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="left"
+            android:maxWidth="240dp"
+            android:padding="8dp"
+            android:textColor="@color/incomingMsgText" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/text_message_time"
+        android:text="11:40"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:maxWidth="40dp"
+        android:textSize="12sp"
+        android:layout_toRightOf="@id/message_body"
+        android:layout_alignBottom="@id/message_body"
+        android:layout_marginLeft="4dp" />
+
+    <ProgressBar
+        android:id="@+id/sending_msg"
+        style="?android:attr/progressBarStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_toRightOf="@id/message_body"
+        android:layout_alignBottom="@id/message_body"
+        android:layout_marginLeft="4dp"
+        android:visibility="gone" />
+
+</RelativeLayout>

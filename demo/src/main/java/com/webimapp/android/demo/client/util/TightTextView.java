@@ -11,7 +11,7 @@ import android.widget.TextView;
  * @see <a href="https://stackoverflow.com/questions/7439748">https://stackoverflow.com/questions/7439748/why-is-wrap-content-in-multiple-line-textview-filling-parent</a>
  * @see <a href="https://stackoverflow.com/questions/10913384">https://stackoverflow.com/questions/10913384/how-to-make-textview-wrap-its-multiline-content-exactly</a>
  */
-public class TightTextView extends TextView {
+public class TightTextView extends android.support.v7.widget.AppCompatTextView {
 
     public TightTextView(Context context) {
         this(context, null, 0);

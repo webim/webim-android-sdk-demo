@@ -2,7 +2,6 @@ package com.webimapp.android.demo.client;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
@@ -14,6 +13,8 @@ import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -25,24 +26,16 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.MimeTypeMap;
-import android.widget.AbsListView;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.RatingBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.webimapp.android.demo.client.items.ListItem;
-import com.webimapp.android.demo.client.items.WebimMessageListItem;
-import com.webimapp.android.demo.client.util.CombinedScrollListener;
 import com.webimapp.android.demo.client.util.EndlessScrollListener;
-import com.webimapp.android.demo.client.util.NormalTranscriptModeScrollListener;
 import com.webimapp.android.sdk.Department;
 import com.webimapp.android.sdk.Message;
 import com.webimapp.android.sdk.MessageListener;
@@ -62,23 +55,22 @@ import java.util.List;
 
 public class WebimChatFragment extends Fragment {
     private static final int FILE_SELECT_CODE = 0;
+
+    private final int menuRateOperator = Menu.FIRST;
+    private final int menuCloseChat = Menu.FIRST + 1;
+    private MenuItem rateOperatorItem;
+    private MenuItem closeChatItem;
+
     private WebimSession session;
+    private ListController listController;
 
     private EditText editTextMessage;
-    private ListController listController;
+    private ImageButton sendButton;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         setHasOptionsMenu(true);
         super.onCreate(savedInstanceState);
-    }
-
-    public void setWebimSession(WebimSession session) {
-        if (this.session != null) {
-            throw new IllegalStateException("Webim session is already set");
-        }
-
-        this.session = session;
     }
 
     @Nullable
@@ -89,14 +81,17 @@ public class WebimChatFragment extends Fragment {
         if (this.session == null) {
             throw new IllegalStateException("this.session == null; Use setWebimSession before");
         }
-        View v = inflater.inflate(R.layout.fragment_webim_chat, container, false);
-        initOperatorState(v);
-        initListView(v);
-        initEditText(v);
-        initSendButton(v);
-        initAttachFileButton(v);
-        ViewCompat.setElevation(v.findViewById(R.id.linLayEnterMessage), 2);
-        return v;
+        View rootView = inflater.inflate(R.layout.fragment_webim_chat, container, false);
+
+        initSessionStreamListeners(rootView);
+        initOperatorState(rootView);
+        initChatView(rootView);
+        initEditText(rootView);
+        initSendButton(rootView);
+        initAttachFileButton(rootView);
+
+        ViewCompat.setElevation(rootView.findViewById(R.id.linLayEnterMessage), 2);
+        return rootView;
     }
 
     @Override
@@ -127,32 +122,16 @@ public class WebimChatFragment extends Fragment {
         super.onDetach();
     }
 
-    private void initOperatorState(final View v) {
-        ((AppCompatActivity) getActivity())
-                .setSupportActionBar((Toolbar) v.findViewById(R.id.toolbar));
-        final ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
-        actionBar.setDisplayHomeAsUpEnabled(true);
-        actionBar.setDisplayShowHomeEnabled(true);
-        v.findViewById(R.id.action_bar_subtitle).setVisibility(View.GONE);
-        session.getStream().setOperatorTypingListener(new MessageStream.OperatorTypingListener() {
-            @Override
-            public void onOperatorTypingStateChanged(boolean isTyping) {
-                if (isTyping) {
-                    v.findViewById(R.id.action_bar_subtitle).setVisibility(View.VISIBLE);
-                } else {
-                    v.findViewById(R.id.action_bar_subtitle).setVisibility(View.GONE);
-                }
-            }
-        });
-
-        setOperatorAvatar(v, session.getStream().getCurrentOperator());
-
+    private void initSessionStreamListeners(final View rootView) {
         session.getStream().setCurrentOperatorChangeListener(
                 new MessageStream.CurrentOperatorChangeListener() {
                     @Override
                     public void onOperatorChanged(@Nullable Operator oldOperator,
                                                   @Nullable Operator newOperator) {
-                        setOperatorAvatar(v, newOperator);
+                        if (rateOperatorItem != null) {
+                            rateOperatorItem.setEnabled(newOperator != null);
+                        }
+                        setOperatorAvatar(rootView, newOperator);
                     }
                 });
 
@@ -162,93 +141,111 @@ public class WebimChatFragment extends Fragment {
                                       @NonNull MessageStream.VisitSessionState newState) {
                 if (newState == MessageStream.VisitSessionState.DEPARTMENT_SELECTION) {
                     final List<Department> departmentList = session.getStream().getDepartmentList();
-                    final ArrayList<String> departmentNames = new ArrayList<>();
                     if (departmentList != null) {
+                        final ArrayList<String> departmentNames = new ArrayList<>();
                         for (Department department : departmentList) {
                             departmentNames.add(department.getName());
                         }
+
+                        AlertDialog.Builder builder = new AlertDialog.Builder(rootView.getContext());
+                        builder.setTitle(R.string.choose_department)
+                                .setItems(
+                                        departmentNames.toArray(new String[0]),
+                                        new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(DialogInterface dialog, int which) {
+                                                session.getStream().startChatWithDepartmentKey(
+                                                        departmentList.get(which).getKey());
+                                            }
+                                        })
+                                .setNegativeButton(
+                                        R.string.cancel,
+                                        new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(DialogInterface dialog, int id) {
+                                            }
+                                        });
+
+                        final AlertDialog dialog = builder.create();
+                        dialog.show();
                     }
-
-                    AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
-                    builder.setTitle(R.string.choose_department)
-                            .setItems(
-                                    departmentNames.toArray(new String[0]),
-                                    new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            session.getStream().startChatWithDepartmentKey(
-                                                    departmentList.get(which).getKey());
-                                        }
-                                    })
-                            .setNegativeButton(
-                                    R.string.cancel,
-                                    new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int id) {
-                                        }
-                                    });
-
-                    final AlertDialog dialog = builder.create();
-                    dialog.show();
                 }
             }
         });
 
         session.getStream().setChatStateListener(new MessageStream.ChatStateListener() {
             @Override
-            public void onStateChange(@NonNull MessageStream.ChatState oldState, @NonNull MessageStream.ChatState newState) {
-                if (newState == MessageStream.ChatState.CLOSED_BY_OPERATOR) {
-                    Operator op = session.getStream().getCurrentOperator();
-                    if (op != null) {
-                        final Operator.Id operatorId = op.getId();
-                        int rating = session.getStream().getLastOperatorRating(operatorId);
-                        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                        builder.setTitle(R.string.rate_operator_title);
-                        View view = View.inflate(getContext(), R.layout.rating_bar, null);
-                        final RatingBar bar = (RatingBar) view.findViewById(R.id.ratingBar);
-                        if (rating != 0) {
-                            bar.setRating(rating);
-                        }
-                        Button button = (Button) view.findViewById(R.id.ratingBarButton);
-                        builder.setView(view);
-                        final AlertDialog dialog = builder.create();
-                        dialog.show();
-                        button.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                dialog.dismiss();
-                                if (bar.getRating() != 0) {
-                                    session.getStream().rateOperator(
-                                            operatorId, (int) bar.getRating(), null
-                                    );
-                                }
-                            }
-                        });
-                    }
+            public void onStateChange(@NonNull MessageStream.ChatState oldState,
+                                      @NonNull MessageStream.ChatState newState) {
+                if (closeChatItem != null) {
+                    closeChatItem.setEnabled(newState != MessageStream.ChatState.NONE
+                            && newState != MessageStream.ChatState.CLOSED_BY_VISITOR
+                            && newState != MessageStream.ChatState.UNKNOWN);
+                }
+
+                if (newState == MessageStream.ChatState.CLOSED_BY_OPERATOR
+                        || newState == MessageStream.ChatState.CLOSED_BY_VISITOR) {
+                    showRateOperatorDialog();
                 }
             }
         });
     }
 
+    private void initOperatorState(final View rootView) {
+        ((AppCompatActivity) getActivity())
+                .setSupportActionBar((Toolbar) rootView.findViewById(R.id.toolbar));
+        final ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setDisplayShowHomeEnabled(true);
+        }
+
+        final View typingView = rootView.findViewById(R.id.action_bar_subtitle);
+        typingView.setVisibility(View.GONE);
+        session.getStream().setOperatorTypingListener(new MessageStream.OperatorTypingListener() {
+            @Override
+            public void onOperatorTypingStateChanged(boolean isTyping) {
+                typingView.setVisibility(isTyping ? View.VISIBLE : View.GONE);
+            }
+        });
+
+        setOperatorAvatar(rootView, session.getStream().getCurrentOperator());
+    }
+
+    public void setWebimSession(WebimSession session) {
+        if (this.session != null) {
+            throw new IllegalStateException("Webim session is already set");
+        }
+        this.session = session;
+    }
+
     private void setOperatorAvatar(View v, @Nullable Operator operator) {
-        if (operator != null && operator.getAvatarUrl() != null) {
-            Glide.with(getContext())
-                    .load(operator.getAvatarUrl())
-                    .into((ImageView) v.findViewById(R.id.imageAvatar));
-            v.findViewById(R.id.imageAvatar).setVisibility(View.VISIBLE);
-        } else {
-            v.findViewById(R.id.imageAvatar).setVisibility(View.GONE);
+        if (operator != null) {
+            if (operator.getAvatarUrl() != null) {
+                Glide.with(getContext())
+                        .load(operator.getAvatarUrl())
+                        .into((ImageView) v.findViewById(R.id.sender_photo));
+            } else {
+                ((ImageView) v.findViewById(R.id.sender_photo)).setImageDrawable(
+                        getContext().getResources().getDrawable(R.drawable.default_operator_avatar_40x40));
+            }
+            v.findViewById(R.id.sender_photo).setVisibility(View.VISIBLE);
         }
     }
 
-    private void initListView(View v) {
-        final ListView listViewChat = (ListView) v.findViewById(R.id.listViewChat);
-        listViewChat.setEmptyView(v.findViewById(R.id.loadingSpinner));
-        listController = ListController.install(getContext(), listViewChat, session.getStream(), v);
+    private void initChatView(View rootView) {
+        ProgressBar progressBar = rootView.findViewById(R.id.loading_spinner);
+        progressBar.setVisibility(View.GONE);
+
+        RecyclerView recyclerView = rootView.findViewById(R.id.chat_recycler_view);
+        recyclerView.setVisibility(View.VISIBLE);
+        listController =
+                ListController.install(this, recyclerView, progressBar,
+                        session.getStream(), rootView);
     }
 
-    private void initEditText(View v) {
-        editTextMessage = (EditText) v.findViewById(R.id.editTextChatMessage);
+    private void initEditText(View rootView) {
+        editTextMessage = rootView.findViewById(R.id.editTextChatMessage);
         editTextMessage.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
@@ -270,36 +267,81 @@ public class WebimChatFragment extends Fragment {
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.menu_chat, menu);
+        super.onCreateOptionsMenu(menu, inflater);
+        rateOperatorItem = menu.add(menu.FIRST, menuRateOperator, menuRateOperator, R.string.rate_operator);
+        if (rateOperatorItem != null) {
+            rateOperatorItem.setEnabled(session.getStream().getCurrentOperator() != null);
+        }
+        closeChatItem = menu.add(menu.FIRST, menuCloseChat, menuCloseChat, R.string.close_chat);
+        if (closeChatItem != null) {
+            closeChatItem.setEnabled(session.getStream().getChatState() != MessageStream.ChatState.NONE
+                    && session.getStream().getChatState() != MessageStream.ChatState.CLOSED_BY_VISITOR
+                    && session.getStream().getChatState() != MessageStream.ChatState.UNKNOWN);
+        }
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.action_close_chat) {
-
-            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-            builder.setMessage(R.string.alert_close_chat)
-                    .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                        }
-                    })
-                    .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            session.getStream().closeChat();
-                        }
-                    });
-            AlertDialog alert = builder.create();
-            alert.show();
-
-            return true;
+        switch (item.getItemId()) {
+            case menuRateOperator:
+                showRateOperatorDialog();
+                break;
+            case menuCloseChat:
+                showCloseChatDialog();
+                break;
         }
-
         return super.onOptionsItemSelected(item);
     }
 
+    private void showRateOperatorDialog() {
+        Operator operator = session.getStream().getCurrentOperator();
+        if (operator != null) {
+            final Operator.Id operatorId = operator.getId();
+            int rating = session.getStream().getLastOperatorRating(operatorId);
+            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+            builder.setTitle(R.string.rate_operator_title);
+            View view = View.inflate(getContext(), R.layout.rating_bar, null);
+            final RatingBar bar = view.findViewById(R.id.ratingBar);
+            if (rating != 0) {
+                bar.setRating(rating);
+            }
+            Button button = view.findViewById(R.id.ratingBarButton);
+            builder.setView(view);
+            final AlertDialog dialog = builder.create();
+            dialog.show();
+            button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dialog.dismiss();
+                    if (bar.getRating() != 0) {
+                        session.getStream().rateOperator(
+                                operatorId, (int) bar.getRating(), null
+                        );
+                    }
+                }
+            });
+        }
+    }
+
+    private void showCloseChatDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setMessage(R.string.alert_close_chat)
+                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                })
+                .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        session.getStream().closeChat();
+                    }
+                });
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
+
     private void initSendButton(View v) {
-        final ImageButton sendButton = (ImageButton) v.findViewById(R.id.imageButtonSendMessage);
+        sendButton = v.findViewById(R.id.imageButtonSendMessage);
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -317,10 +359,9 @@ public class WebimChatFragment extends Fragment {
         });
     }
 
-    private void initAttachFileButton(View v) {
-        ImageButton attachButton = (ImageButton) v.findViewById(R.id.imageButtonAttachFile);
+    private void initAttachFileButton(View rootView) {
+        ImageButton attachButton = rootView.findViewById(R.id.imageButtonAttachFile);
         attachButton.setOnClickListener(new View.OnClickListener() {
-
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
@@ -372,38 +413,38 @@ public class WebimChatFragment extends Fragment {
                         final File fileToUpload = file;
                         session.getStream().sendFile(fileToUpload,
                                 name, mime, new MessageStream.SendFileCallback() {
-                            @Override
-                            public void onProgress(@NonNull Message.Id id, long sentBytes) {
+                                    @Override
+                                    public void onProgress(@NonNull Message.Id id, long sentBytes) {
 
-                            }
+                                    }
 
-                            @Override
-                            public void onSuccess(@NonNull Message.Id id) {
-                                fileToUpload.delete();
-                            }
+                                    @Override
+                                    public void onSuccess(@NonNull Message.Id id) {
+                                        fileToUpload.delete();
+                                    }
 
-                            @Override
-                            public void onFailure(@NonNull Message.Id id,
-                                                  @NonNull WebimError<SendFileError> error) {
-                                fileToUpload.delete();
-                                String msg;
-                                switch (error.getErrorType()) {
-                                    case FILE_TYPE_NOT_ALLOWED:
-                                        msg = getContext().getString(
-                                                R.string.file_upload_failed_type);
-                                        break;
-                                    case FILE_SIZE_EXCEEDED:
-                                        msg = getContext().getString(
-                                                R.string.file_upload_failed_size);
-                                        break;
-                                    case UPLOADED_FILE_NOT_FOUND:
-                                    default:
-                                        msg = getContext().getString(
-                                                R.string.file_upload_failed_unknown);
-                                }
-                                Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
-                            }
-                        });
+                                    @Override
+                                    public void onFailure(@NonNull Message.Id id,
+                                                          @NonNull WebimError<SendFileError> error) {
+                                        fileToUpload.delete();
+                                        String msg;
+                                        switch (error.getErrorType()) {
+                                            case FILE_TYPE_NOT_ALLOWED:
+                                                msg = getContext().getString(
+                                                        R.string.file_upload_failed_type);
+                                                break;
+                                            case FILE_SIZE_EXCEEDED:
+                                                msg = getContext().getString(
+                                                        R.string.file_upload_failed_size);
+                                                break;
+                                            case UPLOADED_FILE_NOT_FOUND:
+                                            default:
+                                                msg = getContext().getString(
+                                                        R.string.file_upload_failed_unknown);
+                                        }
+                                        Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
+                                    }
+                                });
                         break;
                     }
                 }
@@ -435,32 +476,48 @@ public class WebimChatFragment extends Fragment {
     private static class ListController implements MessageListener {
         private static final int MESSAGES_PER_REQUEST = 25;
         private final MessageTracker tracker;
-        private final ListView listViewChat;
+        private final RecyclerView recyclerView;
+        private final ProgressBar progressBar;
         private final MessagesAdapter adapter;
+        private final LinearLayoutManager layoutManager;
         private final EndlessScrollListener scrollListener;
-        private final List<ListItem> messages = new ArrayList<>();
 
         private boolean requestingMessages;
 
-        public static ListController install(Context context,
-                                             ListView listViewChat,
+        public static ListController install(WebimChatFragment context,
+                                             RecyclerView recyclerView,
+                                             ProgressBar progressBar,
                                              MessageStream chat,
-                                             View view) {
-            return new ListController(context, chat, listViewChat, view);
+                                             View rootView) {
+            return new ListController(context, recyclerView, progressBar, chat, rootView);
         }
 
-        private ListController(Context context,
+        private ListController(WebimChatFragment context,
+                               final RecyclerView recyclerView,
+                               final ProgressBar progressBar,
                                MessageStream stream,
-                               final ListView listViewChat,
                                View view) {
-            this.listViewChat = listViewChat;
-            listViewChat.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
-            listViewChat.setStackFromBottom(true);
-            this.adapter = new MessagesAdapter(context,
-                    messages, new ShowRateDialogOnAvatarClickListener(context, stream));
-            listViewChat.setAdapter(adapter);
-            tracker = stream.newMessageTracker(this);
-            final FloatingActionButton downButton = (FloatingActionButton) view.findViewById(R.id.downButton);
+            this.recyclerView = recyclerView;
+            this.progressBar = progressBar;
+
+            this.layoutManager = new LinearLayoutManager(
+                    context.getContext(), LinearLayoutManager.VERTICAL, true);
+            this.layoutManager.setStackFromEnd(false);
+            this.recyclerView.setLayoutManager(layoutManager);
+            this.adapter = new MessagesAdapter(context.getContext());
+            this.recyclerView.setAdapter(this.adapter);
+
+            this.tracker = stream.newMessageTracker(this);
+
+            final FloatingActionButton downButton = view.findViewById(R.id.downButton);
+            downButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    downButton.setVisibility(View.GONE);
+                    recyclerView.smoothScrollToPosition(0);
+                }
+            });
+
             scrollListener = new EndlessScrollListener(10) {
                 @Override
                 public void onLoadMore(int totalItemsCount) {
@@ -468,44 +525,41 @@ public class WebimChatFragment extends Fragment {
                 }
             };
             scrollListener.setLoading(true);
-            scrollListener.setButton(downButton);
-            requestMore();
-            listViewChat.setOnScrollListener(
-                    new CombinedScrollListener(new NormalTranscriptModeScrollListener(),
-                            scrollListener)
-            );
-            downButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    downButton.setVisibility(View.GONE);
-                    listViewChat.setSelection(listViewChat.getMaxScrollAmount());
-                }
-            });
+            scrollListener.setDownButton(downButton);
+            scrollListener.setAdapter(adapter);
+            recyclerView.addOnScrollListener(scrollListener);
+            requestMore(true);
         }
 
         private void requestMore() {
+            requestMore(false);
+        }
+
+        private void requestMore(final boolean flage) {
             requestingMessages = true;
+            progressBar.setVisibility(View.VISIBLE);
+            recyclerView.setVisibility(View.GONE);
             tracker.getNextMessages(MESSAGES_PER_REQUEST, new MessageTracker.GetMessagesCallback() {
                 @Override
                 public void receive(@NonNull List<? extends Message> received) {
                     requestingMessages = false;
+                    progressBar.setVisibility(View.GONE);
+                    recyclerView.setVisibility(View.VISIBLE);
+
                     if (received.size() != 0) {
-                        scrollListener.setLoading(false);
-                        // Scroll position fix
-                        int index = listViewChat.getFirstVisiblePosition();
-                        View v = listViewChat.getChildAt(listViewChat.getHeaderViewsCount());
-                        int topOffset = (v == null) ? 0 : v.getTop();
-                        List<ListItem> items = new ArrayList<>(received.size());
-                        for (Message msg : received) {
-                            items.add(new WebimMessageListItem(msg));
+                        adapter.addAll(0, received);
+                        adapter.notifyItemRangeInserted(adapter.getItemCount() - 1,
+                                received.size());
+
+                        if (flage) {
+                            recyclerView.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    recyclerView.smoothScrollToPosition(0);
+                                }
+                            }, 100);
                         }
-                        messages.addAll(0, items);
-                        adapter.notifyDataSetChanged();
-                        listViewChat.setSelectionFromTop(index + received.size(), topOffset);
-                    } else {
-                        listViewChat.getEmptyView().setVisibility(View.GONE);
-                        listViewChat.setEmptyView(((ViewGroup) listViewChat.getParent())
-                                .findViewById(R.id.emptyHistoryView));
+                        scrollListener.setLoading(false);
                     }
                 }
             });
@@ -513,94 +567,43 @@ public class WebimChatFragment extends Fragment {
 
         @Override
         public void messageAdded(@Nullable Message before, @NonNull Message message) {
-            int ind = before == null
-                    ? messages.size()
-                    : messages.lastIndexOf(new WebimMessageListItem(before));
-            if (ind < 0) {
-                messages.add(new WebimMessageListItem(message));
+            int ind = (before == null) ? 0 : adapter.indexOf(before);
+            if (ind <= 0) {
+                adapter.add(message);
+                adapter.notifyItemInserted(0);
+                recyclerView.smoothScrollToPosition(0);
+            } else {
+                adapter.add(ind, message);
+                adapter.notifyItemInserted(adapter.getItemCount() - ind - 1);
             }
-            else {
-                messages.add(ind, new WebimMessageListItem(message));
-            }
-            adapter.notifyDataSetChanged();
         }
 
         @Override
         public void messageRemoved(@NonNull Message message) {
-            messages.remove(new WebimMessageListItem(message));
-            adapter.notifyDataSetChanged();
+            int pos = adapter.indexOf(message);
+            if (pos != -1) {
+                adapter.remove(pos);
+                adapter.notifyItemRemoved(adapter.getItemCount() - pos);
+            }
         }
 
         @Override
         public void messageChanged(@NonNull Message from, @NonNull Message to) {
-            int ind = messages.lastIndexOf(new WebimMessageListItem(from));
+            int ind = adapter.lastIndexOf(from);
             if (ind != -1) {
-                messages.set(ind, new WebimMessageListItem(to));
+                adapter.set(ind, to);
+                adapter.notifyItemChanged(adapter.getItemCount() - ind - 1);
             }
-            adapter.notifyDataSetChanged();
         }
 
         @Override
         public void allMessagesRemoved() {
-            messages.clear();
-            adapter.notifyDataSetChanged();
+            int size = adapter.getItemCount();
+            adapter.clear();
+            adapter.notifyItemRangeRemoved(0, size);
             if (!requestingMessages) {
                 requestMore();
             }
-        }
-    }
-
-    private static class ShowRateDialogOnAvatarClickListener implements View.OnClickListener {
-        private final Context context;
-        private final MessageStream stream;
-
-        private ShowRateDialogOnAvatarClickListener(Context context, MessageStream stream) {
-            this.context = context;
-            this.stream = stream;
-        }
-
-        @Override
-        public void onClick(View view) {
-            Message item = (Message) view.getTag(R.id.webimMessage);
-            if (item != null) {
-                showRateDialog(item);
-            }
-        }
-
-        private void showRateDialog(Message item) {
-            final Operator.Id operatorId = item.getOperatorId();
-            if (operatorId == null) {
-                return;
-            }
-            showRateDialog(operatorId);
-        }
-
-        private void showRateDialog(@NonNull final Operator.Id operatorId) {
-            int rating = stream.getLastOperatorRating(operatorId);
-            AlertDialog.Builder builder = new AlertDialog.Builder(context);
-            builder.setTitle(R.string.rate_operator_title);
-            View view = View.inflate(context, R.layout.rating_bar, null);
-            final RatingBar bar = (RatingBar) view.findViewById(R.id.ratingBar);
-            if (rating != 0) {
-                bar.setRating(rating);
-            }
-            Button button = (Button) view.findViewById(R.id.ratingBarButton);
-            builder.setView(view);
-            final AlertDialog dialog = builder.create();
-            dialog.show();
-            button.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    dialog.dismiss();
-                    if (bar.getRating() != 0) {
-                        stream.rateOperator(
-                                operatorId,
-                                (int) bar.getRating(),
-                                null
-                        );
-                    }
-                }
-            });
         }
     }
 }
