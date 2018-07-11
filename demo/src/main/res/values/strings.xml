@@ -46,7 +46,7 @@
     <string name="prefs_account_title">Аккаунт</string>
     <string name="prefs_account_summary">Имя Webim аккаунта или полный адрес сервера (например, \'demo\' или \'https://demo.webim.ru\')</string>
     <string name="prefs_location_summary">location</string>
-    <string name="prefs_location_title">location</string>
+    <string name="prefs_location_title">Размещение</string>
 
     <string name="typing">пишет…</string>
 
