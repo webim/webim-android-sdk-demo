@@ -99,6 +99,7 @@ public class WebimChatFragment extends Fragment {
         super.onStart();
         session.resume();
         session.getStream().startChat();
+        session.getStream().setChatRead();
     }
 
     @Override
