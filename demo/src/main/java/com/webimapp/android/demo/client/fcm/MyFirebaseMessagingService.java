@@ -83,9 +83,6 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         Intent intent = new Intent(this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
-                PendingIntent.FLAG_ONE_SHOT);
-
         onPushMessage(getApplicationContext(),
                 Webim.parseFcmPushNotification(remoteMessage.getData().toString()),
                 WebimChatActivity.class);
