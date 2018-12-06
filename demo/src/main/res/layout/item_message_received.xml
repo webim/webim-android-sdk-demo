@@ -64,11 +64,11 @@
         android:text="11:40"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:maxWidth="40dp"
+        android:maxWidth="100dp"
         android:textSize="12sp"
-        android:layout_toRightOf="@id/message_body"
-        android:layout_alignBottom="@id/message_body"
-        android:layout_marginLeft="4dp" />
+        android:layout_below="@id/message_body"
+        android:padding="8dp"
+        android:layout_marginLeft="@dimen/chat_sent_message_margin" />
 
     <ProgressBar
         android:id="@+id/sending_msg"

@@ -51,17 +51,19 @@
     <string name="typing">пишет…</string>
 
     <string name="options">Опции</string>
-    <string name="open_in_browser">Открыть в браузере</string>
-    <string name="copy_url">Копировать ссылку</string>
-    <string name="copied_url">Адрес изображения скопирован</string>
-    <string name="save_image">Сохранить изображение</string>
+    <string name="save_image">Сохранить изображение?</string>
     <string name="saving_image">Загрузка файла %1$s…</string>
+    <string name="uploading_file">Загрузка файла…</string>
     <string name="def_image_name">image_%1$d.jpg</string>
     <string name="saved_file">Файл %1$s сохранён</string>
     <string name="saving_failed">Не удалось загрузить файл</string>
 
     <string name="rate_operator">Оценить оператора</string>
     <string name="close_chat">Завершить чат</string>
+
+    <string name="no_operator">без оператора</string>
+    <string name="operator_typing">%1$s пишет…</string>
+    <string name="operator_name">%1$s</string>
 
     <string-array
         name="received_message_actions">
@@ -70,6 +72,8 @@
     <string-array
         name="sent_message_actions">
         <item>Копировать</item>
+        <item>Редактировать</item>
+        <item>Удалить</item>
     </string-array>
     <string name="copied_message">Текст сообщения скопирован</string>
     <string name="copy_failed">Не удалось скопировать сообщение</string>

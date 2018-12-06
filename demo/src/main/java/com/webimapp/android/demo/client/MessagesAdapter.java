@@ -36,17 +36,18 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
     private static final long MILLIS_IN_DAY = 1000 * 60 * 60 * 24;
 
     private final List<Message> messageList;
-    private final Context context;
+    private final WebimChatFragment webimChatFragment;
 
-    MessagesAdapter(Context context) {
-        this.context = context;
+    MessagesAdapter(WebimChatFragment webimChatFragment) {
+        this.webimChatFragment = webimChatFragment;
         this.messageList = new ArrayList<>();
     }
 
     @Override
     public MessageHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         ViewType vt = ViewType.values()[viewType];
-        View view = LayoutInflater.from(context).inflate(getLayout(vt), parent, false);
+        View view = LayoutInflater.from(webimChatFragment.getContext()).inflate(getLayout(vt),
+                parent, false);
         switch (vt) {
             case OPERATOR:
             case FILE_FROM_OPERATOR:
@@ -174,18 +175,23 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
     }
 
     private void showMessage(String message, View view) {
-        Toast.makeText(view.getContext().getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+        Toast.makeText(view.getContext().getApplicationContext(),
+                message, Toast.LENGTH_SHORT).show();
     }
 
     class MessageHolder extends RecyclerView.ViewHolder {
         Message message;
-        TextView messageText, messageDate, messageTime;
+        TextView messageText;
+        TextView messageDate;
+        TextView messageTime;
+        ImageView messageTick;
 
         MessageHolder(View itemView) {
             super(itemView);
             messageText = itemView.findViewById(R.id.text_message_body);
             messageDate = itemView.findViewById(R.id.text_message_date);
             messageTime = itemView.findViewById(R.id.text_message_time);
+            messageTick = itemView.findViewById(R.id.tick);
         }
 
         public void bind(Message message, boolean showDate) {
@@ -197,15 +203,30 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             }
             if (messageDate != null) {
                 if (showDate) {
-                    messageDate.setText(DateFormat.getDateFormat(context).format(message.getTime()));
+                    messageDate
+                            .setText(DateFormat.getDateFormat(webimChatFragment.getContext())
+                            .format(message.getTime()));
                     messageDate.setVisibility(View.VISIBLE);
                 } else {
                     messageDate.setVisibility(View.GONE);
                 }
             }
             if (messageTime != null) {
-                messageTime.setText(DateFormat.getTimeFormat(context).format(message.getTime()));
+                messageTime
+                        .setText(DateFormat.getTimeFormat(webimChatFragment.getContext())
+                        .format(message.getTime()));
                 messageText.setVisibility(View.VISIBLE);
+            }
+
+            if (messageTick != null) {
+                if (message.isReadByOperator()) {
+                    messageTick.setImageResource(R.drawable.ic_double_tick);
+                } else {
+                    messageTick.setImageResource(R.drawable.ic_tick);
+                }
+                messageTick.setVisibility(message.getSendStatus() == Message.SendStatus.SENT
+                        ? View.VISIBLE
+                        : View.GONE);
             }
         }
     }
@@ -225,10 +246,14 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
         public void bind(Message message, boolean showDate) {
             super.bind(message, showDate);
 
+            thumbView.setVisibility(View.GONE);
+
             Message.Attachment attachment = message.getAttachment();
             if (attachment == null) {
-                if (thumbView != null) {
+                if (thumbView != null && message.getType().equals(Message.Type.FILE_FROM_VISITOR)) {
                     thumbView.setVisibility(View.GONE);
+                    messageText.setText(R.string.uploading_file);
+                    messageText.setVisibility(View.VISIBLE);
                 }
                 return;
             }
@@ -238,7 +263,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                 if (thumbView != null) {
                     thumbView.setVisibility(View.GONE);
                 }
-                messageText.setText(Html.fromHtml(context.getResources().getString(R.string.file_send)
+                messageText.setText(Html.fromHtml(webimChatFragment.getResources().getString(R.string.file_send)
                         + "<a href=\"" + fileUrl + "\">" + message.getText() + "</a>"));
                 messageText.setVisibility(View.VISIBLE);
                 return;
@@ -246,10 +271,11 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
 
             if (thumbView != null) {
                 setViewSize(thumbView, getThumbSize(imageInfo));
-                Glide.with(context)
+                Glide.with(webimChatFragment)
                         .load(imageInfo.getThumbUrl())
                         .diskCacheStrategy(DiskCacheStrategy.SOURCE)
-                        .bitmapTransform(new RoundedCornersTransformation(context, 8, 0))
+                        .bitmapTransform(new RoundedCornersTransformation(
+                                webimChatFragment.getContext(), 8, 0))
                         .into(thumbView);
                 thumbView.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -319,7 +345,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                 @Override
                 public void onClick(final View view) {
                     AlertDialog.Builder builder = new AlertDialog.Builder(view.getContext());
-                    String[] options = view.getResources().getStringArray(R.array.sent_message_actions);
+                    String[] options = view.getResources().getStringArray(message.canBeEdited()
+                            ? R.array.sent_message_actions
+                            : R.array.received_message_actions);
                     builder.setItems(options, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -338,6 +366,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                                         showMessage(view.getResources()
                                                 .getString(R.string.copy_failed), view);
                                     }
+                                    break;
+                                case 1: // edit
+                                    webimChatFragment.onEditAction(message);
+                                    break;
+                                case 2: // delete
+                                    webimChatFragment.onDeleteMessageAction(message);
                                     break;
                             }
                         }
@@ -377,7 +411,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                 @Override
                 public void onClick(final View view) {
                     AlertDialog.Builder builder = new AlertDialog.Builder(view.getContext());
-                    String[] options = view.getResources().getStringArray(R.array.received_message_actions);
+                    String[] options = view.getResources()
+                            .getStringArray(R.array.received_message_actions);
                     builder.setItems(options, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -409,7 +444,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
         @Override
         public void bind(Message message, boolean showDate) {
             super.bind(message, showDate);
-            timeText.setText(DateFormat.getTimeFormat(context).format(message.getTime()));
+            timeText.setText(DateFormat.getTimeFormat(webimChatFragment.getContext())
+                    .format(message.getTime()));
 
             if (showSenderInfo) {
                 nameText.setVisibility(View.VISIBLE);
@@ -419,12 +455,13 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                 profileImage.setVisibility(View.VISIBLE);
                 if (avatarUrl != null) {
                     if (!avatarUrl.equals(profileImage.getTag(R.id.avatarUrl))) {
-                        Glide.with(context).load(avatarUrl).into(profileImage);
+                        Glide.with(webimChatFragment).load(avatarUrl).into(profileImage);
                         profileImage.setTag(R.id.avatarUrl, avatarUrl);
                     }
                 } else {
                     profileImage.setImageDrawable(
-                            context.getResources().getDrawable(R.drawable.default_operator_avatar_40x40));
+                            webimChatFragment.getResources()
+                                    .getDrawable(R.drawable.default_operator_avatar_40x40));
                     profileImage.setVisibility(View.VISIBLE);
                 }
             } else {

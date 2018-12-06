@@ -106,5 +106,8 @@
         <meta-data
             android:name="io.fabric.ApiKey"
             android:value="80055b71f053ff36cce8743fbac5eecae7df7f28" />
+        <meta-data
+            android:name="google_analytics_adid_collection_enabled"
+            android:value="false" />
     </application>
 </manifest>

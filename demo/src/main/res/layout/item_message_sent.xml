@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_marginTop="2dp"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
@@ -48,11 +49,23 @@
         android:text="11:40"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:maxWidth="40dp"
+        android:maxWidth="1000dp"
         android:textSize="12sp"
-        android:layout_toLeftOf="@id/message_body"
-        android:layout_alignBottom="@id/message_body"
+        android:layout_below="@id/message_body"
+        android:layout_alignParentRight="true"
         android:layout_marginRight="4dp" />
+
+    <ImageView
+        android:id="@+id/tick"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/message_body"
+        android:layout_toLeftOf="@+id/text_message_time"
+        app:srcCompat="@drawable/ic_double_tick"
+        android:layout_alignBottom="@id/text_message_time"
+        android:layout_alignTop="@id/text_message_time"
+        android:layout_marginRight="0dp"
+        android:layout_marginBottom="3dp"/>
 
     <ProgressBar
         android:id="@+id/sending_msg"

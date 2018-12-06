@@ -32,6 +32,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RatingBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -63,9 +64,11 @@ public class WebimChatFragment extends Fragment {
 
     private WebimSession session;
     private ListController listController;
+    private Message inEdit = null;
 
     private EditText editTextMessage;
     private ImageButton sendButton;
+    private ImageButton editButton;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -88,6 +91,7 @@ public class WebimChatFragment extends Fragment {
         initChatView(rootView);
         initEditText(rootView);
         initSendButton(rootView);
+        initEditButton(rootView);
         initAttachFileButton(rootView);
 
         ViewCompat.setElevation(rootView.findViewById(R.id.linLayEnterMessage), 2);
@@ -133,6 +137,12 @@ public class WebimChatFragment extends Fragment {
                             rateOperatorItem.setEnabled(newOperator != null);
                         }
                         setOperatorAvatar(rootView, newOperator);
+
+                        TextView operatorNameView = rootView.findViewById(R.id.action_bar_subtitle);
+                        String operatorName = newOperator == null
+                                ? getString(R.string.no_operator)
+                                : newOperator.getName();
+                        operatorNameView.setText(getString(R.string.operator_name, operatorName));
                     }
                 });
 
@@ -201,12 +211,23 @@ public class WebimChatFragment extends Fragment {
             actionBar.setDisplayShowHomeEnabled(true);
         }
 
-        final View typingView = rootView.findViewById(R.id.action_bar_subtitle);
-        typingView.setVisibility(View.GONE);
+        final TextView typingView = rootView.findViewById(R.id.action_bar_subtitle);
+        Operator currentOp = session.getStream().getCurrentOperator();
+        String operatorName = currentOp == null
+                ? getString(R.string.no_operator)
+                : currentOp.getName();
+        typingView.setText(getString(R.string.operator_name, operatorName));
+
         session.getStream().setOperatorTypingListener(new MessageStream.OperatorTypingListener() {
             @Override
             public void onOperatorTypingStateChanged(boolean isTyping) {
-                typingView.setVisibility(isTyping ? View.VISIBLE : View.GONE);
+                Operator currentOp = session.getStream().getCurrentOperator();
+                String operatorName = currentOp == null
+                        ? getString(R.string.no_operator)
+                        : currentOp.getName();
+                typingView.setText(isTyping
+                        ? getString(R.string.operator_typing, operatorName)
+                        : getString(R.string.operator_name, operatorName));
             }
         });
 
@@ -228,9 +249,12 @@ public class WebimChatFragment extends Fragment {
                         .into((ImageView) v.findViewById(R.id.sender_photo));
             } else {
                 ((ImageView) v.findViewById(R.id.sender_photo)).setImageDrawable(
-                        getContext().getResources().getDrawable(R.drawable.default_operator_avatar_40x40));
+                        getContext().getResources()
+                                .getDrawable(R.drawable.default_operator_avatar_40x40));
             }
             v.findViewById(R.id.sender_photo).setVisibility(View.VISIBLE);
+        } else {
+            v.findViewById(R.id.sender_photo).setVisibility(View.GONE);
         }
     }
 
@@ -269,15 +293,19 @@ public class WebimChatFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
-        rateOperatorItem = menu.add(menu.FIRST, menuRateOperator, menuRateOperator, R.string.rate_operator);
+        rateOperatorItem = menu.add(menu.FIRST,
+                menuRateOperator,
+                menuRateOperator,
+                R.string.rate_operator);
         if (rateOperatorItem != null) {
             rateOperatorItem.setEnabled(session.getStream().getCurrentOperator() != null);
         }
         closeChatItem = menu.add(menu.FIRST, menuCloseChat, menuCloseChat, R.string.close_chat);
         if (closeChatItem != null) {
-            closeChatItem.setEnabled(session.getStream().getChatState() != MessageStream.ChatState.NONE
-                    && session.getStream().getChatState() != MessageStream.ChatState.CLOSED_BY_VISITOR
-                    && session.getStream().getChatState() != MessageStream.ChatState.UNKNOWN);
+            MessageStream.ChatState chatState = session.getStream().getChatState();
+            closeChatItem.setEnabled(chatState != MessageStream.ChatState.NONE
+                    && chatState != MessageStream.ChatState.CLOSED_BY_VISITOR
+                    && chatState != MessageStream.ChatState.UNKNOWN);
         }
     }
 
@@ -356,6 +384,29 @@ public class WebimChatFragment extends Fragment {
                         session.getStream().sendMessage(message);
                     }
                 }
+            }
+        });
+    }
+
+    private void initEditButton(View v) {
+        editButton = v.findViewById(R.id.imageButtonAcceptChanges);
+        editButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (inEdit == null) {
+                    return;
+                }
+
+                String newText = editTextMessage.getText().toString();
+                editTextMessage.getText().clear();
+                newText = newText.trim();
+                if (!newText.isEmpty()) {
+                    session.getStream().editMessage(inEdit, newText, null);
+                } else {
+                    session.getStream().deleteMessage(inEdit, null);
+                }
+                editButton.setVisibility(View.GONE);
+                sendButton.setVisibility(View.VISIBLE);
             }
         });
     }
@@ -474,6 +525,18 @@ public class WebimChatFragment extends Fragment {
         }
     }
 
+    void onEditAction(Message message) {
+        inEdit = message;
+        sendButton.setVisibility(View.GONE);
+        editButton.setVisibility(View.VISIBLE);
+        editTextMessage.setText(message.getText());
+        editTextMessage.setSelection(message.getText().length());
+    }
+
+    void onDeleteMessageAction(Message message) {
+        session.getStream().deleteMessage(message, null);
+    }
+
     private static class ListController implements MessageListener {
         private static final int MESSAGES_PER_REQUEST = 25;
         private final MessageTracker tracker;
@@ -485,30 +548,35 @@ public class WebimChatFragment extends Fragment {
 
         private boolean requestingMessages;
 
-        public static ListController install(WebimChatFragment context,
+        static ListController install(WebimChatFragment webimChatFragment,
                                              RecyclerView recyclerView,
                                              ProgressBar progressBar,
-                                             MessageStream chat,
+                                             MessageStream messageStream,
                                              View rootView) {
-            return new ListController(context, recyclerView, progressBar, chat, rootView);
+            return new ListController(webimChatFragment,
+                    recyclerView,
+                    progressBar,
+                    messageStream,
+                    rootView);
         }
 
-        private ListController(WebimChatFragment context,
+        private ListController(WebimChatFragment webimChatFragment,
                                final RecyclerView recyclerView,
                                final ProgressBar progressBar,
-                               MessageStream stream,
+                               final MessageStream messageStream,
                                View view) {
             this.recyclerView = recyclerView;
             this.progressBar = progressBar;
 
             this.layoutManager = new LinearLayoutManager(
-                    context.getContext(), LinearLayoutManager.VERTICAL, true);
+                    webimChatFragment.getContext(), LinearLayoutManager.VERTICAL, true);
             this.layoutManager.setStackFromEnd(false);
             this.recyclerView.setLayoutManager(layoutManager);
-            this.adapter = new MessagesAdapter(context.getContext());
+            this.adapter = new MessagesAdapter(webimChatFragment);
+
             this.recyclerView.setAdapter(this.adapter);
 
-            this.tracker = stream.newMessageTracker(this);
+            this.tracker = messageStream.newMessageTracker(this);
 
             final FloatingActionButton downButton = view.findViewById(R.id.downButton);
             downButton.setOnClickListener(new View.OnClickListener() {

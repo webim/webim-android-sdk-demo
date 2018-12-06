@@ -1,9 +1,9 @@
 package com.webimapp.android.demo.client;
 
+import android.app.AlertDialog;
 import android.app.DownloadManager;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -28,10 +28,6 @@ import com.ortiz.touchview.TouchImageView;
 public class ImageActivity extends AppCompatActivity {
     private Uri imageUri = null;
 
-    private final int MENU_OPEN_IN_BROWSER_ID = Menu.FIRST;
-    private final int MENU_COPY_URL_ID = Menu.FIRST + 1;
-    private final int MENU_SAVE_IMG_ID = Menu.FIRST + 2;
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,10 +37,11 @@ public class ImageActivity extends AppCompatActivity {
         imageView.setVisibility(View.VISIBLE);
 
         Intent callingActivityIntent = getIntent();
-        if(callingActivityIntent != null) {
+        if (callingActivityIntent != null) {
             imageUri = callingActivityIntent.getData();
-            if(imageUri != null) {
-                Glide.with(this).load(imageUri).asBitmap().into(new SimpleTarget<Bitmap>() {
+            if (imageUri != null) {
+                Glide.with(this).load(imageUri)
+                        .asBitmap().into(new SimpleTarget<Bitmap>() {
                     @Override
                     public void onResourceReady(Bitmap resource,
                             GlideAnimation<? super Bitmap> glideAnimation) {
@@ -67,60 +64,57 @@ public class ImageActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add(menu.FIRST, MENU_OPEN_IN_BROWSER_ID, MENU_OPEN_IN_BROWSER_ID, R.string.open_in_browser);
-        menu.add(menu.FIRST, MENU_COPY_URL_ID, MENU_COPY_URL_ID, R.string.copy_url);
-        menu.add(menu.FIRST, MENU_SAVE_IMG_ID, MENU_SAVE_IMG_ID, R.string.save_image);
+        getMenuInflater().inflate(R.menu.image_menu, menu);
         return true;
     }
 
     private void downloadImage() {
-        String imgName = getString(R.string.def_image_name, System.currentTimeMillis());
-        showMessage(getString(R.string.saving_image, imgName));
-
-        DownloadManager manager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
-        if (manager != null) {
-            DownloadManager.Request request = new DownloadManager.Request(imageUri);
-            request.setTitle(imgName);
-            request.allowScanningByMediaScanner();
-            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, imgName);
-
-            manager.enqueue(request);
+        if (Build.VERSION.SDK_INT >= 23
+                && ActivityCompat.checkSelfPermission(
+                this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(
+                    this,
+                    new String[] { android.Manifest.permission.WRITE_EXTERNAL_STORAGE },
+                    1);
         } else {
-            showMessage(getString(R.string.saving_failed));
+            String imgName = getString(R.string.def_image_name, System.currentTimeMillis());
+            showMessage(getString(R.string.saving_image, imgName));
+
+            DownloadManager manager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+            if (manager != null) {
+                DownloadManager.Request request = new DownloadManager.Request(imageUri);
+                request.setTitle(imgName);
+                request.allowScanningByMediaScanner();
+                request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, imgName);
+
+                manager.enqueue(request);
+            } else {
+                showMessage(getString(R.string.saving_failed));
+            }
         }
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case MENU_OPEN_IN_BROWSER_ID:
-                Intent intent = new Intent(Intent.ACTION_VIEW, imageUri);
-                startActivity(intent);
-                break;
-            case MENU_COPY_URL_ID:
-                ClipData clip = ClipData.newUri(getContentResolver(), "URI", imageUri);
-                ClipboardManager clipboard
-                        = (ClipboardManager) this.getSystemService(Context.CLIPBOARD_SERVICE);
-                if (clipboard != null) {
-                    clipboard.setPrimaryClip(clip);
-                    showMessage(R.string.copied_url);
-                } else {
-                    showMessage(R.string.copy_failed);
-                }
-                break;
-            case MENU_SAVE_IMG_ID:
-                if (Build.VERSION.SDK_INT >= 23
-                        && ActivityCompat.checkSelfPermission(
-                                this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                        != PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions(
-                            this,
-                            new String[] { android.Manifest.permission.WRITE_EXTERNAL_STORAGE },
-                            1);
-                } else {
-                    downloadImage();
-                }
+            case R.id.save_image:
+                new AlertDialog.Builder(this)
+                        .setMessage(R.string.save_image)
+                        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                            }
+                        })
+                        .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                downloadImage();
+                            }
+                        })
+                        .create()
+                        .show();
                 break;
         }
         return super.onOptionsItemSelected(item);
