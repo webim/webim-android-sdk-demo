@@ -3,7 +3,6 @@ package com.webimapp.android.demo.client.util;
 import android.content.Context;
 import android.text.Layout;
 import android.util.AttributeSet;
-import android.widget.TextView;
 
 /**
  * Tightly wraps the multiline text when layout_width="wrap_content"

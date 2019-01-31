@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
+import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
 import android.text.format.DateFormat;
@@ -44,7 +45,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
     }
 
     @Override
-    public MessageHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public MessageHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         ViewType vt = ViewType.values()[viewType];
         View view = LayoutInflater.from(webimChatFragment.getContext()).inflate(getLayout(vt),
                 parent, false);
@@ -64,7 +65,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
     }
 
     @Override
-    public void onBindViewHolder(MessageHolder holder, int position) {
+    public void onBindViewHolder(@NonNull MessageHolder holder, int position) {
         Message message = messageList.get(messageList.size() - position - 1);
         Message prev = position < messageList.size() - 1
                 ? messageList.get(messageList.size() - position - 2)
