@@ -1,0 +1,106 @@
+apply plugin: 'com.android.library'
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'groovyx.android'
+
+version = project.property('versionName')
+group = project.property('sdk_group')
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion '23.0.3'
+    resourcePrefix 'webimsdk__'
+
+    defaultConfig {
+        minSdkVersion 15
+        targetSdkVersion 23
+        versionName version
+    }
+    buildTypes {
+    }
+    lintOptions {
+        abortOnError false
+    }
+}
+
+dependencies {
+    testCompile 'junit:junit:4.12'
+    compile 'com.android.support:support-annotations:28.0.0'
+    compile 'com.squareup.retrofit2:retrofit:2.2.0'
+    compile 'com.squareup.retrofit2:converter-gson:2.2.0'
+    compile 'com.squareup.okhttp3:logging-interceptor:3.6.0'
+    testCompile 'org.codehaus.groovy:groovy-all:2.4.12'
+    testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
+    testCompile 'cglib:cglib-nodep:2.2.2'
+}
+
+def siteUrl = project.property('websiteUrl')     // Homepage URL of the library
+def gitUrl = project.property('gitUrl')          // Git repository URL
+
+bintray {
+    user = project.property('bintray.user')
+    key = project.property('bintray.apikey')
+
+    configurations = ['archives']
+    publish = true
+    override = project.property('bintray.override').asBoolean()
+    pkg {
+        repo = project.property('bintray.pkg.repo')
+        userOrg = project.property('bintray.pkg.userOrg')
+        name = project.property('bintray.pkg.name')
+        websiteUrl = siteUrl
+        vcsUrl = gitUrl
+        licenses = ['Apache-2.0']
+    }
+}
+
+install {
+    repositories.mavenInstaller {
+        pom.project {
+            packaging 'aar'
+            name 'Webim SDK Android Library'
+            url siteUrl
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                }
+            }
+            developers {
+                developer {
+                    id 'vbeskrovnyy'
+                    name 'Vladislav Beskrovnyy'
+                    email 'vbeskrovnyy@webim.ru'
+                }
+            }
+            scm {
+                connection gitUrl
+                developerConnection gitUrl
+                url siteUrl
+
+            }
+        }
+    }
+}
+
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+
+task javadoc(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+artifacts {
+    archives sourcesJar
+}
+
+task findConventions << {
+    println project.getConvention()
+}

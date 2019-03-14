@@ -10,7 +10,7 @@ On the one hand this application was created to demonstrate capabilities of our 
 Supported Android 4.+ (Android API 15+) versions
 To start using *Webim Android SDK* add a dependency to build.gradle of your application.
 ```
-compile 'com.webimapp.sdk:webimclientsdkandroid:3.27.0'
+compile 'com.webimapp.sdk:webimclientsdkandroid:3.27.1'
 ```
 Also add to AndroidManifest.xml the following permissions:
 ```
@@ -29,7 +29,7 @@ WebimSession sessoin = Webim.newSessionBuilder()
     .setLocation("mobile") // Use "mobile" if in doubt
     .build()
 ```
-For this you need to decide on a [location] (http://webim.ru/pro/help/help-terms/#location) and an account of Webim service. `Webim.newSessionBuilder()` method returns builder object containing large number of session configuration methods. Read more about each of them in javadoc.
+For this you need to decide on a [location](https://webim.ru/kb/start/8282-terms-and-concepts/#location) and an account of Webim service. `Webim.newSessionBuilder()` method returns builder object containing large number of session configuration methods. Read more about each of them in javadoc.
 
 `build()` method must be called from the thread having `android.os.Looper` associated object (usually it is the main thread). Further, any work with the session must be performed from the same thread in which context the session was created (at a call of any session method it is checked which thread it was called from). All the callbacks are also performed in context of the same thread the session was created in.
 
