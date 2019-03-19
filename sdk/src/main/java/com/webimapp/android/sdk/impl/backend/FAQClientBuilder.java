@@ -9,8 +9,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.webimapp.android.sdk.BuildConfig;
 import com.webimapp.android.sdk.impl.items.FAQCategoryItem;
-import com.webimapp.android.sdk.impl.items.delta.DeltaFullUpdate;
-import com.webimapp.android.sdk.impl.items.delta.DeltaItem;
 
 import java.io.IOException;
 import java.util.concurrent.Executor;

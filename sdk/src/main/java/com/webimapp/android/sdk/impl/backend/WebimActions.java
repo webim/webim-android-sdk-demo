@@ -51,4 +51,6 @@ public interface WebimActions {
 
     void requestHistorySince(@Nullable String since,
                              @NonNull DefaultCallback<HistorySinceResponse> callback);
+
+    void updateWidgetStatus(@NonNull String data);
 }

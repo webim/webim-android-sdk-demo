@@ -29,6 +29,7 @@ public class WebimActionsImpl implements WebimActions {
             = "chat.action_request.call_sentry_action_request";
     private static final String ACTION_SET_PRECHAT_FIELDS = "chat.set_prechat_fields";
     private static final String ACTION_VISITOR_TYPING = "chat.visitor_typing";
+    private static final String ACTION_WIDGET_UPDATE = "widget.update";
     private static final String CHARACTERS_TO_ENCODE = "\n!#$&'()*+,/:;=?@[] \"%-.<>\\^_`{|}~";
     @NonNull
     private final ActionRequestLoop requestLoop;
@@ -359,6 +360,22 @@ public class WebimActionsImpl implements WebimActions {
             @Override
             public void runCallback(HistorySinceResponse response) {
                 callback.onSuccess(response);
+            }
+        });
+    }
+
+    @Override
+    public void updateWidgetStatus(@NonNull final String data) {
+        data.getClass(); //NPE
+        enqueue(new ActionRequestLoop.WebimRequest<DefaultResponse>(false) {
+            @Override
+            public Call<DefaultResponse> makeRequest(AuthData authData) {
+                return webim.updateWidgetStatus(
+                        ACTION_WIDGET_UPDATE,
+                        data,
+                        authData.getPageId(),
+                        authData.getAuthToken()
+                );
             }
         });
     }

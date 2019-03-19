@@ -207,4 +207,13 @@ public interface WebimService {
             @Field(PARAMETER_PAGE_ID) String pageId,
             @Field(PARAMETER_AUTHORIZATION_TOKEN) String authorizationToken
     );
+
+    @FormUrlEncoded
+    @POST(URL_SUFFIX_ACTION)
+    Call<DefaultResponse> updateWidgetStatus(
+            @Field(PARAMETER_ACTION) String action,
+            @Field(PARAMETER_DATA) String dataJsonString,
+            @Field(PARAMETER_PAGE_ID) String pageId,
+            @Field(PARAMETER_AUTHORIZATION_TOKEN) String authorizationToken
+    );
 }

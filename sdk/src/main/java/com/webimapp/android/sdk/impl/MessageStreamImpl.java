@@ -249,6 +249,13 @@ public class MessageStreamImpl implements MessageStream {
     }
 
     @Override
+    public void updateWidgetStatus(@NonNull String data) {
+        accessChecker.checkAccess();
+
+        actions.updateWidgetStatus(data);
+    }
+
+    @Override
     public boolean editMessage(@NonNull Message message,
                             @NonNull String text,
                             @Nullable EditMessageCallback editMessageCallback) {

@@ -274,6 +274,15 @@ public interface MessageStream {
     Message.Id sendMessage(@NonNull String message, boolean isHintQuestion);
 
     /**
+     * Update widget status. The change is displayed by the operator.
+     * @param data JSON string with new widget status
+     * @throws IllegalStateException if the WebimSession was destroyed
+     * @throws RuntimeException if the method was called not from the thread the WebimSession was
+     * created in
+     */
+    void updateWidgetStatus(@NonNull String data);
+
+    /**
      * Edits a previously sent text message.
      * When calling this method, if there is an active {@link MessageTracker} (see
      * {@link MessageStream#newMessageTracker}),
