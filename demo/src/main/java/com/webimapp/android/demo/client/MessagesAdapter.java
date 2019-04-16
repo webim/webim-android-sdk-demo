@@ -73,9 +73,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
 
         if (prev != null) {
             if ((message.getType().equals(Message.Type.OPERATOR)
-                            || message.getType().equals(Message.Type.FILE_FROM_OPERATOR))
+                    || message.getType().equals(Message.Type.FILE_FROM_OPERATOR))
                     && (prev.getType().equals(Message.Type.OPERATOR)
-                            || prev.getType().equals(Message.Type.FILE_FROM_OPERATOR))
+                    || prev.getType().equals(Message.Type.FILE_FROM_OPERATOR))
                     && prev.getOperatorId().equals(message.getOperatorId())) {
                 ((ReceivedMessageHolder) holder).showSenderInfo = false;
             }
@@ -206,7 +206,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                 if (showDate) {
                     messageDate
                             .setText(DateFormat.getDateFormat(webimChatFragment.getContext())
-                            .format(message.getTime()));
+                                    .format(message.getTime()));
                     messageDate.setVisibility(View.VISIBLE);
                 } else {
                     messageDate.setVisibility(View.GONE);
@@ -215,7 +215,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             if (messageTime != null) {
                 messageTime
                         .setText(DateFormat.getTimeFormat(webimChatFragment.getContext())
-                        .format(message.getTime()));
+                                .format(message.getTime()));
                 messageText.setVisibility(View.VISIBLE);
             }
 
@@ -353,6 +353,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             switch (which) {
+                                /*case 0: //reply
+                                    webimChatFragment.onReplyMessageAction(message, getAdapterPosition());
+                                    break;*/
                                 case 0: // copy
                                     ClipData clip =
                                             ClipData.newPlainText("message", message.getText());
@@ -418,6 +421,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             switch (which) {
+                                /*case 0: //reply
+                                    webimChatFragment.onReplyMessageAction(message, getAdapterPosition());
+                                    break;*/
                                 case 0: // copy
                                     ClipData clip =
                                             ClipData.newPlainText("message", message.getText());
@@ -462,7 +468,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                 } else {
                     profileImage.setImageDrawable(
                             webimChatFragment.getResources()
-                                    .getDrawable(R.drawable.default_operator_avatar_40x40));
+                                    .getDrawable(R.drawable.default_operator_avatar));
                     profileImage.setVisibility(View.VISIBLE);
                 }
             } else {

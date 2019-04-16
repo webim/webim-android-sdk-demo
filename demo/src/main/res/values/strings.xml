@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Webim демо-чат</string>
-    <string name="action_settings">Настройки</string>
-    <string name="first_screen_text">
-        Добро пожаловать в демо-приложение Webim! Для того чтобы начать чат, нажмите кнопку в правом нижнем углу экрана.
-        Принять чат со стороны оператора вы можете на странице
-        demo.webim.ru (Данные для входа: Email: o@webim.ru, Пароль: password).
-        Исходный код данного приложения вы можете найти по адресу github.com/webim/webim-android-sdk-demo
-    </string>
+    <string name="first_screen_text1">Добро пожаловать в демо-приложение\nWebim Mobile SDK!</string>
+    <string name="first_screen_text2">Для того чтобы начать чат, нажмите на кнопку ниже.</string>
+    <string name="first_screen_text3">Принять чат со стороны оператора вы можете на странице:</string>
+    <string name="first_screen_text4">https://demo.webim.ru</string>
+    <string name="first_screen_text5">Логин: o@webim.ru</string>
+    <string name="first_screen_text6">Пароль: password</string>
+    <string name="first_screen_text7">Исходный код данного приложения вы можете найти по адресу:</string>
+    <string name="first_screen_text8">https://github.com/webim/webim-android-sdk-demo</string>
+    <string name="image_logo_content_description">Logo</string>
+    <string name="button_text_start_chat">Начать чат</string>
+    <string name="button_text_settings">Настройки</string>
     <string name="message">Сообщение…</string>
     <string name="action_close_chat">Закрыть чат</string>
     <string name="cancel">Отмена</string>
@@ -40,7 +44,7 @@
     <string name="push_contact_information">Оператор запросил контактные данные.</string>
     <string name="push_operator_accepted">Оператор %1$s присоединился к диалогу.</string>
     <string name="push_operator_file">%1$s отправил(а) файл %2$s</string>
-    <string name="push_operator_message">%1$s: %2$s</string>
+    <string name="push_operator_message">%1$s:\n%2$s</string>
     <string name="prefs_notifications_summary">Включить FCM пуш-уведомления для новых сообщений от оператора</string>
     <string name="prefs_notifications_title">Уведомления</string>
     <string name="prefs_account_title">Аккаунт</string>
@@ -77,4 +81,11 @@
     </string-array>
     <string name="copied_message">Текст сообщения скопирован</string>
     <string name="copy_failed">Не удалось скопировать сообщение</string>
+
+    <string name="empty_reply_text"> </string>
+    <string name="reply_message_with_image">"Изображение "</string>
+    <string name="default_text">Пример текста</string>
+    <string name="default_time">10:12</string>
+    <string name="channel_id">com.webimapp.android.demo.client.fcm</string>
+    <string name="channel_name">Webim notification</string>
 </resources>

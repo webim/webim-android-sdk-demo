@@ -6,23 +6,192 @@
     android:id="@+id/mainActivityContent"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="16dp"
-    android:paddingLeft="16dp"
-    android:paddingRight="16dp"
+    android:background="@color/colorBackgroundActivityMain"
+    android:paddingLeft="20dp"
     android:paddingTop="16dp"
-
+    android:paddingRight="20dp"
+    android:paddingBottom="16dp"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="com.webimapp.android.demo.client.MainActivity"
     tools:showIn="@layout/activity_main">
 
-    <TextView
+    <ImageView
+        android:id="@+id/imageViewLogo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:linksClickable="true"
-        android:autoLink="web"
-        android:textIsSelectable="true"
-        android:textColor="#000"
-        android:textSize="16sp"
-        android:lineSpacingMultiplier="1.35"
-        android:text="@string/first_screen_text" />
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="10dp"
+        android:contentDescription="@string/image_logo_content_description"
+        android:scaleType="fitStart"
+        android:src="@drawable/logo_webim" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/linLayButtons"
+        android:layout_below="@id/imageViewLogo"
+        android:fadeScrollbars="false">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/textView1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="26dp"
+                android:lineSpacingMultiplier="1.35"
+                android:text="@string/first_screen_text1"
+                android:textColor="@color/white"
+                android:textSize="@dimen/text_size_normal_header_bold"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/textView2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="26dp"
+                android:lineSpacingMultiplier="1.35"
+                android:text="@string/first_screen_text2"
+                android:textColor="@color/white"
+                android:textSize="@dimen/text_size_normal" />
+
+            <TextView
+                android:id="@+id/textView3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:autoLink="web"
+                android:lineSpacingMultiplier="1.35"
+                android:linksClickable="true"
+                android:text="@string/first_screen_text3"
+                android:textColor="@color/white"
+                android:textSize="@dimen/text_size_normal" />
+
+            <TextView
+                android:id="@+id/textView4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:autoLink="web"
+                android:lineSpacingMultiplier="1.35"
+                android:linksClickable="true"
+                android:text="@string/first_screen_text4"
+                android:textColor="@color/white"
+                android:textIsSelectable="true"
+                android:textSize="@dimen/text_size_normal" />
+
+            <TextView
+                android:id="@+id/textView5"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="13dp"
+                android:lineSpacingMultiplier="1.35"
+                android:text="@string/first_screen_text5"
+                android:textColor="@color/white"
+                android:textIsSelectable="true"
+                android:textSize="@dimen/text_size_normal" />
+
+            <TextView
+                android:id="@+id/textView6"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:lineSpacingMultiplier="1.35"
+                android:text="@string/first_screen_text6"
+                android:textColor="@color/white"
+                android:textIsSelectable="true"
+                android:textSize="@dimen/text_size_normal" />
+
+            <TextView
+                android:id="@+id/textView7"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="26dp"
+                android:lineSpacingMultiplier="1.35"
+                android:text="@string/first_screen_text7"
+                android:textColor="@color/white"
+                android:textSize="@dimen/text_size_normal" />
+
+            <TextView
+                android:id="@+id/textView8"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:autoLink="web"
+                android:lineSpacingMultiplier="1.35"
+                android:linksClickable="true"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:text="@string/first_screen_text8"
+                android:textColor="@color/white"
+                android:textSize="@dimen/text_size_normal" />
+
+        </LinearLayout>
+    </ScrollView>
+
+    <RelativeLayout
+        android:id="@+id/linLayButtons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true">
+
+        <RelativeLayout
+            android:id="@+id/relLayStartChat"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="14dp"
+                android:layout_marginTop="14dp"
+                android:layout_marginRight="14dp">
+
+                <Button
+                    android:id="@+id/buttonStartChat"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/button_text_start_chat"
+                    android:theme="@style/AppTheme.ButtonGreen" />
+            </FrameLayout>
+
+            <ProgressBar
+                android:id="@+id/progressBar"
+                style="?android:attr/progressBarStyle"
+                android:layout_width="@dimen/badge_background_size"
+                android:layout_height="@dimen/badge_background_size"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
+                android:background="@drawable/background_badge"
+                android:padding="@dimen/badge_padding"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/textNumberOfBadge"
+                android:layout_width="@dimen/badge_background_size"
+                android:layout_height="@dimen/badge_background_size"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
+                android:background="@drawable/background_badge"
+                android:gravity="center"
+                android:text="@string/empty_reply_text"
+                android:textColor="@color/colorTextActivityMain"
+                android:textSize="@dimen/badge_text_size"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+        </RelativeLayout>
+
+        <Button
+            android:id="@+id/buttonCettings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/relLayStartChat"
+            android:layout_marginLeft="14dp"
+            android:layout_marginRight="14dp"
+            android:text="@string/button_text_settings"
+            android:theme="@style/AppTheme.ButtonPurple" />
+
+    </RelativeLayout>
+
 </RelativeLayout>

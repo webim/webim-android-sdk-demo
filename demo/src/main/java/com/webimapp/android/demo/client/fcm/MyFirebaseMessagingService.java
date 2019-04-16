@@ -2,6 +2,7 @@ package com.webimapp.android.demo.client.fcm;
 
 import android.app.Activity;
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -146,7 +147,17 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                                              String message,
                                              NotificationManager notificationManager,
                                              Class<? extends Activity> cls) {
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
+        String channelId = context.getResources().getString(R.string.channel_id);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            CharSequence channelName = context.getResources().getString(R.string.channel_name);
+            int importance = NotificationManager.IMPORTANCE_HIGH;
+            NotificationChannel notificationChannel = new NotificationChannel(
+                    channelId, channelName, importance);
+            notificationChannel.enableVibration(true);
+            notificationChannel.setShowBadge(true);
+            notificationManager.createNotificationChannel(notificationChannel);
+        }
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channelId);
         Resources res = context.getResources();
         if (cls != null) {
             Intent notificationIntent = new Intent(context, cls);
@@ -156,13 +167,12 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                     0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
             builder.setContentIntent(contentIntent);
         }
-        builder.setSmallIcon(R.drawable.ic_notify)
-                .setLargeIcon(BitmapFactory.decodeResource(res, R.drawable.ic_big_notify))
+        builder.setSmallIcon(R.drawable.status_bar_icon)
+                .setLargeIcon(BitmapFactory.decodeResource(res, R.drawable.default_operator_avatar))
                 .setTicker(res.getString(R.string.app_name))
                 .setWhen(System.currentTimeMillis())
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setContentTitle(res.getString(R.string.app_name))
                 .setContentText(message)
                 .setStyle(new NotificationCompat.BigTextStyle()
                         .bigText(message))

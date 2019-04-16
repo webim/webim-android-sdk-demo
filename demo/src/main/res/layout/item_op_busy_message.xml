@@ -3,10 +3,13 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_gravity="center"
-    android:paddingLeft="4dp"
-    android:paddingRight="4dp"
+    android:layout_marginLeft="20dp"
+    android:layout_marginRight="20dp"
+    android:layout_marginBottom="8dp"
     android:foregroundGravity="center"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:paddingLeft="4dp"
+    android:paddingRight="4dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -18,18 +21,20 @@
             android:id="@+id/text_message_date"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textAlignment="center"
             android:layout_marginRight="4dp"
-            android:textSize="12sp"
             android:text="nov 12"
+            android:textAlignment="center"
+            android:textColor="@color/systemMsg"
+            android:textSize="12sp"
             android:visibility="gone" />
 
         <TextView
             android:id="@+id/text_message_time"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textAlignment="center"
             android:text="12:40"
+            android:textAlignment="center"
+            android:textColor="@color/systemMsg"
             android:textSize="12sp"
             android:visibility="visible" />
     </LinearLayout>
@@ -40,9 +45,9 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:gravity="center"
-        android:textIsSelectable="true"
         android:linksClickable="true"
+        android:textColor="@color/systemMsg"
+        android:textIsSelectable="true"
         android:textSize="12sp"
-        android:textStyle="bold"
-        android:textColor="#000" />
+        android:textStyle="bold" />
 </LinearLayout>

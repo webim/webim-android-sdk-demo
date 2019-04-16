@@ -30,6 +30,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RatingBar;
 import android.widget.TextView;
@@ -70,6 +71,11 @@ public class WebimChatFragment extends Fragment {
     private ImageButton sendButton;
     private ImageButton editButton;
 
+    private LinearLayout replyLayout;
+    private TextView textSenderName;
+    private TextView textReplyMessage;
+    private int replyMessagePosition;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         setHasOptionsMenu(true);
@@ -93,6 +99,9 @@ public class WebimChatFragment extends Fragment {
         initSendButton(rootView);
         initEditButton(rootView);
         initAttachFileButton(rootView);
+        initReplyLayout(rootView);
+        initDeleteReply(rootView);
+        initReplyMessageButton(rootView);
 
         ViewCompat.setElevation(rootView.findViewById(R.id.linLayEnterMessage), 2);
         return rootView;
@@ -250,7 +259,7 @@ public class WebimChatFragment extends Fragment {
             } else {
                 ((ImageView) v.findViewById(R.id.sender_photo)).setImageDrawable(
                         getContext().getResources()
-                                .getDrawable(R.drawable.default_operator_avatar_40x40));
+                                .getDrawable(R.drawable.default_operator_avatar));
             }
             v.findViewById(R.id.sender_photo).setVisibility(View.VISIBLE);
         } else {
@@ -424,10 +433,47 @@ public class WebimChatFragment extends Fragment {
                     startActivityForResult(
                             Intent.createChooser(intent,
                                     getContext().getString(R.string.file_chooser_title)), FILE_SELECT_CODE);
+                    getActivity().overridePendingTransition(
+                            R.anim.pull_in_right,
+                            R.anim.push_out_right);
                 } catch (android.content.ActivityNotFoundException e) {
                     Toast.makeText(getContext(), getContext().getString(R.string.file_chooser_not_found),
                             Toast.LENGTH_SHORT).show();
                 }
+            }
+        });
+    }
+
+    private void initReplyLayout(View rootView) {
+        replyLayout = rootView.findViewById(R.id.linLayReplyMessage);
+        textSenderName = rootView.findViewById(R.id.textViewSenderName);
+        textReplyMessage = rootView.findViewById(R.id.textViewReplyText);
+        LinearLayout replyTextLayout  = rootView.findViewById(R.id.linLayReplyText);
+        replyTextLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                listController.showReplyMessage(replyMessagePosition);
+            }
+        });
+        replyLayout.setVisibility(View.GONE);
+    }
+
+    private  void initDeleteReply(View rootView) {
+        ImageView deleteReplyButton = rootView.findViewById(R.id.imageButtonReplyDelete);
+        deleteReplyButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                replyLayout.setVisibility(View.GONE);
+            }
+        });
+    }
+
+    private void initReplyMessageButton(View rootView) {
+        ImageView replyButton = rootView.findViewById(R.id.imageButtonReplyMessage);
+        replyButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                listController.showReplyMessage(replyMessagePosition);
             }
         });
     }
@@ -507,6 +553,7 @@ public class WebimChatFragment extends Fragment {
                 break;
         }
         super.onActivityResult(requestCode, resultCode, data);
+        getActivity().overridePendingTransition(R.anim.pull_in_left, R.anim.push_out_right);
     }
 
     private static void writeFully(@NonNull File to, @NonNull InputStream from) throws IOException {
@@ -537,6 +584,20 @@ public class WebimChatFragment extends Fragment {
         session.getStream().deleteMessage(message, null);
     }
 
+    void onReplyMessageAction(Message message, int position) {
+        inEdit = message;
+        replyLayout.setVisibility(View.VISIBLE);
+        replyMessagePosition = position;
+        textSenderName.setText(message.getSenderName());
+        if (message.getAttachment() != null) {
+            String replyMessage = getResources().getString(R.string.reply_message_with_image);
+            String replyMessageWithImage = replyMessage + message.getText();
+            textReplyMessage.setText(replyMessageWithImage);
+        } else {
+            textReplyMessage.setText(message.getText());
+        }
+    }
+
     private static class ListController implements MessageListener {
         private static final int MESSAGES_PER_REQUEST = 25;
         private final MessageTracker tracker;
@@ -549,10 +610,10 @@ public class WebimChatFragment extends Fragment {
         private boolean requestingMessages;
 
         static ListController install(WebimChatFragment webimChatFragment,
-                                             RecyclerView recyclerView,
-                                             ProgressBar progressBar,
-                                             MessageStream messageStream,
-                                             View rootView) {
+                                      RecyclerView recyclerView,
+                                      ProgressBar progressBar,
+                                      MessageStream messageStream,
+                                      View rootView) {
             return new ListController(webimChatFragment,
                     recyclerView,
                     progressBar,
@@ -607,10 +668,12 @@ public class WebimChatFragment extends Fragment {
         private void requestMore(final boolean flage) {
             requestingMessages = true;
             progressBar.setVisibility(View.VISIBLE);
-            recyclerView.setVisibility(View.GONE);
+            if (flage) {
+                recyclerView.setVisibility(View.GONE);
+            }
             tracker.getNextMessages(MESSAGES_PER_REQUEST, new MessageTracker.GetMessagesCallback() {
                 @Override
-                public void receive(@NonNull List<? extends Message> received) {
+                public void receive(@NonNull final List<? extends Message> received) {
                     requestingMessages = false;
                     progressBar.setVisibility(View.GONE);
                     recyclerView.setVisibility(View.VISIBLE);
@@ -625,6 +688,12 @@ public class WebimChatFragment extends Fragment {
                                 @Override
                                 public void run() {
                                     recyclerView.smoothScrollToPosition(0);
+                                    int itemCount = layoutManager.getItemCount();
+                                    int lastItemVisible =
+                                            layoutManager.findLastVisibleItemPosition() + 1;
+                                    if (itemCount == lastItemVisible) {
+                                        requestMore();
+                                    }
                                 }
                             }, 100);
                         }
@@ -673,6 +742,10 @@ public class WebimChatFragment extends Fragment {
             if (!requestingMessages) {
                 requestMore();
             }
+        }
+
+        private void showReplyMessage(int position) {
+            recyclerView.smoothScrollToPosition(position);
         }
     }
 }

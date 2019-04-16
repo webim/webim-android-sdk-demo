@@ -14,7 +14,9 @@ import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -33,6 +35,7 @@ public class ImageActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image);
 
+        initActionBar();
         final TouchImageView imageView = findViewById(R.id.imageView);
         imageView.setVisibility(View.VISIBLE);
 
@@ -49,6 +52,15 @@ public class ImageActivity extends AppCompatActivity {
                     }
                 });
             }
+        }
+    }
+
+    private void initActionBar() {
+        this.setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+        final ActionBar actionBar = this.getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setDisplayShowHomeEnabled(false);
         }
     }
 
@@ -116,6 +128,9 @@ public class ImageActivity extends AppCompatActivity {
                         .create()
                         .show();
                 break;
+            case android.R.id.home:
+                onBackPressed();
+                return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -128,5 +143,11 @@ public class ImageActivity extends AppCompatActivity {
         if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             downloadImage();
         }
+    }
+
+    @Override
+    public void onBackPressed(){
+        super.onBackPressed();
+        overridePendingTransition(R.anim.pull_in_left, R.anim.push_out_right);
     }
 }

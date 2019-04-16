@@ -22,4 +22,15 @@
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
+    <style name="AppTheme.ButtonGreen" parent="Widget.AppCompat.Button.Colored">
+        <item name="colorButtonNormal">@color/colorAccent</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="AppTheme.ButtonPurple" parent="Widget.AppCompat.Button.Colored">
+        <item name="colorButtonNormal">@color/purple</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+
 </resources>

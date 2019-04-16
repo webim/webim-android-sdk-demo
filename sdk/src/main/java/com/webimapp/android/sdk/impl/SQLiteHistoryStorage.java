@@ -95,10 +95,14 @@ public class SQLiteHistoryStorage implements HistoryStorage {
             Cursor c = db.rawQuery(
                     "SELECT ts FROM HISTORY ORDER BY ts ASC LIMIT 1",
                     new String[0]);
-            if (c.moveToNext()) {
-                firstKnownTs = c.getLong(c.getColumnIndex("ts"));
+            try {
+                if (c.moveToNext()) {
+                    firstKnownTs = c.getLong(c.getColumnIndex("ts"));
+                }
+            } finally {
+                c.close();
+                db.close();
             }
-            c.close();
         }
     }
 
@@ -135,18 +139,17 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                         }
 
                         newFirstKnownTs = Math.min(newFirstKnownTs, historyId.getTimeMicros());
+                        Cursor cursor = db.rawQuery(
+                                "SELECT * FROM history WHERE ts > ? ORDER BY ts ASC LIMIT 1",
+                                new String[]{Long.toString(message.getTimeMicros())});
                         try {
                             insertStatement.bindString(1, message.getId().toString());
                             bindMessageFields(insertStatement, 2, message);
                             insertStatement.executeInsert();
 
-                            Cursor cursor = db.rawQuery(
-                                    "SELECT * FROM history WHERE ts > ? ORDER BY ts ASC LIMIT 1",
-                                    new String[]{Long.toString(message.getTimeMicros())});
                             runMessageAdded(callback,
                                     cursor.moveToNext() ? createMessage(cursor).getHistoryId() : null,
                                     message);
-                            cursor.close();
                         } catch (SQLiteConstraintException ignored) {
                             bindMessageFields(updateStatement, 1, message);
                             updateStatement.bindString(9, message.getId().toString()/*historyId.getDbId()*/);
@@ -158,6 +161,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                         } finally {
                             insertStatement.clearBindings();
                             updateStatement.clearBindings();
+                            cursor.close();
                         }
                     }
                 }
@@ -183,6 +187,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                         callback.endOfBatch();
                     }
                 });
+                db.close();
             }
         });
     }
@@ -369,6 +374,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                 if (newFirstKnownTs != Long.MAX_VALUE) {
                     firstKnownTs = newFirstKnownTs;
                 }
+                db.close();
             }
         });
     }
@@ -383,10 +389,14 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                 Cursor c = db.rawQuery("SELECT * FROM history ORDER BY ts DESC LIMIT ?",
                         new String[]{Integer.toString(limit)});
                 List<Message> list = new ArrayList<>();
-                while (c.moveToNext()) {
-                    list.add(createMessage(c));
+                try {
+                    while (c.moveToNext()) {
+                        list.add(createMessage(c));
+                    }
+                } finally {
+                    c.close();
+                    db.close();
                 }
-                c.close();
                 Collections.reverse(list);
                 runMessageList(callback, list);
             }
@@ -403,10 +413,14 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                         "SELECT * FROM history ORDER BY ts ASC",
                         new String[]{});
                 List<Message> messageList = new ArrayList<>();
-                while (cursor.moveToNext()) {
-                    messageList.add(createMessage(cursor));
+                try {
+                    while (cursor.moveToNext()) {
+                        messageList.add(createMessage(cursor));
+                    }
+                } finally {
+                    cursor.close();
+                    db.close();
                 }
-                cursor.close();
                 runMessageList(callback, messageList);
             }
         });
@@ -423,10 +437,14 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                 Cursor c = db.rawQuery("SELECT * FROM history WHERE ts < ? ORDER BY ts DESC LIMIT ?",
                         new String[]{Long.toString(before.getTimeMicros()), Integer.toString(limit)});
                 List<Message> list = new ArrayList<>();
-                while (c.moveToNext()) {
-                    list.add(createMessage(c));
+                try {
+                    while (c.moveToNext()) {
+                        list.add(createMessage(c));
+                    }
+                } finally {
+                    c.close();
+                    db.close();
                 }
-                c.close();
                 Collections.reverse(list);
                 runMessageList(callback, list);
             }
