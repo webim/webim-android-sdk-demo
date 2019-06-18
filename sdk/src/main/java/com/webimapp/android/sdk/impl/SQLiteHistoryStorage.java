@@ -10,12 +10,16 @@ import android.database.sqlite.SQLiteStatement;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 
+import com.google.gson.reflect.TypeToken;
 import com.webimapp.android.sdk.Message;
 import com.webimapp.android.sdk.MessageTracker;
 import com.webimapp.android.sdk.Webim;
 import com.webimapp.android.sdk.impl.backend.WebimClient;
 import com.webimapp.android.sdk.impl.backend.WebimInternalLog;
+import com.webimapp.android.sdk.impl.items.KeyboardItem;
+import com.webimapp.android.sdk.impl.items.KeyboardRequestItem;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -273,6 +277,20 @@ public class SQLiteHistoryStorage implements HistoryStorage {
             }
         }
 
+        Message.Keyboard keyboardButton = null;
+        if (type == Message.Type.KEYBOARD) {
+            Type mapType = new TypeToken<KeyboardItem>() {}.getType();
+            KeyboardItem keyboard = InternalUtils.getKeyboard(data, true, mapType);
+            keyboardButton = InternalUtils.getKeyboardButton(keyboard);
+        }
+
+        Message.KeyboardRequest keyboardRequest = null;
+        if (type == Message.Type.KEYBOARD_RESPONCE) {
+            Type mapType = new TypeToken<KeyboardRequestItem>() {}.getType();
+            KeyboardRequestItem keyboard = InternalUtils.getKeyboard(data, true, mapType);
+            keyboardRequest = InternalUtils.getKeyboardRequest(keyboard);
+        }
+
         boolean isRead = ts <= readBeforeTimestamp || readBeforeTimestamp == -1;
 
         return new MessageImpl(serverUrl,
@@ -293,7 +311,9 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                 true,
                 data,
                 isRead,
-                false);
+                false,
+                keyboardButton,
+                keyboardRequest);
     }
 
     private void runMessageAdded(final UpdateHistoryCallback callback, final HistoryId before, final MessageImpl msg) {

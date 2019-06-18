@@ -35,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         initNewChatButton();
         initViewForBagde();
-        inintSettingButton();
+        initSettingButton();
         initSession();
     }
 
@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
         numberOfBadge = findViewById(R.id.textNumberOfBadge);
     }
 
-    private void inintSettingButton() {
+    private void initSettingButton() {
         Button settingsButton = findViewById(R.id.buttonCettings);
         settingsButton.setOnClickListener(new View.OnClickListener() {
             @Override

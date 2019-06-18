@@ -10,6 +10,7 @@ import com.webimapp.android.sdk.MessageStream;
 import com.webimapp.android.sdk.MessageTracker;
 import com.webimapp.android.sdk.Operator;
 import com.webimapp.android.sdk.impl.backend.LocationSettingsImpl;
+import com.webimapp.android.sdk.impl.backend.SendKeyboardErrorListener;
 import com.webimapp.android.sdk.impl.backend.SendOrDeleteMessageInternalCallback;
 import com.webimapp.android.sdk.impl.backend.WebimActions;
 import com.webimapp.android.sdk.impl.backend.WebimInternalError;
@@ -248,6 +249,34 @@ public class MessageStreamImpl implements MessageStream {
         return sendMessageInternally(message, null, isHintQuestion, null);
     }
 
+    public void sendKeyboardRequest(@NonNull String requestMessageId,
+                                    @NonNull String buttonId,
+                                    @Nullable final SendKeyboardCallback sendKeyboardCallback) {
+        final Message.Id messageId = StringId.generateForMessage();
+        actions.sendKeyboard(
+                requestMessageId,
+                buttonId,
+                new SendKeyboardErrorListener() {
+                    @Override
+                    public void onSuccess() {
+                        if (sendKeyboardCallback != null) {
+                            sendKeyboardCallback.onSuccess(messageId);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(String error) {
+                        messageHolder.onMessageSendingCancelled(messageId);
+                        if (sendKeyboardCallback != null) {
+                            sendKeyboardCallback.onFailure(
+                                    messageId,
+                                    new WebimErrorImpl<>(toPublicSendKeyboardError(error), error)
+                            );
+                        }
+                    }
+                });
+    }
+
     @Override
     public void updateWidgetStatus(@NonNull String data) {
         accessChecker.checkAccess();
@@ -257,14 +286,14 @@ public class MessageStreamImpl implements MessageStream {
 
     @Override
     public boolean editMessage(@NonNull Message message,
-                            @NonNull String text,
-                            @Nullable EditMessageCallback editMessageCallback) {
+                               @NonNull String text,
+                               @Nullable EditMessageCallback editMessageCallback) {
         return editMessageInternally(message, text, editMessageCallback);
     }
 
     @Override
     public boolean deleteMessage(@NonNull Message message,
-                              @Nullable DeleteMessageCallback deleteMessageCallback) {
+                                 @Nullable DeleteMessageCallback deleteMessageCallback) {
         return deleteMessageInternally(message, deleteMessageCallback);
     }
 
@@ -828,6 +857,21 @@ public class MessageStreamImpl implements MessageStream {
                         .QUOTED_MESSAGE_REQUIRED_ARGUMENTS_MISSING;
             default:
                 return DataMessageCallback.DataMessageError.UNKNOWN;
+        }
+    }
+
+    private SendKeyboardCallback.SendKeyboardError toPublicSendKeyboardError(String sendKeyboardError) {
+        switch (sendKeyboardError) {
+            case WebimInternalError.NO_CHAT:
+                return SendKeyboardCallback.SendKeyboardError.NO_CHAT;
+            case WebimInternalError.BUTTON_ID_NO_SET:
+                return SendKeyboardCallback.SendKeyboardError.BUTTON_ID_NO_SET;
+            case WebimInternalError.REQUEST_MESSAGE_ID_NOT_SET:
+                return SendKeyboardCallback.SendKeyboardError.REQUEST_MESSAGE_ID_NOT_SET;
+            case WebimInternalError.CAN_NOT_CREATE_RESPONSE:
+                return SendKeyboardCallback.SendKeyboardError.CAN_NOT_CREATE_RESPONSE;
+            default:
+                return SendKeyboardCallback.SendKeyboardError.UNKNOWN;
         }
     }
 

@@ -14,12 +14,15 @@ import com.webimapp.android.sdk.WebimPushNotification;
 import com.webimapp.android.sdk.impl.backend.WebimClient;
 import com.webimapp.android.sdk.impl.backend.WebimInternalLog;
 import com.webimapp.android.sdk.impl.items.FileParametersItem;
+import com.webimapp.android.sdk.impl.items.KeyboardItem;
+import com.webimapp.android.sdk.impl.items.KeyboardRequestItem;
 import com.webimapp.android.sdk.impl.items.MessageItem;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.crypto.Mac;
@@ -161,6 +164,10 @@ public final class InternalUtils {
                 return Message.Type.VISITOR;
             case CONTACT_REQUEST:
                 return Message.Type.CONTACT_REQUEST;
+            case KEYBOARD:
+                return Message.Type.KEYBOARD;
+            case KEYBOARD_RESPONCE:
+                return Message.Type.KEYBOARD_RESPONCE;
             default:
                 throw new IllegalStateException(kind.toString());
         }
@@ -289,5 +296,75 @@ public final class InternalUtils {
         }
 
         return new MessageImpl.ImageInfoImpl(url, size.getWidth(), size.getHeight());
+    }
+
+    public static <T> T getKeyboard(String data, boolean isHistoryMessage, Type mapType) {
+        if (!isHistoryMessage) {
+            return gson.fromJson(data, mapType);
+        } else {
+            JsonElement jsonElement = gson.fromJson(data, JsonElement.class);
+            return gson.fromJson(jsonElement, mapType);
+        }
+    }
+
+    public static Message.Keyboard getKeyboardButton(@Nullable KeyboardItem keyboardItem) {
+        return keyboardItem != null
+                ? new MessageImpl.KeyboardImpl(
+                        keyboardItem.getState(),
+                        extractButtons(keyboardItem),
+                        extractResponse(keyboardItem.getResponse()))
+                : null;
+    }
+
+    @Nullable
+    private static List<List<Message.KeyboardButtons>> extractButtons(@Nullable KeyboardItem keyboardItem) {
+        if (keyboardItem != null && keyboardItem.getButtons() != null) {
+            return getKeyboardButtons(keyboardItem);
+        } else {
+            return null;
+        }
+    }
+
+    private static List<List<Message.KeyboardButtons>> getKeyboardButtons(KeyboardItem keyboardItem) {
+        List<List<Message.KeyboardButtons>> keyboardButtons = new ArrayList<>();
+        for (List<KeyboardItem.Buttons> buttonList : keyboardItem.getButtons()) {
+            keyboardButtons.add(getButtons(buttonList));
+        }
+        return keyboardButtons;
+    }
+
+    private static List<Message.KeyboardButtons> getButtons(List<KeyboardItem.Buttons> buttonList) {
+        List<Message.KeyboardButtons> keyboardButtonsList = new ArrayList<>();
+        for (KeyboardItem.Buttons buttons : buttonList) {
+            Message.KeyboardButtons button = new MessageImpl.KeyboardButtonsImpl(
+                    buttons.getId(),
+                    buttons.getText());
+            keyboardButtonsList.add(button);
+        }
+        return keyboardButtonsList;
+    }
+
+    @Nullable
+    private static Message.KeyboardResponse extractResponse(@Nullable KeyboardItem.Response keyboardItem) {
+        return keyboardItem != null
+                ? new MessageImpl.KeyboardResponseImpl(
+                        keyboardItem.getButtonId(),
+                        keyboardItem.getMessageId())
+                : null;
+    }
+
+    @Nullable
+    public static Message.KeyboardRequest getKeyboardRequest(@Nullable KeyboardRequestItem keyboardRequestItem) {
+        return keyboardRequestItem != null
+                ? new MessageImpl.KeyboardRequestImpl(
+                        extractButton(keyboardRequestItem.getButton()),
+                        keyboardRequestItem.getRequest().getMessageId())
+                : null;
+    }
+
+    private static Message.KeyboardButtons extractButton(KeyboardRequestItem.Button keyboardRequest) {
+        return new MessageImpl.KeyboardButtonsImpl(
+                keyboardRequest.getId(),
+                keyboardRequest.getText());
     }
 }

@@ -52,4 +52,9 @@ public class WebimInternalError {
     // Rate operator errors.
 	public static final String NO_CHAT = "no-chat";
 	public static final String OPERATOR_NOT_IN_CHAT = "operator-not-in-chat";
+
+	//Errors for sending keyboard
+	public static final String BUTTON_ID_NO_SET = "button-id-not-set";
+	public static final String REQUEST_MESSAGE_ID_NOT_SET = "request-message-id-not-set";
+	public static final String CAN_NOT_CREATE_RESPONSE = "can-not-create-response";
 }

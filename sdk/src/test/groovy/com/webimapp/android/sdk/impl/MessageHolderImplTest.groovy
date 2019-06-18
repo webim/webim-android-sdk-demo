@@ -43,7 +43,9 @@ class MessageHolderImplTest extends Specification {
                     true,
                     null,
                     false,
-                    false)
+                    false,
+                    null,
+                    null)
         }
         msgIndCounter += count
         history
@@ -66,7 +68,9 @@ class MessageHolderImplTest extends Specification {
                     false,
                     null,
                     false,
-                    true)
+                    true,
+                    null,
+                    null)
         }
         msgIndCounter += count
         curChat
@@ -88,7 +92,9 @@ class MessageHolderImplTest extends Specification {
                     true,
                     null,
                     false,
-                    true)
+                    true,
+                    null,
+                    null)
         }
     }
 
@@ -108,7 +114,9 @@ class MessageHolderImplTest extends Specification {
                 false,
                 null,
                 false,
-                true)
+                true,
+                null,
+                null)
     }
 
     MessageImpl newEditedCurrentChat(MessageImpl orig) {
@@ -126,7 +134,9 @@ class MessageHolderImplTest extends Specification {
                 false,
                 null,
                 false,
-                true)
+                true,
+                null,
+                null)
     }
 
     MessageImpl newEditedHistory(MessageImpl orig) {
@@ -144,7 +154,9 @@ class MessageHolderImplTest extends Specification {
                 true,
                 null,
                 false,
-                false)
+                false,
+                null,
+                null)
     }
 
     MessageHolderImpl newMessageHolderWithHistory(RemoteHistoryProvider history) {

@@ -22,6 +22,7 @@ public interface WebimService {
     String PARAMETER_ACTION = "action";
     String PARAMETER_APP_VERSION = "app-version";
     String PARAMETER_AUTHORIZATION_TOKEN = "auth-token";
+    String PARAMETER_BUTTON_ID = "button-id";
     String PARAMETER_CHAT_DEPARTMENT_KEY = "department-key";
     String PARAMETER_CHAT_FIRST_QUESTION = "first-question";
     String PARAMETER_CHAT_FORCE_ONLINE = "force-online";
@@ -46,6 +47,7 @@ public interface WebimService {
     String PARAMETER_PUSH_SERVICE = "push-service";
     String PARAMETER_PUSH_TOKEN = "push-token";
     String PARAMETER_RESPOND_IMMEDIATELY = "respond-immediately";
+    String PARAMETER_REQUEST_MESSAGE_ID = "request-message-id";
     String PARAMETER_SINCE = "since";
     String PARAMETER_TIMESTAMP = "ts";
     String PARAMETER_TIMESTAMP_BEFORE = "before-ts";
@@ -120,6 +122,16 @@ public interface WebimService {
             @Field(PARAMETER_AUTHORIZATION_TOKEN) String authorizationToken,
             @Field(PARAMETER_MESSAGE_HINT_QUESTION) Boolean isHintQuestion,
             @Field(PARAMETER_DATA) String dataJsonString
+    );
+
+    @FormUrlEncoded
+    @POST(URL_SUFFIX_ACTION)
+    Call<DefaultResponse> sendKeyboardResponse(
+            @Field(PARAMETER_PAGE_ID) String pageId,
+            @Field(PARAMETER_AUTHORIZATION_TOKEN) String authorizationToken,
+            @Field(PARAMETER_ACTION) String action,
+            @Field(PARAMETER_REQUEST_MESSAGE_ID) String requestMessageId,
+            @Field(PARAMETER_BUTTON_ID) String buttonId
     );
 
     @FormUrlEncoded

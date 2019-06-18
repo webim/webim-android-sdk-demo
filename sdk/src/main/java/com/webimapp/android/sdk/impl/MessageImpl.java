@@ -6,10 +6,14 @@ import android.support.annotation.Nullable;
 import com.webimapp.android.sdk.Message;
 import com.webimapp.android.sdk.Operator;
 
+import java.util.List;
+
 public class MessageImpl implements Message, TimeMicrosHolder {
 
     protected final @Nullable String avatarUrl;
     protected final @NonNull Id id;
+    protected final @Nullable Keyboard keyboard;
+    protected final @Nullable KeyboardRequest keyboardRequest;
     protected final @Nullable Operator.Id operatorId;
     protected final @NonNull String senderName;
     protected final @NonNull String serverUrl;
@@ -44,7 +48,9 @@ public class MessageImpl implements Message, TimeMicrosHolder {
             boolean isHistoryMessage,
             @Nullable String data,
             boolean readByOperator,
-            boolean canBeEdited
+            boolean canBeEdited,
+            @Nullable Keyboard keyboard,
+            @Nullable KeyboardRequest keyboardRequest
     ) {
         serverUrl.getClass(); // NPE
         id.getClass(); // NPE
@@ -72,6 +78,8 @@ public class MessageImpl implements Message, TimeMicrosHolder {
         this.data = data;
         this.readByOperator = readByOperator;
         this.canBeEdited = canBeEdited;
+        this.keyboard = keyboard;
+        this.keyboardRequest = keyboardRequest;
     }
 
     @Override
@@ -82,6 +90,16 @@ public class MessageImpl implements Message, TimeMicrosHolder {
     @Override
     public boolean canBeEdited() {
         return canBeEdited;
+    }
+
+    @Override
+    public Keyboard getKeyboard() {
+        return keyboard;
+    }
+
+    @Override
+    public KeyboardRequest getKeyboardRequest() {
+        return keyboardRequest;
     }
 
     public void setReadByOperator(boolean read) {
@@ -398,6 +416,109 @@ public class MessageImpl implements Message, TimeMicrosHolder {
             if (!isCurrentChat()) {
                 throw new IllegalStateException();
             }
+        }
+    }
+
+    public static class KeyboardImpl implements Keyboard {
+        private final @NonNull String state;
+        private final @Nullable List<List<KeyboardButtons>> keyboardButton;
+        private final @Nullable KeyboardResponse keyboardResponse;
+
+        public KeyboardImpl(
+                @NonNull String state,
+                @Nullable List<List<KeyboardButtons>> keyboardButton,
+                @Nullable KeyboardResponse keyboardResponse) {
+            this.state = state;
+            this.keyboardButton = keyboardButton;
+            this.keyboardResponse = keyboardResponse;
+        }
+
+        @Nullable
+        @Override
+        public List<List<KeyboardButtons>> getButtons() {
+            return keyboardButton;
+        }
+
+        @NonNull
+        @Override
+        public String getState() {
+            return state;
+        }
+
+        @Nullable
+        @Override
+        public KeyboardResponse getKeyboardResponse() {
+            return keyboardResponse;
+        }
+    }
+
+    public static class KeyboardButtonsImpl implements KeyboardButtons {
+        private final @NonNull String id;
+        private final @NonNull String text;
+
+        public KeyboardButtonsImpl(@NonNull String id, @NonNull String text) {
+            this.id = id;
+            this.text = text;
+        }
+
+        @NonNull
+        @Override
+        public String getId() {
+            return id;
+        }
+
+        @NonNull
+        @Override
+        public String getText() {
+            return text;
+        }
+    }
+
+    public static class KeyboardResponseImpl implements KeyboardResponse {
+        private final @NonNull String buttonId;
+        private final @NonNull String messageId;
+
+        public KeyboardResponseImpl(
+                @NonNull String buttonId,
+                @NonNull String messageId) {
+            this.buttonId = buttonId;
+            this.messageId = messageId;
+        }
+
+        @NonNull
+        @Override
+        public String getButtonId() {
+            return buttonId;
+        }
+
+        @NonNull
+        @Override
+        public String getMessageId() {
+            return messageId;
+        }
+    }
+
+    public static class KeyboardRequestImpl implements Message.KeyboardRequest {
+        private final @NonNull KeyboardButtons button;
+        private final @NonNull String messageId;
+
+        public KeyboardRequestImpl(
+                @NonNull KeyboardButtons button,
+                @NonNull String messageId) {
+            this.button = button;
+            this.messageId = messageId;
+        }
+
+        @NonNull
+        @Override
+        public KeyboardButtons getButtons() {
+            return button;
+        }
+
+        @NonNull
+        @Override
+        public String getMessageId() {
+            return messageId;
         }
     }
 }

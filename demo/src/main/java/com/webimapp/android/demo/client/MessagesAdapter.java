@@ -11,6 +11,7 @@ import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
 import android.text.format.DateFormat;
+import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -138,6 +139,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                 return R.layout.item_op_busy_message;
             case INFO:
                 return R.layout.item_info_message;
+            case KEYBOARD:
+            case KEYBOARD_RESPONCE:
+                return R.layout.item_info_message;
             default:
                 return R.layout.item_info_message;
         }
@@ -195,7 +199,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             messageTick = itemView.findViewById(R.id.tick);
         }
 
-        public void bind(Message message, boolean showDate) {
+        public void bind(final Message message, boolean showDate) {
             this.message = message;
 
             if (messageText != null) {
@@ -233,8 +237,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
     }
 
     class FileMessageHolder extends MessageHolder {
-        // Should be the same as in the server configuration
-        private static final int THUMB_SIZE = 300;
+
+        private final double PORTAIN_ORIENTATION = 0.6;
+        private final double LANDSCAPE_ORIENTATION = 0.8;
 
         ImageView thumbView;
 
@@ -292,16 +297,16 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
         }
 
         private Size getThumbSize(Message.ImageInfo imageInfo) {
-            int width = imageInfo.getWidth();
-            int height = imageInfo.getHeight();
-            if (height > width) {
-                width = THUMB_SIZE * width / height;
-                height = THUMB_SIZE;
-            } else {
-                height = THUMB_SIZE * height / width;
-                width = THUMB_SIZE;
-            }
-            return new Size(width, height);
+            DisplayMetrics displayMetrics = new DisplayMetrics();
+            webimChatFragment.getActivity().getWindowManager().
+                    getDefaultDisplay().getMetrics(displayMetrics);
+            int imageWidth =  Math.min(displayMetrics.widthPixels, displayMetrics.heightPixels);
+            double width = imageInfo.getWidth();
+            double height = imageInfo.getHeight();
+            double sideImageRatio = width / height;
+            width = imageWidth * (height > width ? PORTAIN_ORIENTATION : LANDSCAPE_ORIENTATION);
+            height = width / sideImageRatio;
+            return new Size((int) width, (int) height);
         }
 
         private void setViewSize(ImageView view, Size size) {

@@ -283,6 +283,23 @@ public interface MessageStream {
     void updateWidgetStatus(@NonNull String data);
 
     /**
+     * Sends a button from keyboard.
+     * When calling this method, if there is an active {@link MessageTracker} (see
+     * {@link MessageStream#newMessageTracker}),
+     * {@link MessageListener#messageAdded(Message, Message)} with a message
+     * @see Message#getKeyboard()
+     * @param requestMessageId id of the message
+     * @param buttonId the id of the button that the user selected
+     * @param sendKeyboardCallback shows if a call is completed or failed
+     * @throws IllegalStateException if the WebimSession was destroyed
+     * @throws RuntimeException if the method was called not from the thread the WebimSession was
+     * created in
+     */
+    void sendKeyboardRequest(@NonNull String requestMessageId,
+                             @NonNull String buttonId,
+                             @Nullable SendKeyboardCallback sendKeyboardCallback);
+
+    /**
      * Edits a previously sent text message.
      * When calling this method, if there is an active {@link MessageTracker} (see
      * {@link MessageStream#newMessageTracker}),
@@ -297,8 +314,8 @@ public interface MessageStream {
      * created in
      */
     boolean editMessage(@NonNull Message message,
-                     @NonNull String text,
-                     @Nullable EditMessageCallback editMessageCallback);
+                        @NonNull String text,
+                        @Nullable EditMessageCallback editMessageCallback);
 
     /**
      * Deletes a message.
@@ -490,6 +507,53 @@ public interface MessageStream {
              * To be raised when wrong quoted message ID is sent.
              */
             QUOTED_MESSAGE_WRONG_ID
+        }
+    }
+
+    /**
+     * @see MessageStream#sendKeyboardRequest(String, String, SendKeyboardCallback)
+     */
+    interface SendKeyboardCallback {
+
+        /**
+         * Invoked when message with data field is sent successfully.
+         * @param messageId ID of the message
+         */
+        void onSuccess(@NonNull Message.Id messageId);
+
+        /**
+         * Invoked when file deleting failed.
+         * @param messageId ID of the message
+         * @param error Error
+         * @see SendKeyboardError
+         */
+        void onFailure(@NonNull Message.Id messageId,
+                       @NonNull WebimError<SendKeyboardError> error);
+
+        /**
+         * @see SendKeyboardCallback#onFailure(Message.Id, WebimError)
+         */
+        enum SendKeyboardError {
+            /**
+             * Button from keyboard sent to the wrong chat
+             */
+            NO_CHAT,
+            /**
+             * Not set button id
+             */
+            BUTTON_ID_NO_SET,
+            /**
+             * Not set request message id
+             */
+            REQUEST_MESSAGE_ID_NOT_SET,
+            /**
+             * Cannot create response
+             */
+            CAN_NOT_CREATE_RESPONSE,
+            /**
+             * Received error is not supported by current WebimClientLibrary version.
+             */
+            UNKNOWN
         }
     }
 

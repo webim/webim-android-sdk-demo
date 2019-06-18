@@ -49,4 +49,5 @@
         android:textIsSelectable="true"
         android:textSize="12sp"
         android:textStyle="italic" />
+
 </LinearLayout>

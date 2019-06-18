@@ -17,6 +17,10 @@ public interface WebimActions {
                      boolean isHintQuestion,
                      @Nullable SendOrDeleteMessageInternalCallback callback);
 
+    void sendKeyboard(@NonNull String requestMessageId,
+                      @NonNull String buttonId,
+                      @Nullable SendKeyboardErrorListener callback);
+
     void deleteMessage(@NonNull String clientSideId,
                        @Nullable SendOrDeleteMessageInternalCallback callback);
 

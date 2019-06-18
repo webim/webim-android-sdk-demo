@@ -31,6 +31,7 @@ public class WebimActionsImpl implements WebimActions {
     private static final String ACTION_VISITOR_TYPING = "chat.visitor_typing";
     private static final String ACTION_WIDGET_UPDATE = "widget.update";
     private static final String CHARACTERS_TO_ENCODE = "\n!#$&'()*+,/:;=?@[] \"%-.<>\\^_`{|}~";
+    private static final String ACTION_CHAT_KEYBOARD_RESPONSE = "chat.keyboard_response";
     @NonNull
     private final ActionRequestLoop requestLoop;
     @NonNull
@@ -69,6 +70,40 @@ public class WebimActionsImpl implements WebimActions {
                         authData.getAuthToken(),
                         (isHintQuestion ? true : null),
                         dataJsonString);
+            }
+
+            @Override
+            public void runCallback(DefaultResponse response) {
+                //noinspection ConstantConditions
+                callback.onSuccess();
+            }
+
+            @Override
+            public boolean isHandleError(@NonNull String error) {
+                return true;
+            }
+
+            @Override
+            public void handleError(@NonNull String error) {
+                //noinspection ConstantConditions
+                callback.onFailure(error);
+            }
+        });
+    }
+
+    @Override
+    public void sendKeyboard(@NonNull final String requestMessageId,
+                             @NonNull final String buttonId,
+                             @Nullable final SendKeyboardErrorListener callback) {
+        enqueue(new ActionRequestLoop.WebimRequest<DefaultResponse>(callback != null) {
+            @Override
+            public Call<DefaultResponse> makeRequest(AuthData authData) {
+                return webim.sendKeyboardResponse(
+                        authData.getPageId(),
+                        authData.getAuthToken(),
+                        ACTION_CHAT_KEYBOARD_RESPONSE,
+                        requestMessageId,
+                        buttonId);
             }
 
             @Override

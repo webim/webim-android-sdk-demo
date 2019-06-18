@@ -429,7 +429,9 @@ public class MessageHolderImpl implements MessageHolder {
                     message.isHistoryMessage,
                     message.getData(),
                     message.isReadByOperator(),
-                    message.canBeEdited());
+                    message.canBeEdited(),
+                    message.getKeyboard(),
+                    message.getKeyboardRequest());
             newMsg.sendStatus = Message.SendStatus.SENDING;
             messageTracker.messageListener.messageChanged(message, newMsg);
             return message.text;
@@ -481,7 +483,9 @@ public class MessageHolderImpl implements MessageHolder {
                     message.isHistoryMessage,
                     message.getData(),
                     message.isReadByOperator(),
-                    message.canBeEdited());
+                    message.canBeEdited(),
+                    message.getKeyboard(),
+                    message.getKeyboardRequest());
             newMsg.sendStatus = Message.SendStatus.SENT;
             messageTracker.messageListener.messageChanged(message, newMsg);
         }

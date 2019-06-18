@@ -3,6 +3,8 @@ package com.webimapp.android.sdk;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import java.util.List;
+
 /**
  * Abstracts a single message in the message history. A message is an immutable object. It means that for changing 
  * some of the message fields there will be created a new object. That is why messages can be compared by using ({@code equals}) for searching messages
@@ -122,6 +124,14 @@ public interface Message {
 		 */
         INFO,
         /**
+         * The system message that the chat bot sends.
+         */
+        KEYBOARD,
+        /**
+         * A system message from the chat bot containing information about the button that the user selected.
+         */
+        KEYBOARD_RESPONCE,
+        /**
          * A text message sent by an operator.
          */
         OPERATOR,
@@ -218,5 +228,88 @@ public interface Message {
          * @return height of an image
          */
         int getHeight();
+    }
+
+    /**
+     * @return keyboard item for chat bot
+     */
+    @Nullable
+    Keyboard getKeyboard();
+
+    /**
+     * @return the button that was pressed in keyboard item
+     */
+    @Nullable
+    KeyboardRequest getKeyboardRequest();
+
+    /**
+     * Contains information about keyboard item.
+     * @see Message#getKeyboard()
+     */
+    interface Keyboard {
+        /**
+         * @return List of buttons from keyboard item
+         */
+        @Nullable List<List<KeyboardButtons>> getButtons();
+
+        /**
+         * @return state from keyboard item
+         */
+        @Nullable String getState();
+
+        /**
+         * @return the button that was pressed in keyboard item
+         */
+        @Nullable
+        KeyboardResponse getKeyboardResponse();
+    }
+
+    /**
+     * Contains information about buttons in keyboard item.
+     * @see Keyboard#getButtons()
+     */
+    interface KeyboardButtons {
+        /**
+         * @return the id of the button in the keyboard item that will be shown in the chat
+         */
+        @NonNull String getId();
+
+        /**
+         * @return the text of the button in the keyboard item that will be shown in the chat
+         */
+        @NonNull String getText();
+    }
+
+    /**
+     * Contains information about the pressed button in keyboard item.
+     * @see Keyboard#getKeyboardResponse()
+     */
+    interface KeyboardResponse {
+        /**
+         * @return the button id that was pressed in keyboard item
+         */
+        @NonNull String getButtonId();
+
+        /**
+         * @return the button text that was pressed in keyboard item
+         */
+        @NonNull String getMessageId();
+    }
+
+    /**
+     * Contains information about the pressed button in keyboard item.
+     * @see Message#getKeyboardRequest()
+     */
+    interface KeyboardRequest {
+        /**
+         * @return the button that was pressed in keyboard item
+         */
+        @Nullable
+        KeyboardButtons getButtons();
+
+        /**
+         * @return the message id that was pressed in keyboard item
+         */
+        @NonNull String getMessageId();
     }
 }

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -52,7 +51,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/message_body"
-
         android:layout_toStartOf="@+id/tick"
         android:layout_toLeftOf="@+id/tick"
         android:maxWidth="1000dp"
@@ -72,7 +70,6 @@
         android:layout_alignBottom="@id/text_message_time"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
-
         android:layout_marginBottom="3dp"
         android:src="@drawable/ic_double_tick" />
 
@@ -81,10 +78,10 @@
         style="?android:attr/progressBarStyleSmall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBottom="@id/message_body"
+        android:layout_below="@+id/message_body"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
         android:layout_marginRight="4dp"
         android:layout_marginEnd="4dp"
-        android:layout_toLeftOf="@id/message_body"
-        android:layout_toStartOf="@id/message_body"
         android:visibility="gone" />
 </RelativeLayout>

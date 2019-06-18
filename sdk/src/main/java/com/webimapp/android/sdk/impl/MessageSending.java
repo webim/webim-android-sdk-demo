@@ -23,7 +23,9 @@ public class MessageSending extends MessageImpl {
                 false,
                 null,
                 false,
-                false);
+                false,
+                null,
+                null);
     }
 
     @NonNull

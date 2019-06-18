@@ -730,7 +730,8 @@ public class WebimChatFragment extends Fragment {
             int ind = adapter.lastIndexOf(from);
             if (ind != -1) {
                 adapter.set(ind, to);
-                adapter.notifyItemChanged(adapter.getItemCount() - ind - 1);
+                adapter.notifyItemChanged(adapter.getItemCount() - ind - 1, 42);
+                recyclerView.setItemAnimator(null);
             }
         }
 

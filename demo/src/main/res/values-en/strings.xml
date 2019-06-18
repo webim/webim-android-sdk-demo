@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Webim demo chat</string>
-    <string name="first_screen_text1">Welcome to the demo app\nWebim Mobile SDK!</string>
-    <string name="first_screen_text2">To start a chat tap on the button below.</string>
-    <string name="first_screen_text3">Operator can answer to your chat at:</string>
+    <string name="first_screen_text1">Welcome to the Demo App for\nWebim Mobile SDK!</string>
+    <string name="first_screen_text2">Tap the button below to start chatting.</string>
+    <string name="first_screen_text3">Sign in as an agent to answer this chat at:</string>
     <string name="first_screen_text4">https://demo.webim.ru</string>
     <string name="first_screen_text5">Login: o@webim.ru</string>
     <string name="first_screen_text6">Password: password</string>
-    <string name="first_screen_text7">This app source code can be found at:</string>
+    <string name="first_screen_text7">Source code of this app can be found at:</string>
     <string name="first_screen_text8">https://github.com/webim/webim-android-sdk-demo</string>
     <string name="image_logo_content_description">Logo</string>
     <string name="button_text_start_chat">Start chat</string>
@@ -51,6 +51,7 @@
     <string name="prefs_account_summary">Webim account name or full server address (for example, \'demo\' или \'https://demo.webim.ru\')</string>
     <string name="prefs_location_summary">location</string>
     <string name="prefs_location_title">Dislocation</string>
+    <string name="prefs_privacy">Privacy</string>
 
     <string name="typing">typing…</string>
 
@@ -65,7 +66,7 @@
     <string name="rate_operator">Rate operator</string>
     <string name="close_chat">Close chat</string>
 
-    <string name="no_operator">without operator</string>
+    <string name="no_operator">agents not available</string>
     <string name="operator_typing">%1$s typing…</string>
     <string name="operator_name">%1$s</string>
 

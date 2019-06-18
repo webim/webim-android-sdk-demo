@@ -185,6 +185,10 @@ public final class MessageItem implements Comparable<MessageItem> {
         FILE_FROM_VISITOR,
         @SerializedName("info")
         INFO,
+        @SerializedName("keyboard")
+        KEYBOARD,
+        @SerializedName("keyboard_response")
+        KEYBOARD_RESPONCE,
         @SerializedName("operator")
         OPERATOR,
         @SerializedName("operator_busy")

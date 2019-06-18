@@ -869,32 +869,26 @@ public class WebimSessionImpl implements WebimSession {
                 switch (deltaType) {
                     case CHAT: {
                         handleChatDelta(deltaItem);
-
                         break;
                     }
                     case CHAT_MESSAGE: {
                         handleChatMessageDelta(deltaItem);
-
                         break;
                     }
                     case CHAT_OPERATOR: {
                         handleChatOperatorDelta(deltaItem);
-
                         break;
                     }
                     case CHAT_OPERATOR_TYPING: {
                         handleChatOperatorTypingDelta(deltaItem);
-
                         break;
                     }
                     case CHAT_READ_BY_VISITOR: {
                         handleChatReadByVisitorDelta(deltaItem);
-
                         break;
                     }
                     case CHAT_STATE: {
                         handleChatStateDelta(deltaItem);
-
                         break;
                     }
                     case CHAT_UNREAD_BY_OPERATOR_SINCE_TIMESTAMP: {
@@ -904,17 +898,14 @@ public class WebimSessionImpl implements WebimSession {
                     }
                     case DEPARTMENT_LIST: {
                         handleDepartmentListDelta(deltaItem);
-
                         break;
                     }
                     case HISTORY_REVISION: {
                         handleHistoryRevision(deltaItem);
-
                         break;
                     }
                     case OPERATOR_RATE: {
                         handleOperatorRateDelta(deltaItem);
-
                         break;
                     }
                     case READ_MESSAGE: {
@@ -927,7 +918,6 @@ public class WebimSessionImpl implements WebimSession {
                     }
                     case VISIT_SESSION_STATE: {
                         handleVisitSessionStateDelta(deltaItem);
-
                         break;
                     }
                     default: {

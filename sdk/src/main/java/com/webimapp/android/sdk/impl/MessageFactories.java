@@ -4,12 +4,16 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.webimapp.android.sdk.Message;
 import com.webimapp.android.sdk.Operator;
 import com.webimapp.android.sdk.impl.backend.WebimClient;
+import com.webimapp.android.sdk.impl.items.KeyboardItem;
+import com.webimapp.android.sdk.impl.items.KeyboardRequestItem;
 import com.webimapp.android.sdk.impl.items.MessageItem;
 import com.webimapp.android.sdk.impl.items.OperatorItem;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,6 +55,20 @@ public final class MessageFactories {
                 ? null
                 : new Gson().toJson(json);
 
+        Message.Keyboard keyboardButton = null;
+        if (kind == MessageItem.WMMessageKind.KEYBOARD) {
+            Type mapType = new TypeToken<KeyboardItem>(){}.getType();
+            KeyboardItem keyboard = InternalUtils.getKeyboard(data, isHistoryMessage, mapType);
+            keyboardButton = InternalUtils.getKeyboardButton(keyboard);
+        }
+
+        Message.KeyboardRequest keyboardRequest = null;
+        if (kind == MessageItem.WMMessageKind.KEYBOARD_RESPONCE) {
+            Type mapType = new TypeToken<KeyboardRequestItem>(){}.getType();
+            KeyboardRequestItem keyboard = InternalUtils.getKeyboard(data, isHistoryMessage, mapType);
+            keyboardRequest = InternalUtils.getKeyboardRequest(keyboard);
+        }
+
         return new MessageImpl(serverUrl,
                 StringId.forMessage(message.getClientSideId()),
                 InternalUtils.getOperatorId(message),
@@ -65,7 +83,9 @@ public final class MessageFactories {
                 isHistoryMessage,
                 data,
                 message.isRead(),
-                message.canBeEdited());
+                message.canBeEdited(),
+                keyboardButton,
+                keyboardRequest);
     }
 
     public interface Mapper<T extends MessageImpl> {
