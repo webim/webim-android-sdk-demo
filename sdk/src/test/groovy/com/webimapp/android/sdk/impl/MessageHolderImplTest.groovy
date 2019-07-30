@@ -44,6 +44,8 @@ class MessageHolderImplTest extends Specification {
                     null,
                     false,
                     false,
+                    false,
+                    null,
                     null,
                     null)
         }
@@ -69,6 +71,8 @@ class MessageHolderImplTest extends Specification {
                     null,
                     false,
                     true,
+                    false,
+                    null,
                     null,
                     null)
         }
@@ -93,6 +97,8 @@ class MessageHolderImplTest extends Specification {
                     null,
                     false,
                     true,
+                    false,
+                    null,
                     null,
                     null)
         }
@@ -115,6 +121,8 @@ class MessageHolderImplTest extends Specification {
                 null,
                 false,
                 true,
+                false,
+                null,
                 null,
                 null)
     }
@@ -135,6 +143,8 @@ class MessageHolderImplTest extends Specification {
                 null,
                 false,
                 true,
+                false,
+                null,
                 null,
                 null)
     }
@@ -154,7 +164,9 @@ class MessageHolderImplTest extends Specification {
                 true,
                 null,
                 false,
+                true,
                 false,
+                null,
                 null,
                 null)
     }

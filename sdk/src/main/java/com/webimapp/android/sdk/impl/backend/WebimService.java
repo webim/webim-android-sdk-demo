@@ -42,6 +42,7 @@ public interface WebimService {
     String PARAMETER_OPERATOR_RATING = "rate";
     String PARAMETER_PAGE_ID = "page-id";
     String PARAMETER_PLATFORM = "platform";
+    String PARAMETER_QUOTE = "quote";
     String PARAMETER_PRECHAT_KEY_INDEPENDENT_FIELDS = "prechat-key-independent-fields";
     String PARAMETER_PROVIDED_AUTHORIZATION_TOKEN = "provided_auth_token";
     String PARAMETER_PUSH_SERVICE = "push-service";
@@ -122,6 +123,17 @@ public interface WebimService {
             @Field(PARAMETER_AUTHORIZATION_TOKEN) String authorizationToken,
             @Field(PARAMETER_MESSAGE_HINT_QUESTION) Boolean isHintQuestion,
             @Field(PARAMETER_DATA) String dataJsonString
+    );
+
+    @FormUrlEncoded
+    @POST(URL_SUFFIX_ACTION)
+    Call<DefaultResponse> replyMessage(
+            @Field(PARAMETER_ACTION) String action,
+            @Field(value = PARAMETER_MESSAGE, encoded = true) String message,
+            @Field(PARAMETER_CLIENT_SIDE_ID) String clientSideId,
+            @Field(PARAMETER_QUOTE) String quoteMessage,
+            @Field(PARAMETER_PAGE_ID) String pageId,
+            @Field(PARAMETER_AUTHORIZATION_TOKEN) String authorizationToken
     );
 
     @FormUrlEncoded

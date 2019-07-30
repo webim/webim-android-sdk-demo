@@ -1,29 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#2F315F</color>
-    <color name="colorPrimaryDark">#030a35</color>
-    <color name="colorAccent">#0AB4A9</color>
+    <color name="colorPrimary">#272A51</color>
+    <color name="colorPrimaryDark">#181B3D</color>
+    <color name="colorAccent">#15ACD2</color>
 
-    <color name="colorBackground">#F3F4F6</color>
-    <color name="colorBackgroundActivityMain">#2F315F</color>
+    <color name="colorBackground">#EEEFF4</color>
+    <color name="colorBackgroundActivityMain">#272A51</color>
+    <color name="colorBackgroundDialog">#333333</color>
+    <color name="colorBackgroundChatMenu">#99000000</color>
 
-    <color name="colorText">#2F315F</color>
-    <color name="colorTextActivityMain">#ffffff</color>
+    <color name="colorText">#272A51</color>
+    <color name="colorTextActivityMain">#FFFFFF</color>
+    <color name="colorTexWhenTyping">#BDC0CA</color>
 
-    <color name="sendingMsgBubble">#FFFFFF</color>
-    <color name="incomingMsgBubble">#22C2D8</color>
-    <color name="sendingMsgText">#6A6E89</color>
-    <color name="incomingMsgText">#FFFFFF</color>
-    <color name="sendingMsgTimeText">#C9CCDD</color>
-    <color name="incomingMsgTimeText">#C9CCDD</color>
-    <color name="message_border">#A2A7CC</color>
+    <color name="infoMsgBubble">#145C5F8A</color>
 
-    <color name="systemMsg">#806A6E89</color>
+    <color name="receivedMsgBubble">#FFFFFF</color>
+    <color name="receivedMsgText">#272A51</color>
+    <color name="receivedMsgTimeText">#805C5F8A</color>
+    <color name="receivedMsgSelect">#E4F9FF</color>
+
+    <color name="sendingMsgBubble">#15ACD2</color>
+    <color name="sendingMsgText">#FFFFFF</color>
+    <color name="sendingMsgTimeText">#805C5F8A</color>
+    <color name="sendingMsgSelect">#008AAD</color>
+
+    <color name="message_border">#E0E2EA</color>
+    <color name="items_border">#5C5F8A</color>
+
+    <color name="systemMsg">#5C5F8A</color>
+    <color name="systemMsgTime">#805C5f8A</color>
+    <color name="colorHintText">#8A393F6B</color>
+
+    <color name="circleForAnimation">#FFFFFF</color>
 
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
     <color name="orange">#FFA500</color>
     <color name="grey">#808080</color>
     <color name="purple">#26274C</color>
-    <color name="blue">#22C2D8</color>
+    <color name="blue">#15ACD2</color>
 </resources>

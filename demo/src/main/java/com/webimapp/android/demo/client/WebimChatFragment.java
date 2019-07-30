@@ -4,7 +4,9 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.drawable.AnimationDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -20,11 +22,10 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.EditText;
@@ -33,6 +34,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RatingBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -58,14 +60,10 @@ import java.util.List;
 public class WebimChatFragment extends Fragment {
     private static final int FILE_SELECT_CODE = 0;
 
-    private final int menuRateOperator = Menu.FIRST;
-    private final int menuCloseChat = Menu.FIRST + 1;
-    private MenuItem rateOperatorItem;
-    private MenuItem closeChatItem;
-
     private WebimSession session;
     private ListController listController;
     private Message inEdit = null;
+    private Message quotedMessage = null;
 
     private EditText editTextMessage;
     private ImageButton sendButton;
@@ -75,16 +73,19 @@ public class WebimChatFragment extends Fragment {
     private TextView textSenderName;
     private TextView textReplyMessage;
     private int replyMessagePosition;
+    private TextView textReplyId;
+
+    private RelativeLayout chatMenuLayout;
+    private RelativeLayout rateOperatorLayout;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        setHasOptionsMenu(true);
         super.onCreate(savedInstanceState);
     }
 
     @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater,
+    public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container,
                              Bundle savedInstanceState) {
         if (this.session == null) {
@@ -98,7 +99,7 @@ public class WebimChatFragment extends Fragment {
         initEditText(rootView);
         initSendButton(rootView);
         initEditButton(rootView);
-        initAttachFileButton(rootView);
+        initChatMenu(rootView);
         initReplyLayout(rootView);
         initDeleteReply(rootView);
         initReplyMessageButton(rootView);
@@ -129,9 +130,11 @@ public class WebimChatFragment extends Fragment {
 
     @Override
     public void onDetach() {
-        final ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setSubtitle("");
+        if (getActivity() != null) {
+            final ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+            if (actionBar != null) {
+                actionBar.setSubtitle("");
+            }
         }
         super.onDetach();
     }
@@ -142,9 +145,10 @@ public class WebimChatFragment extends Fragment {
                     @Override
                     public void onOperatorChanged(@Nullable Operator oldOperator,
                                                   @Nullable Operator newOperator) {
-                        if (rateOperatorItem != null) {
-                            rateOperatorItem.setEnabled(newOperator != null);
-                        }
+                        settingRateOperatorLayout(
+                                rootView,
+                                newOperator != null);
+
                         setOperatorAvatar(rootView, newOperator);
 
                         TextView operatorNameView = rootView.findViewById(R.id.action_bar_subtitle);
@@ -197,12 +201,6 @@ public class WebimChatFragment extends Fragment {
             @Override
             public void onStateChange(@NonNull MessageStream.ChatState oldState,
                                       @NonNull MessageStream.ChatState newState) {
-                if (closeChatItem != null) {
-                    closeChatItem.setEnabled(newState != MessageStream.ChatState.NONE
-                            && newState != MessageStream.ChatState.CLOSED_BY_VISITOR
-                            && newState != MessageStream.ChatState.UNKNOWN);
-                }
-
                 if (newState == MessageStream.ChatState.CLOSED_BY_OPERATOR
                         || newState == MessageStream.ChatState.CLOSED_BY_VISITOR) {
                     showRateOperatorDialog();
@@ -212,12 +210,14 @@ public class WebimChatFragment extends Fragment {
     }
 
     private void initOperatorState(final View rootView) {
-        ((AppCompatActivity) getActivity())
-                .setSupportActionBar((Toolbar) rootView.findViewById(R.id.toolbar));
-        final ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-            actionBar.setDisplayShowHomeEnabled(true);
+        if (getActivity() != null) {
+            ((AppCompatActivity) getActivity())
+                    .setSupportActionBar((Toolbar) rootView.findViewById(R.id.toolbar));
+            final ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+            if (actionBar != null) {
+                actionBar.setDisplayHomeAsUpEnabled(true);
+                actionBar.setDisplayShowHomeEnabled(true);
+            }
         }
 
         final TextView typingView = rootView.findViewById(R.id.action_bar_subtitle);
@@ -230,13 +230,26 @@ public class WebimChatFragment extends Fragment {
         session.getStream().setOperatorTypingListener(new MessageStream.OperatorTypingListener() {
             @Override
             public void onOperatorTypingStateChanged(boolean isTyping) {
+                ImageView imageView = rootView.findViewById(R.id.image_typing);
+                imageView.setBackgroundResource(R.drawable.typing_animation);
+                AnimationDrawable animationDrawable = (AnimationDrawable) imageView.getBackground();
                 Operator currentOp = session.getStream().getCurrentOperator();
                 String operatorName = currentOp == null
                         ? getString(R.string.no_operator)
                         : currentOp.getName();
-                typingView.setText(isTyping
-                        ? getString(R.string.operator_typing, operatorName)
-                        : getString(R.string.operator_name, operatorName));
+                if (isTyping) {
+                    typingView.setText(getString(R.string.operator_typing));
+                    typingView.setTextColor(
+                            rootView.getResources().getColor(R.color.colorTexWhenTyping));
+                    imageView.setVisibility(View.VISIBLE);
+                    animationDrawable.start();
+                } else {
+                    typingView.setText(getString(R.string.operator_name, operatorName));
+                    typingView.setTextColor(
+                            rootView.getResources().getColor(R.color.white));
+                    imageView.setVisibility(View.GONE);
+                    animationDrawable.stop();
+                }
             }
         });
 
@@ -257,9 +270,11 @@ public class WebimChatFragment extends Fragment {
                         .load(operator.getAvatarUrl())
                         .into((ImageView) v.findViewById(R.id.sender_photo));
             } else {
-                ((ImageView) v.findViewById(R.id.sender_photo)).setImageDrawable(
-                        getContext().getResources()
-                                .getDrawable(R.drawable.default_operator_avatar));
+                if (getContext() != null) {
+                    ((ImageView) v.findViewById(R.id.sender_photo)).setImageDrawable(
+                            getContext().getResources()
+                                    .getDrawable(R.drawable.default_operator_avatar));
+                }
             }
             v.findViewById(R.id.sender_photo).setVisibility(View.VISIBLE);
         } else {
@@ -299,36 +314,154 @@ public class WebimChatFragment extends Fragment {
         });
     }
 
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-        rateOperatorItem = menu.add(menu.FIRST,
-                menuRateOperator,
-                menuRateOperator,
-                R.string.rate_operator);
-        if (rateOperatorItem != null) {
-            rateOperatorItem.setEnabled(session.getStream().getCurrentOperator() != null);
-        }
-        closeChatItem = menu.add(menu.FIRST, menuCloseChat, menuCloseChat, R.string.close_chat);
-        if (closeChatItem != null) {
-            MessageStream.ChatState chatState = session.getStream().getChatState();
-            closeChatItem.setEnabled(chatState != MessageStream.ChatState.NONE
-                    && chatState != MessageStream.ChatState.CLOSED_BY_VISITOR
-                    && chatState != MessageStream.ChatState.UNKNOWN);
-        }
+    private void initSendButton(View v) {
+        sendButton = v.findViewById(R.id.imageButtonSendMessage);
+        sendButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String message = editTextMessage.getText().toString();
+                editTextMessage.getText().clear();
+                message = message.trim();
+                if (!message.isEmpty()) {
+                    if (BuildConfig.DEBUG && message.equals("##OPEN")) {
+                        session.getStream().startChat();
+                    } else {
+                        if (replyLayout.getVisibility() == View.GONE) {
+                            session.getStream().sendMessage(message);
+                        } else {
+                            replyLayout.setVisibility(View.GONE);
+                            session.getStream().replyMessage(
+                                    message,
+                                    quotedMessage);
+                        }
+                    }
+                }
+            }
+        });
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case menuRateOperator:
-                showRateOperatorDialog();
-                break;
-            case menuCloseChat:
-                showCloseChatDialog();
-                break;
+    private void initEditButton(View v) {
+        editButton = v.findViewById(R.id.imageButtonAcceptChanges);
+        editButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (inEdit == null) {
+                    return;
+                }
+
+                String newText = editTextMessage.getText().toString();
+                editTextMessage.getText().clear();
+                newText = newText.trim();
+                if (!newText.isEmpty()) {
+                    session.getStream().editMessage(inEdit, newText, null);
+                } else {
+                    session.getStream().deleteMessage(inEdit, null);
+                }
+                editButton.setVisibility(View.GONE);
+                sendButton.setVisibility(View.VISIBLE);
+            }
+        });
+    }
+
+    private void initChatMenu(final View rootView) {
+        final ImageButton chatMenuButton = rootView.findViewById(R.id.imageButtonChatMenu);
+        chatMenuButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (chatMenuLayout.getVisibility() == View.GONE) {
+                    Animation animationScaleUp =
+                            AnimationUtils.loadAnimation(getContext(), R.anim.scale_up);
+                    animationScaleUp.setAnimationListener(new Animation.AnimationListener(){
+                        @Override
+                        public void onAnimationStart(Animation arg0) {
+                        }
+                        @Override
+                        public void onAnimationRepeat(Animation arg0) {
+                        }
+                        @Override
+                        public void onAnimationEnd(Animation arg0) {
+                            LinearLayout chatMenuBackground =
+                                    rootView.findViewById(R.id.chat_menu_background);
+                            Animation animationAlfaHide =
+                                    AnimationUtils.loadAnimation(getContext(), R.anim.alfa_hide);
+                            chatMenuBackground.startAnimation(animationAlfaHide);
+                            chatMenuBackground.setVisibility(View.VISIBLE);
+                        }
+                    });
+                    chatMenuLayout.startAnimation(animationScaleUp);
+                    chatMenuLayout.setVisibility(View.VISIBLE);
+                    Animation animationRotateShow =
+                            AnimationUtils.loadAnimation(getContext(), R.anim.rotate_show);
+                    chatMenuButton.startAnimation(animationRotateShow);
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                        replyLayout.setVisibility(View.GONE);
+                    }
+                } else {
+                    hideChatMenu(rootView);
+                }
+            }
+        });
+        chatMenuLayout = rootView.findViewById(R.id.chat_menu);
+        RelativeLayout newAttachmentLayout = rootView.findViewById(R.id.relLay_new_attachment);
+        rateOperatorLayout = rootView.findViewById(R.id.relLay_rate_operator);
+        chatMenuLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                hideChatMenu(rootView);
+            }
+        });
+        newAttachmentLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                hideChatMenu(rootView);
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.setType("*/*");
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+
+                try {
+                    if (getContext() != null) {
+                        startActivityForResult(
+                                Intent.createChooser(
+                                        intent, getContext().getString(R.string.file_chooser_title)),
+                                        FILE_SELECT_CODE);
+                    }
+                } catch (android.content.ActivityNotFoundException e) {
+                    if (getContext() != null) {
+                        Toast.makeText(
+                                getContext(),
+                                getContext().getString(R.string.file_chooser_not_found),
+                                Toast.LENGTH_SHORT
+                        ).show();
+                    }
+                }
+            }
+        });
+        settingRateOperatorLayout(
+                rootView,
+                session.getStream().getCurrentOperator() != null);
+    }
+
+    private void settingRateOperatorLayout(final View rootView, final boolean operatorIsAvailable) {
+        ImageView imageRateOperator = rootView.findViewById(R.id.image_rate_operator);
+        TextView textRateOperator = rootView.findViewById(R.id.text_rate_operator);
+        if (operatorIsAvailable) {
+            rateOperatorLayout.setEnabled(true);
+            imageRateOperator.setColorFilter(rootView.getResources().getColor(R.color.colorText));
+            textRateOperator.setTextColor(rootView.getResources().getColor(R.color.items_border));
+        } else {
+            rateOperatorLayout.setEnabled(false);
+            imageRateOperator.setColorFilter(rootView.getResources().getColor(R.color.colorHintText));
+            textRateOperator.setTextColor(rootView.getResources().getColor(R.color.colorHintText));
         }
-        return super.onOptionsItemSelected(item);
+        rateOperatorLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (operatorIsAvailable) {
+                    hideChatMenu(rootView);
+                    showRateOperatorDialog();
+                }
+            }
+        });
     }
 
     private void showRateOperatorDialog() {
@@ -361,94 +494,22 @@ public class WebimChatFragment extends Fragment {
         }
     }
 
-    private void showCloseChatDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        builder.setMessage(R.string.alert_close_chat)
-                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                    }
-                })
-                .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        session.getStream().closeChat();
-                    }
-                });
-        AlertDialog alert = builder.create();
-        alert.show();
-    }
-
-    private void initSendButton(View v) {
-        sendButton = v.findViewById(R.id.imageButtonSendMessage);
-        sendButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String message = editTextMessage.getText().toString();
-                editTextMessage.getText().clear();
-                message = message.trim();
-                if (!message.isEmpty()) {
-                    if (BuildConfig.DEBUG && message.equals("##OPEN")) {
-                        session.getStream().startChat();
-                    } else {
-                        session.getStream().sendMessage(message);
-                    }
-                }
-            }
-        });
-    }
-
-    private void initEditButton(View v) {
-        editButton = v.findViewById(R.id.imageButtonAcceptChanges);
-        editButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (inEdit == null) {
-                    return;
-                }
-
-                String newText = editTextMessage.getText().toString();
-                editTextMessage.getText().clear();
-                newText = newText.trim();
-                if (!newText.isEmpty()) {
-                    session.getStream().editMessage(inEdit, newText, null);
-                } else {
-                    session.getStream().deleteMessage(inEdit, null);
-                }
-                editButton.setVisibility(View.GONE);
-                sendButton.setVisibility(View.VISIBLE);
-            }
-        });
-    }
-
-    private void initAttachFileButton(View rootView) {
-        ImageButton attachButton = rootView.findViewById(R.id.imageButtonAttachFile);
-        attachButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-                intent.setType("*/*");
-                intent.addCategory(Intent.CATEGORY_OPENABLE);
-
-                try {
-                    startActivityForResult(
-                            Intent.createChooser(intent,
-                                    getContext().getString(R.string.file_chooser_title)), FILE_SELECT_CODE);
-                    getActivity().overridePendingTransition(
-                            R.anim.pull_in_right,
-                            R.anim.push_out_right);
-                } catch (android.content.ActivityNotFoundException e) {
-                    Toast.makeText(getContext(), getContext().getString(R.string.file_chooser_not_found),
-                            Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
+    private void hideChatMenu(View rootView) {
+        final ImageButton attachButton = rootView.findViewById(R.id.imageButtonChatMenu);
+        final LinearLayout linearLayout = rootView.findViewById(R.id.chat_menu_background);
+        final Animation animationRotateHide =
+                AnimationUtils.loadAnimation(getContext(), R.anim.rotate_hide);
+        attachButton.startAnimation(animationRotateHide);
+        linearLayout.setVisibility(View.GONE);
+        chatMenuLayout.setVisibility(View.GONE);
     }
 
     private void initReplyLayout(View rootView) {
         replyLayout = rootView.findViewById(R.id.linLayReplyMessage);
         textSenderName = rootView.findViewById(R.id.textViewSenderName);
         textReplyMessage = rootView.findViewById(R.id.textViewReplyText);
-        LinearLayout replyTextLayout  = rootView.findViewById(R.id.linLayReplyText);
+        textReplyId = rootView.findViewById(R.id.quote_Id);
+        LinearLayout replyTextLayout  = rootView.findViewById(R.id.linLayReplyBody);
         replyTextLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -480,10 +541,10 @@ public class WebimChatFragment extends Fragment {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        switch (requestCode) {
-            case FILE_SELECT_CODE:
-                if (resultCode == Activity.RESULT_OK) {
-                    Uri uri = data.getData();
+        if (requestCode == FILE_SELECT_CODE) {
+            if (resultCode == Activity.RESULT_OK) {
+                Uri uri = data.getData();
+                if (uri != null && getActivity() != null) {
                     String mime = getActivity().getContentResolver().getType(uri);
                     String extension = mime == null
                             ? null
@@ -494,23 +555,26 @@ public class WebimChatFragment extends Fragment {
                     File file = null;
                     try {
                         InputStream inp = getActivity().getContentResolver().openInputStream(uri);
-                        if (inp == null) {
-                            file = null;
-                        } else {
+                        if (inp != null) {
                             file = File.createTempFile("webim",
                                     extension, getActivity().getCacheDir());
                             writeFully(file, inp);
                         }
                     } catch (IOException e) {
                         Log.e("WEBIM", "failed to copy selected file", e);
-                        file.delete();
-                        file = null;
+                        if (file != null) {
+                            file.delete();
+                            file = null;
+                        }
                     }
 
                     if (file != null && name != null) {
                         final File fileToUpload = file;
-                        session.getStream().sendFile(fileToUpload,
-                                name, mime, new MessageStream.SendFileCallback() {
+                        session.getStream().sendFile(
+                                fileToUpload,
+                                name,
+                                mime,
+                                new MessageStream.SendFileCallback() {
                                     @Override
                                     public void onProgress(@NonNull Message.Id id, long sentBytes) {
 
@@ -525,35 +589,49 @@ public class WebimChatFragment extends Fragment {
                                     public void onFailure(@NonNull Message.Id id,
                                                           @NonNull WebimError<SendFileError> error) {
                                         fileToUpload.delete();
-                                        String msg;
-                                        switch (error.getErrorType()) {
-                                            case FILE_TYPE_NOT_ALLOWED:
-                                                msg = getContext().getString(
-                                                        R.string.file_upload_failed_type);
-                                                break;
-                                            case FILE_SIZE_EXCEEDED:
-                                                msg = getContext().getString(
-                                                        R.string.file_upload_failed_size);
-                                                break;
-                                            case UPLOADED_FILE_NOT_FOUND:
-                                            default:
-                                                msg = getContext().getString(
-                                                        R.string.file_upload_failed_unknown);
+                                        if (getContext() != null) {
+                                            String message;
+                                            switch (error.getErrorType()) {
+                                                case FILE_TYPE_NOT_ALLOWED:
+                                                    message = getContext().getString(
+                                                            R.string.file_upload_failed_type);
+                                                    break;
+                                                case FILE_SIZE_EXCEEDED:
+                                                    message = getContext().getString(
+                                                            R.string.file_upload_failed_size);
+                                                    break;
+                                                case UPLOADED_FILE_NOT_FOUND:
+                                                default:
+                                                    message = getContext().getString(
+                                                            R.string.file_upload_failed_unknown);
+                                            }
+                                            Toast.makeText(
+                                                    getContext(),
+                                                    message,
+                                                    Toast.LENGTH_SHORT).show();
                                         }
-                                        Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
+
                                     }
                                 });
-                        break;
+                        return;
                     }
                 }
-                if (resultCode != Activity.RESULT_CANCELED) {
-                    Toast.makeText(getContext(), getContext().getString(R.string.file_selection_failed),
-                            Toast.LENGTH_SHORT).show();
-                }
-                break;
+
+            }
+            if (resultCode != Activity.RESULT_CANCELED && getContext() != null) {
+                Toast.makeText(
+                        getContext(),
+                        getContext().getString(R.string.file_selection_failed),
+                        Toast.LENGTH_SHORT
+                ).show();
+            }
+            return;
+
         }
         super.onActivityResult(requestCode, resultCode, data);
-        getActivity().overridePendingTransition(R.anim.pull_in_left, R.anim.push_out_right);
+        if (getActivity() != null) {
+            getActivity().overridePendingTransition(R.anim.pull_in_left, R.anim.push_out_right);
+        }
     }
 
     private static void writeFully(@NonNull File to, @NonNull InputStream from) throws IOException {
@@ -585,16 +663,17 @@ public class WebimChatFragment extends Fragment {
     }
 
     void onReplyMessageAction(Message message, int position) {
-        inEdit = message;
+        quotedMessage = message;
         replyLayout.setVisibility(View.VISIBLE);
         replyMessagePosition = position;
-        textSenderName.setText(message.getSenderName());
-        if (message.getAttachment() != null) {
+        textSenderName.setText(quotedMessage.getSenderName());
+        textReplyId.setText(quotedMessage.getCurrentChatId());
+        if (quotedMessage.getAttachment() != null) {
             String replyMessage = getResources().getString(R.string.reply_message_with_image);
-            String replyMessageWithImage = replyMessage + message.getText();
+            String replyMessageWithImage = replyMessage + quotedMessage.getText();
             textReplyMessage.setText(replyMessageWithImage);
         } else {
-            textReplyMessage.setText(message.getText());
+            textReplyMessage.setText(quotedMessage.getText());
         }
     }
 
@@ -621,7 +700,7 @@ public class WebimChatFragment extends Fragment {
                     rootView);
         }
 
-        private ListController(WebimChatFragment webimChatFragment,
+        private ListController(final WebimChatFragment webimChatFragment,
                                final RecyclerView recyclerView,
                                final ProgressBar progressBar,
                                final MessageStream messageStream,
@@ -647,11 +726,20 @@ public class WebimChatFragment extends Fragment {
                     recyclerView.smoothScrollToPosition(0);
                 }
             });
+            downButton.bringToFront();
 
             scrollListener = new EndlessScrollListener(10) {
                 @Override
                 public void onLoadMore(int totalItemsCount) {
                     requestMore();
+                }
+
+                @Override
+                public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                    super.onScrolled(recyclerView, dx, dy);
+                    if (dy < 0 && downButton.isShown()) {
+                        downButton.setVisibility(View.GONE);
+                    }
                 }
             };
             scrollListener.setLoading(true);
@@ -665,10 +753,10 @@ public class WebimChatFragment extends Fragment {
             requestMore(false);
         }
 
-        private void requestMore(final boolean flage) {
+        private void requestMore(final boolean flag) {
             requestingMessages = true;
             progressBar.setVisibility(View.VISIBLE);
-            if (flage) {
+            if (flag) {
                 recyclerView.setVisibility(View.GONE);
             }
             tracker.getNextMessages(MESSAGES_PER_REQUEST, new MessageTracker.GetMessagesCallback() {
@@ -683,7 +771,7 @@ public class WebimChatFragment extends Fragment {
                         adapter.notifyItemRangeInserted(adapter.getItemCount() - 1,
                                 received.size());
 
-                        if (flage) {
+                        if (flag) {
                             recyclerView.postDelayed(new Runnable() {
                                 @Override
                                 public void run() {

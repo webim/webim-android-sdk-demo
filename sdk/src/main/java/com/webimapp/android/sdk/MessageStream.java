@@ -274,6 +274,20 @@ public interface MessageStream {
     Message.Id sendMessage(@NonNull String message, boolean isHintQuestion);
 
     /**
+     * Sends a reply on message.
+     * When calling this method, if there is an active {@link MessageTracker} (see
+     * {@link MessageStream#newMessageTracker}),
+     * {@link MessageListener#messageAdded(Message, Message)} with a message
+     * {@link Message.SendStatus#SENDING} in the status is also called.
+     * @param message text of the message
+     * @param quotedMessage the quoted message
+     * @throws IllegalStateException if the WebimSession was destroyed
+     * @throws RuntimeException if the method was called not from the thread the WebimSession was
+     * created in
+     */
+    boolean replyMessage(@NonNull String message, @NonNull Message quotedMessage);
+
+    /**
      * Update widget status. The change is displayed by the operator.
      * @param data JSON string with new widget status
      * @throws IllegalStateException if the WebimSession was destroyed
@@ -780,7 +794,7 @@ public interface MessageStream {
          * Means that a visitor has closed the chat.
          * From this state a chat can be turned into:
          * <ul>
-         * <li>{@link ChatState#NONE}, if the chat is also closed by an operator or automatically during long-term abscence of activity</li>
+         * <li>{@link ChatState#NONE}, if the chat is also closed by an operator or automatically during long-term absence of activity</li>
          * <li>{@link ChatState#QUEUE}, if a visitor sends a new message ({@link MessageStream#sendMessage(String)})</li>
          * </ul>
          */

@@ -50,6 +50,8 @@ public final class MessageFactories {
             rawText = null;
         }
 
+        Message.Quote quote = InternalUtils.getQuote(serverUrl, message.getQuote(), client);
+
         Object json = message.getData();
         String data = json == null
                 ? null
@@ -84,6 +86,8 @@ public final class MessageFactories {
                 data,
                 message.isRead(),
                 message.canBeEdited(),
+                message.canBeReplied(),
+                quote,
                 keyboardButton,
                 keyboardRequest);
     }
@@ -167,12 +171,36 @@ public final class MessageFactories {
 
         public MessageSending createText(Message.Id id, String text) {
             return new MessageSending(serverUrl, id, "", Message.Type.VISITOR,
-                    text, System.currentTimeMillis() * 1000);
+                    text, System.currentTimeMillis() * 1000, null);
+        }
+
+        public MessageSending createTextWithQuote(
+                Message.Id id,
+                String text,
+                String quoteAuthor,
+                String quoteText) {
+            MessageImpl.QuoteImpl quote = new MessageImpl.QuoteImpl(
+                    null,
+                    null,
+                    "",
+                    Message.Type.VISITOR,
+                    quoteAuthor,
+                    Message.Quote.State.PENDING,
+                    quoteText,
+                    0);
+            return new MessageSending(
+                    serverUrl,
+                    id,
+                    "",
+                    Message.Type.VISITOR,
+                    text,
+                    System.currentTimeMillis() * 1000,
+                    quote);
         }
 
         public MessageSending createFile(Message.Id id) {
             return new MessageSending(serverUrl, id, "", Message.Type.FILE_FROM_VISITOR,
-                    "", System.currentTimeMillis() * 1000);
+                    "", System.currentTimeMillis() * 1000, null);
         }
     }
 

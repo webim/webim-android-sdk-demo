@@ -9,6 +9,8 @@ public final class MessageItem implements Comparable<MessageItem> {
     private String authorId;
     @SerializedName("avatar")
     private String avatar;
+    @SerializedName("canBeReplied")
+    private boolean canBeReplied;
     @SerializedName("clientSideId")
     private String clientSideId;
 
@@ -42,6 +44,8 @@ public final class MessageItem implements Comparable<MessageItem> {
     private double tsSeconds;
     @SerializedName("ts_m")
     private long tsMicros = -1;
+    @SerializedName("quote")
+    private Quote quote;
 
     public MessageItem() {
         // Need for Gson No-args fix
@@ -82,6 +86,10 @@ public final class MessageItem implements Comparable<MessageItem> {
         return kind;
     }
 
+    public void setType(WMMessageKind newKind) {
+        kind = newKind;
+    }
+
     public String getMessage() {
         return text;
     }
@@ -100,6 +108,10 @@ public final class MessageItem implements Comparable<MessageItem> {
 
     public String getId() {
         return id;
+    }
+
+    public void setId(String newId) {
+        id = newId;
     }
 
     public String getChatId() {
@@ -132,6 +144,10 @@ public final class MessageItem implements Comparable<MessageItem> {
 
     public boolean canBeEdited() {
         return canBeEdited;
+    }
+
+    public boolean canBeReplied() {
+        return canBeReplied;
     }
 
     @Override
@@ -195,5 +211,121 @@ public final class MessageItem implements Comparable<MessageItem> {
         OPERATOR_BUSY,
         @SerializedName("visitor")
         VISITOR
+    }
+
+    public Quote getQuote() {
+        return quote;
+    }
+
+    public static final class Quote {
+        private String id;
+        private  WMMessageKind kind;
+        @SerializedName("message")
+        private QuotedMessage message;
+        private String name;
+        @SerializedName("state")
+        private State state;
+        private String text;
+
+        public String getAuthorId() {
+            return message.authorId;
+        }
+
+        public String getId() {
+            return id = message.getId();
+        }
+
+        public String getName() {
+            return name = message.getName();
+        }
+
+        public State getState() {
+            return state;
+        }
+
+        public WMMessageKind getType() {
+            return kind = message.getType();
+        }
+
+        public String getText() {
+            return text = message.getText();
+        }
+
+        public long getTimeSeconds() {
+            return message.getTimeSeconds();
+        }
+
+        public enum State {
+            @SerializedName("pending")
+            PENDING,
+            @SerializedName("filled")
+            FILLED,
+            @SerializedName("not-found")
+            NOT_FOUND
+        }
+
+        public static final class QuotedMessage {
+            @SerializedName("authorId")
+            private String authorId;
+            @SerializedName("id")
+            private String id;
+            @SerializedName("kind")
+            private  WMMessageKind kind;
+            @SerializedName("name")
+            private String name;
+            @SerializedName("text")
+            private String text;
+            @SerializedName("ts")
+            private long tsSeconds;
+
+            public String getAuthorId() {
+                return authorId;
+            }
+
+            public String getId() {
+                return id;
+            }
+
+            public String getName() {
+                return name;
+            }
+
+            public WMMessageKind getType() {
+                return kind;
+            }
+
+            public String getText() {
+                return text;
+            }
+
+            public long getTimeSeconds() {
+                return tsSeconds;
+            }
+        }
+
+        public static String getRawQuote(
+                String state,
+                String senderName,
+                String text,
+                String type,
+                long tsSeconds,
+                String authorId,
+                String id) {
+            return "{\"state\":\"" + state.toLowerCase().replace("_","-") + "\"," +
+                    "\"message\":{" +
+                        "\"channelSideId\":null," +
+                        "\"name\":" + checkOnNull(senderName) + "," +
+                        "\"text\":" + checkOnNull(text) + "," +
+                        "\"kind\":" + checkOnNull(type) + "," +
+                        "\"ts\":" + tsSeconds + "," +
+                        "\"authorId\":" + checkOnNull(authorId) +  "," +
+                        "\"id\":" + checkOnNull(id) + "" +
+                        "}" +
+                    "}";
+        }
+        
+        private static String checkOnNull(String checkValue) {
+            return (checkValue != null) ? "\"" + checkValue + "\"" : null;
+        }
     }
 }

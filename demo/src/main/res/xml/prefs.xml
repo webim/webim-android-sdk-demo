@@ -2,15 +2,20 @@
 <PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android">
     <EditTextPreference
-        android:key="account"
-        android:inputType="textUri"
         android:defaultValue="demo"
+        android:inputType="textUri"
+        android:key="account"
         android:summary="@string/prefs_account_summary"
-        android:title="@string/prefs_account_title">
-    </EditTextPreference>
+        android:textColor="@color/colorText"
+        android:textColorHighlight="#5C5F8A"
+        android:textColorHint="@color/colorHintText"
+        android:title="@string/prefs_account_title"/>
     <EditTextPreference
         android:key="location"
         android:defaultValue="mobile"
+        android:textColor="@color/colorText"
+        android:textColorHighlight="#5C5F8A"
+        android:textColorHint="@color/colorHintText"
         android:summary="@string/prefs_location_summary"
         android:title="@string/prefs_location_title">
     </EditTextPreference>
@@ -18,6 +23,9 @@
         android:key="fcm"
         android:defaultValue="true"
         android:summary="@string/prefs_notifications_summary"
+        android:textColor="@color/colorText"
+        android:textColorHighlight="#5C5F8A"
+        android:textColorHint="@color/colorHintText"
         android:title="@string/prefs_notifications_title">
     </CheckBoxPreference>
 </PreferenceScreen>

@@ -32,6 +32,8 @@ public class MessageImpl implements Message, TimeMicrosHolder {
     private HistoryId historyId;
     private boolean readByOperator;
     private boolean canBeEdited;
+    private boolean canBeReplied;
+    private @Nullable Quote quote;
 
     public MessageImpl(
             @NonNull String serverUrl,
@@ -49,6 +51,8 @@ public class MessageImpl implements Message, TimeMicrosHolder {
             @Nullable String data,
             boolean readByOperator,
             boolean canBeEdited,
+            boolean canBeReplied,
+            @Nullable Quote quote,
             @Nullable Keyboard keyboard,
             @Nullable KeyboardRequest keyboardRequest
     ) {
@@ -78,6 +82,8 @@ public class MessageImpl implements Message, TimeMicrosHolder {
         this.data = data;
         this.readByOperator = readByOperator;
         this.canBeEdited = canBeEdited;
+        this.canBeReplied = canBeReplied;
+        this.quote = quote;
         this.keyboard = keyboard;
         this.keyboardRequest = keyboardRequest;
     }
@@ -90,6 +96,16 @@ public class MessageImpl implements Message, TimeMicrosHolder {
     @Override
     public boolean canBeEdited() {
         return canBeEdited;
+    }
+
+    public boolean canBeReplied() {
+        return canBeReplied;
+    }
+
+    @Nullable
+    @Override
+    public Quote getQuote() {
+        return quote;
     }
 
     @Override
@@ -416,6 +432,91 @@ public class MessageImpl implements Message, TimeMicrosHolder {
             if (!isCurrentChat()) {
                 throw new IllegalStateException();
             }
+        }
+    }
+
+    public static class QuoteImpl implements Message.Quote {
+        @Nullable
+        private final Attachment attachment;
+        @Nullable
+        private final String authorId;
+        @Nullable
+        private final String id;
+        @Nullable
+        private final Type type;
+        @Nullable
+        private final String senderName;
+        @NonNull
+        private final State status;
+        @Nullable
+        private final String text;
+        private final
+        long timeSeconds;
+
+        public QuoteImpl(
+                @Nullable Attachment attachment,
+                @Nullable String authorId,
+                @Nullable String id,
+                @Nullable Type type,
+                @Nullable String senderName,
+                @NonNull State status,
+                @Nullable String text,
+                long timeSeconds) {
+            this.attachment = attachment;
+            this.authorId = authorId;
+            this.id = id;
+            this.type = type;
+            this.senderName = senderName;
+            this.status = status;
+            this.text = text;
+            this.timeSeconds = timeSeconds;
+        }
+
+        @Nullable
+        @Override
+        public Attachment getMessageAttachment() {
+            return attachment;
+        }
+
+        @Nullable
+        @Override
+        public String getAuthorId() {
+            return authorId;
+        }
+
+        @Nullable
+        @Override
+        public String getMessageId() {
+            return id;
+        }
+
+        @Nullable
+        @Override
+        public String getSenderName() {
+            return senderName;
+        }
+
+        @Nullable
+        @Override
+        public String getMessageText() {
+            return text;
+        }
+
+        @Nullable
+        @Override
+        public Type getMessageType() {
+            return type;
+        }
+
+        @Override
+        public long getMessageTimestamp() {
+            return timeSeconds;
+        }
+
+        @NonNull
+        @Override
+        public State getState() {
+            return status;
         }
     }
 

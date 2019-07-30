@@ -17,7 +17,7 @@ import android.support.annotation.NonNull;
 public interface ProvidedAuthorizationTokenStateListener {
     /**
      * Method is called in two cases:
-     * 1. Provided authorization token is genrated (or set by client app) and must be sent to
+     * 1. Provided authorization token is generated (or set by client app) and must be sent to
      * client server which is responsible to send it to Webim service.
      * 2. Passed provided authorization token is not valid. Provided authorization token can be
      * invalid if Webim service did not receive it from client server yet.

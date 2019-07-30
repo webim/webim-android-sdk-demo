@@ -20,6 +20,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -29,6 +30,8 @@ import com.ortiz.touchview.TouchImageView;
 
 public class ImageActivity extends AppCompatActivity {
     private Uri imageUri = null;
+    private TouchImageView imageView;
+    private ProgressBar progressBar;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -36,9 +39,13 @@ public class ImageActivity extends AppCompatActivity {
         setContentView(R.layout.activity_image);
 
         initActionBar();
-        final TouchImageView imageView = findViewById(R.id.imageView);
-        imageView.setVisibility(View.VISIBLE);
+        imageView = findViewById(R.id.imageView);
+        progressBar = findViewById(R.id.progressBar);
+    }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
         Intent callingActivityIntent = getIntent();
         if (callingActivityIntent != null) {
             imageUri = callingActivityIntent.getData();
@@ -47,7 +54,9 @@ public class ImageActivity extends AppCompatActivity {
                         .asBitmap().into(new SimpleTarget<Bitmap>() {
                     @Override
                     public void onResourceReady(Bitmap resource,
-                            GlideAnimation<? super Bitmap> glideAnimation) {
+                                                GlideAnimation<? super Bitmap> glideAnimation) {
+                        progressBar.setVisibility(View.GONE);
+                        imageView.setVisibility(View.VISIBLE);
                         imageView.setImageBitmap(resource);
                     }
                 });

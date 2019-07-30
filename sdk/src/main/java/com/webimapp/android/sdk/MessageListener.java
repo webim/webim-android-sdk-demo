@@ -12,9 +12,9 @@ public interface MessageListener {
      * Called when adding a new message. If {@code before} == null, then it should be added to the end of message history 
 	 * (the lowest message is added), in other cases the message should be inserted <b>before</b> the message (i.e. above it in history)
 	 * which was given as a parameter {@code before}.
-	 * Notice that this is a logical insertion of a message. I.e. calling this method does not necessarily mean recieving
+	 * Notice that this is a logical insertion of a message. I.e. calling this method does not necessarily mean receiving
 	 * a new (unread) message. Moreover at the first call {@link MessageTracker#getNextMessages} most often the last messages of a <b>local</b> history  
-	 * (i.e. which is stored on a user's device) are returned, and this method will be called for each message recieved from a server after a 
+	 * (i.e. which is stored on a user's device) are returned, and this method will be called for each message received from a server after a
 	 * successful connection.
      * @param before a message, before which it is needed to implement an insert. If null then an insert is performed at the end of the list.
      * @param message added message

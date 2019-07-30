@@ -1,13 +1,20 @@
 package com.webimapp.android.demo.client;
 
-import android.app.AlertDialog;
+import android.app.Activity;
+import android.app.Dialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.constraint.ConstraintLayout;
+import android.support.v4.graphics.drawable.DrawableCompat;
+import android.support.v7.content.res.AppCompatResources;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
 import android.text.format.DateFormat;
@@ -16,10 +23,13 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,6 +44,9 @@ import java.util.List;
 
 import jp.wasabeef.glide.transformations.RoundedCornersTransformation;
 
+import static com.webimapp.android.sdk.Message.*;
+import static com.webimapp.android.sdk.Message.Type.*;
+
 public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.MessageHolder> {
     private static final long MILLIS_IN_DAY = 1000 * 60 * 60 * 24;
 
@@ -45,6 +58,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
         this.messageList = new ArrayList<>();
     }
 
+    @NonNull
     @Override
     public MessageHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         ViewType vt = ViewType.values()[viewType];
@@ -63,6 +77,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             default:
                 return null;
         }
+
+
     }
 
     @Override
@@ -73,10 +89,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                 : null;
 
         if (prev != null) {
-            if ((message.getType().equals(Message.Type.OPERATOR)
-                    || message.getType().equals(Message.Type.FILE_FROM_OPERATOR))
-                    && (prev.getType().equals(Message.Type.OPERATOR)
-                    || prev.getType().equals(Message.Type.FILE_FROM_OPERATOR))
+            if ((message.getType().equals(OPERATOR)
+                    || message.getType().equals(FILE_FROM_OPERATOR))
+                    && (prev.getType().equals(OPERATOR)
+                    || prev.getType().equals(FILE_FROM_OPERATOR))
                     && prev.getOperatorId().equals(message.getOperatorId())) {
                 ((ReceivedMessageHolder) holder).showSenderInfo = false;
             }
@@ -94,7 +110,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
     @Override
     public int getItemViewType(int position) {
         Message message = messageList.get(messageList.size() - position - 1);
-        if (message.getSendStatus() == Message.SendStatus.SENDING) {
+        if (message.getSendStatus() == SendStatus.SENDING) {
             return ViewType.VISITOR.ordinal();
         }
         switch (message.getType()) {
@@ -190,6 +206,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
         TextView messageDate;
         TextView messageTime;
         ImageView messageTick;
+        RelativeLayout quoteLayout;
+        LinearLayout quote_body;
+        TextView quoteSenderName;
+        TextView quoteText;
+        LinearLayout messageBody;
+
 
         MessageHolder(View itemView) {
             super(itemView);
@@ -197,11 +219,17 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             messageDate = itemView.findViewById(R.id.text_message_date);
             messageTime = itemView.findViewById(R.id.text_message_time);
             messageTick = itemView.findViewById(R.id.tick);
+            quoteLayout = itemView.findViewById(R.id.quote_message);
+            quote_body = itemView.findViewById(R.id.quote_body);
+            quoteSenderName = itemView.findViewById(R.id.quote_sender_name);
+            quoteText = itemView.findViewById(R.id.quote_text);
+            messageBody = itemView.findViewById(R.id.message_body);
         }
 
         public void bind(final Message message, boolean showDate) {
             this.message = message;
 
+            messageBody.setVisibility(View.VISIBLE);
             if (messageText != null) {
                 messageText.setText(message.getText());
                 messageText.setVisibility(View.VISIBLE);
@@ -229,23 +257,63 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                 } else {
                     messageTick.setImageResource(R.drawable.ic_tick);
                 }
-                messageTick.setVisibility(message.getSendStatus() == Message.SendStatus.SENT
+                messageTick.setVisibility(message.getSendStatus() == SendStatus.SENT
                         ? View.VISIBLE
                         : View.GONE);
+            }
+
+            if (quoteLayout != null) {
+                if (message.getQuote() != null) {
+                    quoteLayout.setVisibility(View.VISIBLE);
+                    quoteSenderName.setVisibility(View.VISIBLE);
+                    quoteText.setVisibility(View.VISIBLE);
+                    String textQuoteSenderName = "";
+                    String textQuote = "";
+                    if (message.getQuote().getState() == Quote.State.PENDING) {
+                        textQuote = (message.getType() == OPERATOR)
+                                ? webimChatFragment.getResources().getString(R.string.quote_is_pending)
+                                : message.getQuote().getMessageText();
+                    }
+                    if (message.getQuote().getState() == Quote.State.FILLED) {
+                        if (message.getQuote().getMessageType() == FILE_FROM_OPERATOR ||
+                                message.getQuote().getMessageType() == FILE_FROM_VISITOR) {
+                            textQuote =
+                                    message.getQuote().getMessageAttachment().getFileName();
+                        } else {
+                            textQuote = message.getQuote().getMessageText();
+                        }
+                        textQuoteSenderName = message.getQuote().getSenderName();
+                    }
+                    if (message.getQuote().getState() == Quote.State.NOT_FOUND) {
+                        quoteSenderName.setVisibility(View.GONE);
+                        textQuote = webimChatFragment.getResources().getString(R.string.quote_is_not_found);
+                    }
+                    quoteSenderName.setText(textQuoteSenderName);
+                    quoteText.setText(textQuote);
+                } else {
+                    quoteLayout.setVisibility(View.GONE);
+                    quoteSenderName.setVisibility(View.GONE);
+                    quoteText.setVisibility(View.GONE);
+                }
             }
         }
     }
 
     class FileMessageHolder extends MessageHolder {
 
-        private final double PORTAIN_ORIENTATION = 0.6;
+        private final double PORTRAIT_ORIENTATION = 0.6;
         private final double LANDSCAPE_ORIENTATION = 0.8;
 
-        ImageView thumbView;
+        ImageView thumbView, quoteView;
+        ConstraintLayout layoutQuotedView;
+        TextView senderNameForImage;
 
         FileMessageHolder(View itemView) {
             super(itemView);
             thumbView = itemView.findViewById(R.id.attached_image);
+            quoteView = itemView.findViewById(R.id.quoted_image);
+            layoutQuotedView = itemView.findViewById(R.id.const_quoted_image);
+            senderNameForImage = itemView.findViewById(R.id.sender_name_for_image);
         }
 
         @Override
@@ -253,50 +321,95 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             super.bind(message, showDate);
 
             thumbView.setVisibility(View.GONE);
+            layoutQuotedView.setVisibility(View.GONE);
 
-            Message.Attachment attachment = message.getAttachment();
+            Attachment attachment = message.getAttachment();
             if (attachment == null) {
-                if (thumbView != null && message.getType().equals(Message.Type.FILE_FROM_VISITOR)) {
+                if (thumbView != null && message.getType().equals(FILE_FROM_VISITOR)) {
                     thumbView.setVisibility(View.GONE);
                     messageText.setText(R.string.uploading_file);
                     messageText.setVisibility(View.VISIBLE);
                 }
-                return;
-            }
-            final Message.ImageInfo imageInfo = attachment.getImageInfo();
-            final String fileUrl = attachment.getUrl();
-            if (imageInfo == null) {
-                if (thumbView != null) {
-                    thumbView.setVisibility(View.GONE);
+            } else {
+                if (attachment.getImageInfo() == null) {
+                    getMessageForEmptyImage(attachment, thumbView, messageText);
+                    return;
                 }
-                messageText.setText(Html.fromHtml(webimChatFragment.getResources().getString(R.string.file_send)
-                        + "<a href=\"" + fileUrl + "\">" + message.getText() + "</a>"));
-                messageText.setVisibility(View.VISIBLE);
-                return;
+
+                if (thumbView != null) {
+                    setViewSize(thumbView, getThumbSize(attachment.getImageInfo()));
+                    addImageInView(attachment, thumbView, messageText);
+                    messageBody.setVisibility(View.GONE);
+                }
             }
 
-            if (thumbView != null) {
-                setViewSize(thumbView, getThumbSize(imageInfo));
-                Glide.with(webimChatFragment)
-                        .load(imageInfo.getThumbUrl())
-                        .diskCacheStrategy(DiskCacheStrategy.SOURCE)
-                        .bitmapTransform(new RoundedCornersTransformation(
-                                webimChatFragment.getContext(), 8, 0))
-                        .into(thumbView);
-                thumbView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Intent openImgIntent = new Intent(v.getContext(), ImageActivity.class);
-                        openImgIntent.setData(Uri.parse(fileUrl));
-                        v.getContext().startActivity(openImgIntent);
+            if (message.getQuote() != null && message.getQuote() != null) {
+                attachment = message.getQuote().getMessageAttachment();
+                if (attachment != null) {
+                    if (attachment.getImageInfo() == null) {
+                        getMessageForEmptyImage(attachment, quoteView, quoteText);
+                        return;
                     }
-                });
-                messageText.setVisibility(View.GONE);
-                thumbView.setVisibility(View.VISIBLE);
+
+                    if (quoteView != null) {
+                        addImageInView(attachment, quoteView, quoteText);
+                        layoutQuotedView.setVisibility(View.VISIBLE);
+                    }
+                }
             }
         }
 
-        private Size getThumbSize(Message.ImageInfo imageInfo) {
+        private void getMessageForEmptyImage(
+                Attachment attachment,
+                ImageView imageView,
+                TextView textView) {
+            if (imageView != null) {
+                imageView.setVisibility(View.GONE);
+            }
+            textView.setText(
+                    Html.fromHtml(webimChatFragment.getResources().getString(R.string.file_send)
+                    + "<a href=\"" + attachment.getUrl() + "\">" + attachment.getFileName() + "</a>"));
+            textView.setVisibility(View.VISIBLE);
+        }
+
+        private void addImageInView(
+                Attachment attachment,
+                ImageView imageView,
+                TextView textView) {
+            String imageUrl = attachment.getImageInfo().getThumbUrl();
+            final Uri fileUrl = Uri.parse(attachment.getUrl());
+            RoundedCornersTransformation.CornerType cornerType;
+            if (message.getType().equals(FILE_FROM_OPERATOR)) {
+                cornerType = RoundedCornersTransformation.CornerType.OTHER_BOTTOM_LEFT;
+            } else {
+                cornerType = RoundedCornersTransformation.CornerType.OTHER_BOTTOM_RIGHT;
+            }
+            Glide.with(webimChatFragment)
+                    .load(imageUrl)
+                    .diskCacheStrategy(DiskCacheStrategy.SOURCE)
+                    .bitmapTransform(new RoundedCornersTransformation(
+                            webimChatFragment.getContext(), 12, 0, cornerType))
+                    .into(imageView);
+            imageView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent openImgIntent = new Intent(view.getContext(), ImageActivity.class);
+                    openImgIntent.setData(fileUrl);
+                    Context context = view.getContext();
+                    if (context instanceof ContextWrapper) {
+                        context = ((ContextWrapper)context).getBaseContext();
+                    }
+                    Activity activity = (Activity) context;
+                    activity.startActivity(openImgIntent);
+                    activity.overridePendingTransition(R.anim.pull_in_right, R.anim.push_out_left);
+                }
+            });
+            textView.setText(attachment.getFileName());
+            textView.setVisibility(View.VISIBLE);
+            imageView.setVisibility(View.VISIBLE);
+        }
+
+        private Size getThumbSize(ImageInfo imageInfo) {
             DisplayMetrics displayMetrics = new DisplayMetrics();
             webimChatFragment.getActivity().getWindowManager().
                     getDefaultDisplay().getMetrics(displayMetrics);
@@ -304,7 +417,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             double width = imageInfo.getWidth();
             double height = imageInfo.getHeight();
             double sideImageRatio = width / height;
-            width = imageWidth * (height > width ? PORTAIN_ORIENTATION : LANDSCAPE_ORIENTATION);
+            width = imageWidth * (height > width ? PORTRAIT_ORIENTATION : LANDSCAPE_ORIENTATION);
             height = width / sideImageRatio;
             return new Size((int) width, (int) height);
         }
@@ -342,7 +455,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
     private class SentMessageHolder extends FileMessageHolder {
         ProgressBar sendingProgress;
 
-        SentMessageHolder(View itemView) {
+        private float LEVEL_SHADING = 0.6f;
+
+        SentMessageHolder(final View itemView) {
             super(itemView);
 
             sendingProgress = itemView.findViewById(R.id.sending_msg);
@@ -350,43 +465,85 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(final View view) {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(view.getContext());
-                    String[] options = view.getResources().getStringArray(message.canBeEdited()
-                            ? R.array.sent_message_actions
-                            : R.array.received_message_actions);
-                    builder.setItems(options, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            switch (which) {
-                                /*case 0: //reply
-                                    webimChatFragment.onReplyMessageAction(message, getAdapterPosition());
-                                    break;*/
-                                case 0: // copy
-                                    ClipData clip =
-                                            ClipData.newPlainText("message", message.getText());
-                                    ClipboardManager clipboard =
-                                            (ClipboardManager) view.getContext()
-                                                    .getSystemService(Context.CLIPBOARD_SERVICE);
-                                    if (clipboard != null) {
-                                        clipboard.setPrimaryClip(clip);
-                                        showMessage(view.getResources()
-                                                .getString(R.string.copied_message), view);
-                                    } else {
-                                        showMessage(view.getResources()
-                                                .getString(R.string.copy_failed), view);
-                                    }
-                                    break;
-                                case 1: // edit
-                                    webimChatFragment.onEditAction(message);
-                                    break;
-                                case 2: // delete
-                                    webimChatFragment.onDeleteMessageAction(message);
-                                    break;
+                    changeBackgroundDrawable(
+                            view,
+                            messageBody,
+                            R.drawable.background_send_message,
+                            R.color.sendingMsgSelect);
+                    final Dialog dialog = new Dialog(view.getContext());
+                    dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+                    dialog.setContentView(R.layout.dialog_message_menu);
+                    WindowManager.LayoutParams layoutParams = dialog.getWindow().getAttributes();
+                    layoutParams.dimAmount = LEVEL_SHADING;
+                    dialog.getWindow().setAttributes(layoutParams);
+                    RelativeLayout replyLayout = dialog.findViewById(R.id.relLayoutReply);
+                    RelativeLayout copyLayout = dialog.findViewById(R.id.relLayoutCopy);
+                    RelativeLayout editLayout = dialog.findViewById(R.id.relLayoutEdit);
+                    RelativeLayout deleteLayout = dialog.findViewById(R.id.relLayoutDelete);
+                    if (message.canBeReplied()) {
+                        replyLayout.setVisibility(View.VISIBLE);
+                        replyLayout.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                webimChatFragment.onReplyMessageAction(message, getAdapterPosition());
+                                dialog.dismiss();
                             }
+                        });
+                    } else {
+                        replyLayout.setVisibility(View.GONE);
+                    }
+                    copyLayout.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            ClipData clip =
+                                    ClipData.newPlainText("message", message.getText());
+                            ClipboardManager clipboard =
+                                    (ClipboardManager) view.getContext()
+                                            .getSystemService(Context.CLIPBOARD_SERVICE);
+                            if (clipboard != null) {
+                                clipboard.setPrimaryClip(clip);
+                                showMessage(view.getResources()
+                                        .getString(R.string.copied_message), view);
+                            } else {
+                                showMessage(view.getResources()
+                                        .getString(R.string.copy_failed), view);
+                            }
+                            dialog.dismiss();
                         }
                     });
-                    AlertDialog dialog = builder.create();
+                    if (message.canBeEdited()) {
+                        editLayout.setVisibility(View.VISIBLE);
+                        editLayout.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                webimChatFragment.onEditAction(message);
+                                dialog.dismiss();
+                            }
+                        });
+                        deleteLayout.setVisibility(View.VISIBLE);
+                        deleteLayout.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                webimChatFragment.onDeleteMessageAction(message);
+                                dialog.dismiss();
+                            }
+                        });
+                    } else {
+                        editLayout.setVisibility(View.GONE);
+                        deleteLayout.setVisibility(View.GONE);
+                    }
+                    dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                        @Override
+                        public void onDismiss(DialogInterface dialogInterface) {
+                            changeBackgroundDrawable(
+                                    view,
+                                    messageBody,
+                                    R.drawable.background_send_message,
+                                    R.color.sendingMsgBubble);
+                        }
+                    });
                     dialog.show();
+
                 }
             });
         }
@@ -395,7 +552,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
         public void bind(Message message, boolean showDate) {
             super.bind(message, showDate);
 
-            boolean sending = message.getSendStatus() == Message.SendStatus.SENDING;
+            boolean sending = message.getSendStatus() == SendStatus.SENDING;
             if (messageTime != null) {
                 messageTime.setVisibility(sending ? View.GONE : View.VISIBLE);
             }
@@ -407,47 +564,79 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
 
     private class ReceivedMessageHolder extends FileMessageHolder {
         boolean showSenderInfo = true;
-        TextView timeText, nameText;
+        TextView timeText, nameText, nameTextForImage;
         ImageView profileImage;
 
-        ReceivedMessageHolder(View itemView) {
+        private float LEVEL_SHADING = 0.6f;
+
+        ReceivedMessageHolder(final View itemView) {
             super(itemView);
             timeText = itemView.findViewById(R.id.text_message_time);
             nameText = itemView.findViewById(R.id.sender_name);
+            nameTextForImage = itemView.findViewById(R.id.sender_name_for_image);
             profileImage = itemView.findViewById(R.id.sender_photo);
 
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(final View view) {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(view.getContext());
-                    String[] options = view.getResources()
-                            .getStringArray(R.array.received_message_actions);
-                    builder.setItems(options, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            switch (which) {
-                                /*case 0: //reply
-                                    webimChatFragment.onReplyMessageAction(message, getAdapterPosition());
-                                    break;*/
-                                case 0: // copy
-                                    ClipData clip =
-                                            ClipData.newPlainText("message", message.getText());
-                                    ClipboardManager clipboard =
-                                            (ClipboardManager) view.getContext()
-                                                    .getSystemService(Context.CLIPBOARD_SERVICE);
-                                    if (clipboard != null) {
-                                        clipboard.setPrimaryClip(clip);
-                                        showMessage(view.getResources()
-                                                .getString(R.string.copied_message), view);
-                                    } else {
-                                        showMessage(view.getResources()
-                                                .getString(R.string.copy_failed), view);
-                                    }
-                                    break;
+                    changeBackgroundDrawable(
+                            view,
+                            messageBody,
+                            R.drawable.background_received_message,
+                            R.color.receivedMsgSelect);
+                    final Dialog dialog = new Dialog(view.getContext());
+                    dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+                    dialog.setContentView(R.layout.dialog_message_menu);
+                    WindowManager.LayoutParams layoutParams = dialog.getWindow().getAttributes();
+                    layoutParams.dimAmount = LEVEL_SHADING;
+                    dialog.getWindow().setAttributes(layoutParams);
+                    RelativeLayout replyLayout = dialog.findViewById(R.id.relLayoutReply);
+                    RelativeLayout copyLayout = dialog.findViewById(R.id.relLayoutCopy);
+                    RelativeLayout editLayout = dialog.findViewById(R.id.relLayoutEdit);
+                    RelativeLayout deleteLayout = dialog.findViewById(R.id.relLayoutDelete);
+                    if (message.canBeReplied()) {
+                        replyLayout.setVisibility(View.VISIBLE);
+                        replyLayout.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                webimChatFragment.onReplyMessageAction(message, getAdapterPosition());
+                                dialog.dismiss();
                             }
+                        });
+                    } else {
+                        replyLayout.setVisibility(View.GONE);
+                    }
+                    copyLayout.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            ClipData clip =
+                                    ClipData.newPlainText("message", message.getText());
+                            ClipboardManager clipboard =
+                                    (ClipboardManager) view.getContext()
+                                            .getSystemService(Context.CLIPBOARD_SERVICE);
+                            if (clipboard != null) {
+                                clipboard.setPrimaryClip(clip);
+                                showMessage(view.getResources()
+                                        .getString(R.string.copied_message), view);
+                            } else {
+                                showMessage(view.getResources()
+                                        .getString(R.string.copy_failed), view);
+                            }
+                            dialog.dismiss();
                         }
                     });
-                    AlertDialog dialog = builder.create();
+                    editLayout.setVisibility(View.GONE);
+                    deleteLayout.setVisibility(View.GONE);
+                    dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                        @Override
+                        public void onDismiss(DialogInterface dialogInterface) {
+                            changeBackgroundDrawable(
+                                    view,
+                                    messageBody,
+                                    R.drawable.background_received_message,
+                                    R.color.receivedMsgBubble);
+                        }
+                    });
                     dialog.show();
                 }
             });
@@ -458,10 +647,15 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             super.bind(message, showDate);
             timeText.setText(DateFormat.getTimeFormat(webimChatFragment.getContext())
                     .format(message.getTime()));
-
             if (showSenderInfo) {
-                nameText.setVisibility(View.VISIBLE);
-                nameText.setText(message.getSenderName());
+                if (message.getType().equals(FILE_FROM_OPERATOR)) {
+                    nameTextForImage.setVisibility(View.VISIBLE);
+                    nameTextForImage.setText(message.getSenderName());
+                } else {
+                    nameTextForImage.setVisibility(View.GONE);
+                    nameText.setVisibility(View.VISIBLE);
+                    nameText.setText(message.getSenderName());
+                }
 
                 String avatarUrl = message.getSenderAvatarUrl();
                 profileImage.setVisibility(View.VISIBLE);
@@ -478,9 +672,29 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                 }
             } else {
                 nameText.setVisibility(View.GONE);
+                nameTextForImage.setVisibility(View.GONE);
                 profileImage.setVisibility(View.GONE);
                 showSenderInfo = true;
             }
+        }
+    }
+
+    private void changeBackgroundDrawable(
+            View view,
+            LinearLayout messageBody,
+            int drawableResource,
+            int colorForSelect) {
+        Drawable unwrappedDrawable =
+                AppCompatResources.getDrawable(view.getContext(), drawableResource);
+        DrawableCompat.setTint(
+                DrawableCompat.wrap(unwrappedDrawable),
+                view.getResources().getColor(colorForSelect));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            messageBody.setBackground(
+                    view.getResources().getDrawable(drawableResource));
+        } else {
+            messageBody.setBackgroundDrawable(
+                    view.getResources().getDrawable(drawableResource));
         }
     }
 }

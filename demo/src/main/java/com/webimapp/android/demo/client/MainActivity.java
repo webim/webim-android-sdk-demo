@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
         }
         setContentView(R.layout.activity_main);
         initNewChatButton();
-        initViewForBagde();
+        initViewForBadge();
         initSettingButton();
         initSession();
     }
@@ -50,13 +50,13 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void initViewForBagde() {
+    private void initViewForBadge() {
         progressBar = findViewById(R.id.progressBar);
         numberOfBadge = findViewById(R.id.textNumberOfBadge);
     }
 
     private void initSettingButton() {
-        Button settingsButton = findViewById(R.id.buttonCettings);
+        Button settingsButton = findViewById(R.id.buttonSettings);
         settingsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

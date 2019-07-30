@@ -249,6 +249,32 @@ public class MessageStreamImpl implements MessageStream {
         return sendMessageInternally(message, null, isHintQuestion, null);
     }
 
+    @Override
+    public boolean replyMessage(@NonNull String message,
+                                @NonNull Message quotedMessage) {
+        message.getClass(); // NPE
+
+        if(!quotedMessage.canBeReplied()) {
+            return false;
+        }
+
+        accessChecker.checkAccess();
+
+        final Message.Id messageId = StringId.generateForMessage();
+        actions.replyMessage(
+                message,
+                messageId.toString(),
+                quotedMessage.getCurrentChatId());
+        messageHolder.onSendingMessage(
+                sendingMessageFactory.createTextWithQuote(
+                        messageId,
+                        message,
+                        quotedMessage.getSenderName(),
+                        quotedMessage.getText()));
+
+        return true;
+    }
+
     public void sendKeyboardRequest(@NonNull String requestMessageId,
                                     @NonNull String buttonId,
                                     @Nullable final SendKeyboardCallback sendKeyboardCallback) {

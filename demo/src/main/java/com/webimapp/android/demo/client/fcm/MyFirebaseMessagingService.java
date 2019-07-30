@@ -167,7 +167,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                     0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
             builder.setContentIntent(contentIntent);
         }
-        builder.setSmallIcon(R.drawable.status_bar_icon)
+        builder.setSmallIcon(R.drawable.logo_webim_status_bar)
                 .setLargeIcon(BitmapFactory.decodeResource(res, R.drawable.default_operator_avatar))
                 .setTicker(res.getString(R.string.app_name))
                 .setWhen(System.currentTimeMillis())

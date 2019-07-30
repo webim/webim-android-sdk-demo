@@ -63,30 +63,28 @@
     <string name="saved_file">Файл %1$s сохранён</string>
     <string name="saving_failed">Не удалось загрузить файл</string>
 
+    <string name="upload_file">Загрузка файла</string>
     <string name="rate_operator">Оценить оператора</string>
     <string name="close_chat">Завершить чат</string>
 
     <string name="no_operator">без оператора</string>
-    <string name="operator_typing">%1$s пишет…</string>
+    <string name="operator_typing">пишет</string>
     <string name="operator_name">%1$s</string>
+    <string name="reply">Ответить</string>
+    <string name="copy">Копировать</string>
+    <string name="edit">Редактировать</string>
+    <string name="delete">Удалить</string>
 
-    <string-array
-        name="received_message_actions">
-        <item>Копировать</item>
-    </string-array>
-    <string-array
-        name="sent_message_actions">
-        <item>Копировать</item>
-        <item>Редактировать</item>
-        <item>Удалить</item>
-    </string-array>
     <string name="copied_message">Текст сообщения скопирован</string>
     <string name="copy_failed">Не удалось скопировать сообщение</string>
+    <string name="quote_is_pending">Цитата загружается</string>
+    <string name="quote_is_not_found">Цитата недоступна</string>
 
     <string name="empty_reply_text"> </string>
     <string name="reply_message_with_image">"Изображение "</string>
     <string name="default_text">Пример текста</string>
     <string name="default_time">10:12</string>
+    <string name="default_date">Ноябрь 12</string>
     <string name="channel_id">com.webimapp.android.demo.client.fcm</string>
     <string name="channel_name">Webim notification</string>
 </resources>

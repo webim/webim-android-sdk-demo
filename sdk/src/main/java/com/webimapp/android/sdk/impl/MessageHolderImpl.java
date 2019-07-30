@@ -430,6 +430,8 @@ public class MessageHolderImpl implements MessageHolder {
                     message.getData(),
                     message.isReadByOperator(),
                     message.canBeEdited(),
+                    message.canBeReplied(),
+                    message.getQuote(),
                     message.getKeyboard(),
                     message.getKeyboardRequest());
             newMsg.sendStatus = Message.SendStatus.SENDING;
@@ -484,6 +486,8 @@ public class MessageHolderImpl implements MessageHolder {
                     message.getData(),
                     message.isReadByOperator(),
                     message.canBeEdited(),
+                    message.canBeReplied(),
+                    message.getQuote(),
                     message.getKeyboard(),
                     message.getKeyboardRequest());
             newMsg.sendStatus = Message.SendStatus.SENT;

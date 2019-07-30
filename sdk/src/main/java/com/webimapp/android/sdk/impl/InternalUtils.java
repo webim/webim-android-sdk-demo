@@ -231,7 +231,7 @@ public final class InternalUtils {
             String fileUrl;
             if (client.getAuthData() != null) {
                 String pageId = client.getAuthData().getPageId();
-                Long expires = currentTimeSeconds() + ATTACHMENT_URL_EXPIRES_PERIOD;
+                long expires = currentTimeSeconds() + ATTACHMENT_URL_EXPIRES_PERIOD;
                 String data = fileParams.getGuid() + expires;
                 String key = client.getAuthData().getAuthToken();
                 String hash = sha256(data, key);
@@ -366,5 +366,67 @@ public final class InternalUtils {
         return new MessageImpl.KeyboardButtonsImpl(
                 keyboardRequest.getId(),
                 keyboardRequest.getText());
+    }
+
+    @Nullable
+    public static Message.Quote getQuote(@NonNull String serverUrl,
+                                         @Nullable MessageItem.Quote quote,
+                                         @NonNull WebimClient client) {
+        if (quote != null) {
+            Message.Attachment attachment = null;
+            String quoteText = null;
+            String quoteSenderName =  null;
+            String quoteId = null;
+            String quoteAuthorId = null;
+            long quoteTimeSeconds = 0;
+            Message.Type quoteState = null;
+            if (quote.getState() != MessageItem.Quote.State.NOT_FOUND) {
+                if ((quote.getType() == MessageItem.WMMessageKind.FILE_FROM_VISITOR)
+                        || (quote.getType() == MessageItem.WMMessageKind.FILE_FROM_OPERATOR)) {
+                    attachment = extractAttachment(serverUrl, quote, client);
+                    quoteText = attachment.getFileName();
+                } else {
+                    quoteText = quote.getText();
+                }
+                quoteAuthorId =quote.getAuthorId();
+                quoteId = quote.getId();
+                quoteState = toPublicMessageType(quote.getType());
+                quoteSenderName = quote.getName();
+                quoteTimeSeconds = quote.getTimeSeconds();
+            }
+            return new MessageImpl.QuoteImpl(
+                    attachment,
+                    quoteAuthorId,
+                    quoteId,
+                    quoteState,
+                    quoteSenderName,
+                    extractState(quote.getState()),
+                    quoteText,
+                    quoteTimeSeconds);
+        }
+        return null;
+    }
+
+    private static Message.Quote.State extractState(MessageItem.Quote.State state) {
+        switch (state) {
+            case PENDING:
+                return Message.Quote.State.PENDING;
+            case FILLED:
+                return Message.Quote.State.FILLED;
+            case NOT_FOUND:
+            default:
+                return Message.Quote.State.NOT_FOUND;
+        }
+    }
+
+    private static Message.Attachment extractAttachment(
+            @NonNull String serverUrl,
+            @NonNull MessageItem.Quote quotedMessage,
+            @NonNull WebimClient client) {
+        MessageItem messageItem = new MessageItem();
+        messageItem.setMessage(quotedMessage.getText());
+        messageItem.setType(quotedMessage.getType());
+        messageItem.setId(quotedMessage.getId());
+        return getAttachment(serverUrl, messageItem, client);
     }
 }

@@ -13,7 +13,7 @@ import java.util.List;
  */
 public interface Message {
     /**
-	 * @return unique id of the message. Notice that id doesn’t change while changing the content of a message.
+	 * @return unique id of the message. Notice that id does not change while changing the content of a message.
      */
     @NonNull Id getId();
 
@@ -72,8 +72,7 @@ public interface Message {
      * of {@link Type#ACTION_REQUEST} Message type.
      * This data is to be unparsed by a client.
      */
-    @Nullable
-    String getData();
+    @Nullable String getData();
 
     /**
      * @return true if this visitor message is read by operator or this message is not by visitor.
@@ -84,6 +83,16 @@ public interface Message {
      * @return true if this message can be edited.
      */
     boolean canBeEdited();
+
+    /**
+     * @return true if this message can be replied.
+     */
+    boolean canBeReplied();
+
+    /**
+     * @return information about quoted message.
+     */
+    @Nullable Quote getQuote();
 
     /**
      * Abstracts unique id of the message. The class was designed only to be compared by {@code equals}.
@@ -146,7 +155,7 @@ public interface Message {
     }
 
     /**
-     * Until a message will be sent to the server, will have been recieved by the server and will have been spreaded among clients, we can
+     * Until a message will be sent to the server, will have been received by the server and will have been spreaded among clients, we can
 	 * see the message as "being sent", at the same time {@link Message#getSendStatus()} will return {@link SendStatus#SENDING}. 
 	 * In other cases - {@link SendStatus#SENT}
 	 */
@@ -156,7 +165,7 @@ public interface Message {
          */
         SENDING,
         /**
-         * A message had been sent to the server, recieved by the server and was spreaded among clients.
+         * A message had been sent to the server, received by the server and was spreaded among clients.
          */
         SENT
     }
@@ -228,6 +237,77 @@ public interface Message {
          * @return height of an image
          */
         int getHeight();
+    }
+
+    /**
+     * Contains information about quote.
+     * @see Message#getQuote()
+     */
+    interface Quote {
+        /**
+         * @return the status in which quoted message may be.
+         */
+        @NonNull State getState();
+
+        /**
+         * Messages of the types {@link Type#FILE_FROM_OPERATOR} and {@link Type#FILE_FROM_VISITOR} can contain attachments.
+         * Notice that this method may return null even in the case of previously listed types of messages. For instance,
+         * if a file is being sent.
+         * @return the attachment of the message
+         */
+        @Nullable Attachment getMessageAttachment();
+
+        /**
+         * @return the id of the message that was quoted.
+         */
+        @Nullable String getMessageId();
+
+        /**
+         * @return type of the message that was quoted.
+         */
+        @Nullable Type getMessageType();
+
+        /**
+         * @return name of a message sender of the message that was quoted.
+         */
+        @Nullable String getSenderName();
+
+        /**
+         * @return text of a message sender of the message that was quoted.
+         */
+        @Nullable String getMessageText();
+
+        /**
+         * @return time of the message that was quoted.
+         */
+        long getMessageTimestamp();
+
+        /**
+         * @return author id of the message that was quoted.
+         */
+        @Nullable String getAuthorId();
+
+        /**
+         * Shows the state of the quoted message.
+         * @see Quote#getState()
+         */
+        enum State {
+
+            /**
+             * Quoted message send to server.
+             */
+            PENDING,
+
+            /**
+             * Quoted message received by the server and processed.
+             */
+            FILLED,
+
+            /**
+             * Quoted message not found.
+             */
+            NOT_FOUND
+        }
     }
 
     /**

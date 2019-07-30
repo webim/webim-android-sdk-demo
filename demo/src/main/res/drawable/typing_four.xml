@@ -1,0 +1,21 @@
+<vector
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="8dp"
+    android:viewportHeight="8"
+    android:viewportWidth="24">
+    <group android:name="ovals">
+        <path
+            android:fillColor="@color/circleForAnimation"
+            android:fillAlpha="180"
+            android:pathData="M4,4m-2,0a1,1 0,1 1,5 0a1,1 0,1 1,-5 0" />
+        <path
+            android:fillColor="@color/circleForAnimation"
+            android:fillAlpha="180"
+            android:pathData="M12,4m-3,0a2,2 0,2 2,6 0a2,2 0,2 2,-6 0" />
+        <path
+            android:fillColor="@color/circleForAnimation"
+            android:fillAlpha="76"
+            android:pathData="M20,4m-4,0a3,3 0,1 1,7 0a3,3 0,1 1,-7 0" />
+    </group>
+</vector>

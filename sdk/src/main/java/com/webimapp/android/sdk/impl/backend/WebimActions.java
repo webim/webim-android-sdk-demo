@@ -24,6 +24,10 @@ public interface WebimActions {
     void deleteMessage(@NonNull String clientSideId,
                        @Nullable SendOrDeleteMessageInternalCallback callback);
 
+    void replyMessage(@NonNull String message,
+                      @NonNull String clientSideId,
+                      @NonNull String quoteMessageId);
+
     void sendFile(@NonNull RequestBody body,
                   @NonNull String filename,
                   @NonNull String clientSideId,

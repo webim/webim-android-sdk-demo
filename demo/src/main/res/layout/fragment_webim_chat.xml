@@ -23,36 +23,58 @@
             android:background="?attr/colorPrimary"
             app:popupTheme="@style/AppTheme.PopupOverlay">
 
-            <ImageView
+            <de.hdodenhof.circleimageview.CircleImageView
                 android:id="@+id/sender_photo"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:layout_marginBottom="1dp"
                 android:visibility="gone" />
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_toRightOf="@id/sender_photo"
-                android:orientation="vertical">
+                android:layout_toEndOf="@id/sender_photo"
+                android:orientation="vertical"
+                android:paddingLeft="10dp"
+                android:paddingStart="10dp"
+                tools:ignore="RtlSymmetry">
 
                 <TextView
                     android:id="@+id/action_bar_title"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center"
                     android:text="@string/app_name"
                     android:textAllCaps="false"
                     android:textColor="@color/white"
-                    android:textSize="22sp" />
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/action_bar_subtitle"
+                <RelativeLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:paddingTop="3dp"
-                    android:textColor="@color/white" />
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:id="@+id/image_typing"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+
+                        android:layout_centerVertical="true"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginEnd="5dp"
+                        android:layout_marginRight="5dp"
+                        android:contentDescription="@string/empty_chat_text"
+                        android:visibility="visible" />
+
+                    <TextView
+                        android:id="@+id/action_bar_subtitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_toRightOf="@+id/image_typing"
+                        android:layout_toEndOf="@+id/image_typing"
+                        android:layout_centerVertical="true"
+                        android:textColor="@color/white"/>
+                </RelativeLayout>
             </LinearLayout>
 
         </android.support.v7.widget.Toolbar>
@@ -77,9 +99,10 @@
             android:layout_marginRight="@dimen/fab_margin"
             android:layout_marginBottom="@dimen/fab_margin"
             android:src="@drawable/arrow_drop_down"
+            android:tint="@color/items_border"
             android:visibility="gone"
             app:backgroundTint="@color/common_google_signin_btn_text_dark_default"
-            app:fabSize="mini"/>
+            app:fabSize="mini" />
 
         <TextView
             android:id="@+id/emptyHistoryView"
@@ -95,7 +118,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="10dp"
-            android:background="@drawable/circle"
+            android:background="@drawable/background_progressbar"
             android:padding="3dp"
             android:visibility="gone" />
 
@@ -103,11 +126,107 @@
             android:id="@+id/chat_recycler_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/colorBackground"
+            android:background="@drawable/background_chat"
             android:clipToPadding="false"
-            android:paddingBottom="4dp"></android.support.v7.widget.RecyclerView>
+            android:paddingTop="8dp"
+            android:scrollbars="vertical">
+        </android.support.v7.widget.RecyclerView>
 
     </FrameLayout>
+
+    <RelativeLayout
+        android:id="@+id/chat_menu"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/linLayEnterMessage"
+        android:elevation="1dp"
+        android:outlineProvider="none"
+        android:visibility="gone"
+        tools:targetApi="lollipop">
+
+        <LinearLayout
+            android:id="@+id/chat_menu_background"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/colorBackgroundChatMenu"
+            android:orientation="horizontal"
+            android:visibility="gone">
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="15dp"
+            android:layout_marginStart="15dp"
+            android:layout_marginRight="15dp"
+            android:layout_marginEnd="15dp"
+            android:layout_marginBottom="20dp"
+            android:layout_alignParentBottom="true"
+            android:background="@drawable/background_chat_menu"
+            android:orientation="vertical">
+
+            <RelativeLayout
+                android:id="@+id/relLay_new_attachment"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:id="@+id/image_new_attachment"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignTop="@+id/text_new_attachment"
+                    android:layout_alignBottom="@+id/text_new_attachment"
+                    android:paddingTop="2dp"
+                    android:layout_marginLeft="15dp"
+                    android:layout_marginStart="15dp"
+                    app:srcCompat="@drawable/ic_new_attachment"
+                    android:tint="@color/items_border"
+                    android:contentDescription="@string/upload_file" />
+
+                <TextView
+                    android:id="@+id/text_new_attachment"
+                    style="@android:style/TextAppearance.Medium"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="15dp"
+                    android:layout_toEndOf="@id/image_new_attachment"
+                    android:layout_toRightOf="@id/image_new_attachment"
+                    android:text="@string/upload_file"
+                    android:textColor="@color/colorText" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/relLay_rate_operator"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:id="@+id/image_rate_operator"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignTop="@+id/text_rate_operator"
+                    android:layout_alignBottom="@+id/text_rate_operator"
+                    android:layout_marginStart="15dp"
+                    android:layout_marginLeft="15dp"
+                    android:contentDescription="@string/rate_operator"
+                    android:tint="@color/items_border"
+                    app:srcCompat="@drawable/ic_star" />
+
+                <TextView
+                    android:id="@+id/text_rate_operator"
+                    style="@android:style/TextAppearance.Medium"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="15dp"
+                    android:layout_toEndOf="@id/image_rate_operator"
+                    android:layout_toRightOf="@id/image_rate_operator"
+                    android:text="@string/rate_operator"
+                    android:textColor="@color/colorText" />
+            </RelativeLayout>
+        </LinearLayout>
+    </RelativeLayout>
 
     <LinearLayout
         android:id="@+id/linLayReplyMessage"
@@ -124,6 +243,13 @@
             android:padding="10dp"
             android:paddingBottom="5dp">
 
+            <TextView
+                android:id="@+id/quote_Id"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0"
+                android:visibility="gone" />
+
             <ImageButton
                 android:id="@+id/imageButtonReplyMessage"
                 android:layout_width="wrap_content"
@@ -131,21 +257,22 @@
                 android:layout_gravity="center_vertical"
                 android:layout_weight="0.05"
                 android:background="@null"
+                android:contentDescription="@string/reply"
                 android:gravity="bottom"
                 android:padding="5dp"
                 android:scaleType="center"
                 android:src="@drawable/arrow_reply_message"
-                android:tint="@color/message_border"
+                android:tint="@color/items_border"
                 android:visibility="visible" />
 
             <LinearLayout
-                android:id="@+id/linLayReplyText"
+                android:id="@+id/linLayReplyBody"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_marginLeft="10dp"
                 android:layout_marginRight="10dp"
                 android:layout_weight="1"
-                android:background="@drawable/background_reply_message"
+                android:background="@drawable/background_quoted_message"
                 android:orientation="vertical">
 
                 <TextView
@@ -155,8 +282,8 @@
                     android:ellipsize="end"
                     android:maxLength="2000"
                     android:maxLines="1"
-                    android:paddingLeft="12dp"
                     android:paddingStart="12dp"
+                    android:paddingLeft="12dp"
                     android:paddingTop="4dp"
                     android:singleLine="true"
                     android:text="@string/default_text"
@@ -170,13 +297,14 @@
                     android:layout_height="wrap_content"
                     android:ellipsize="end"
                     android:maxLines="5"
-                    android:paddingStart="4dp"
-                    android:paddingLeft="16dp"
+                    android:paddingStart="12dp"
+                    android:paddingLeft="12dp"
                     android:paddingEnd="4dp"
+                    android:paddingRight="4dp"
                     android:paddingBottom="4dp"
                     android:singleLine="false"
                     android:text="@string/default_text"
-                    android:textColor="@color/purple"
+                    android:textColor="@color/receivedMsgText"
                     android:textSize="12sp" />
 
             </LinearLayout>
@@ -188,23 +316,23 @@
                 android:layout_gravity="center_vertical"
                 android:layout_weight="0.05"
                 android:background="@null"
+                android:contentDescription="@string/delete"
                 android:gravity="bottom"
                 android:paddingLeft="7dp"
                 android:paddingTop="11dp"
                 android:paddingRight="7dp"
                 android:paddingBottom="11dp"
+                android:rotation="45"
                 android:scaleType="center"
-                android:src="@drawable/cancel_cross"
-                android:tint="@color/message_border"
+                android:src="@drawable/ic_plus"
+                android:tint="@color/items_border"
                 android:visibility="visible" />
-
         </LinearLayout>
 
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:background="@color/message_border" />
-
     </LinearLayout>
 
     <LinearLayout
@@ -223,18 +351,19 @@
         android:paddingBottom="5dp">
 
         <ImageButton
-            android:id="@+id/imageButtonAttachFile"
+            android:id="@+id/imageButtonChatMenu"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
             android:layout_weight="0.05"
             android:background="@null"
             android:gravity="bottom"
-            android:padding="1dp"
+            android:padding="7dp"
             android:scaleType="center"
-            android:src="@drawable/new_attachment"
-            android:tint="@color/message_border"
-            android:visibility="visible" />
+            android:src="@drawable/ic_plus"
+            android:tint="@color/items_border"
+            android:visibility="visible"
+            tools:ignore="ContentDescription" />
 
         <!-- Dummy item to prevent AutoCompleteTextView from receiving focus -->
         <LinearLayout
@@ -262,8 +391,9 @@
             android:nextFocusUp="@id/editTextChatMessage"
             android:scrollHorizontally="false"
             android:singleLine="false"
-            android:textColor="@color/message_border"
-            android:textColorHint="@color/message_border" />
+            android:textColor="@color/colorText"
+            android:textColorHint="@color/receivedMsgTimeText"
+            tools:ignore="Autofill" />
 
         <ImageButton
             android:id="@+id/imageButtonSendMessage"
@@ -276,8 +406,8 @@
             android:gravity="bottom"
             android:padding="7dp"
             android:scaleType="center"
-            android:src="@drawable/social_send_now"
-            android:tint="@color/message_border" />
+            android:src="@drawable/ic_send_message"
+            android:tint="@color/items_border" />
 
         <ImageButton
             android:id="@+id/imageButtonAcceptChanges"
@@ -291,8 +421,8 @@
             android:paddingLeft="2dp"
             android:paddingRight="2dp"
             android:scaleType="center"
-            android:src="@drawable/baseline_check_circle_black_36"
-            android:tint="@color/message_border"
+            android:src="@drawable/ic_circle_accept"
+            android:tint="@color/items_border"
             android:visibility="gone" />
     </LinearLayout>
 </RelativeLayout>

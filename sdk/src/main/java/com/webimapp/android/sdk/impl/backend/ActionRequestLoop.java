@@ -95,7 +95,6 @@ public class ActionRequestLoop extends AbstractRequestLoop {
         return authData;
     }
 
-    @SuppressWarnings("unchecked")
     private void runIteration(AuthData currentAuthData) throws SocketTimeoutException {
         WebimRequest<?> currentRequest = this.lastRequest;
         if (currentRequest == null) {

@@ -38,7 +38,7 @@
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/textView1"
+                android:id="@+id/textReply"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="26dp"
@@ -183,7 +183,7 @@
         </RelativeLayout>
 
         <Button
-            android:id="@+id/buttonCettings"
+            android:id="@+id/buttonSettings"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/relLayStartChat"

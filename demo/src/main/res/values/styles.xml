@@ -13,6 +13,10 @@
         <item name="windowNoTitle">true</item>
     </style>
 
+    <style name="AppTheme.Launcher">
+        <item name="android:windowBackground">@drawable/splash_screen</item>
+    </style>
+
     <style name="RatingBar" parent="Theme.AppCompat">
         <item name="colorControlNormal">@color/grey</item>
         <item name="colorControlActivated">@color/orange</item>
@@ -28,9 +32,8 @@
     </style>
 
     <style name="AppTheme.ButtonPurple" parent="Widget.AppCompat.Button.Colored">
-        <item name="colorButtonNormal">@color/purple</item>
+        <item name="colorButtonNormal">@color/colorPrimaryDark</item>
         <item name="android:textColor">@color/white</item>
     </style>
-
 
 </resources>

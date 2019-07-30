@@ -11,7 +11,6 @@ import java.lang.reflect.Type;
 import com.webimapp.android.sdk.impl.items.delta.DeltaFullUpdate;
 
 public class DeltaFullUpdateDeserializer implements JsonDeserializer<DeltaFullUpdate> {
-    @SuppressWarnings("deprecation")
     @Override
     public DeltaFullUpdate deserialize(JsonElement je, Type type, JsonDeserializationContext ctx)
             throws JsonParseException {

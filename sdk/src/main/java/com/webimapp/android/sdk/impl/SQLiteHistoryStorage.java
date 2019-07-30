@@ -18,6 +18,7 @@ import com.webimapp.android.sdk.impl.backend.WebimClient;
 import com.webimapp.android.sdk.impl.backend.WebimInternalLog;
 import com.webimapp.android.sdk.impl.items.KeyboardItem;
 import com.webimapp.android.sdk.impl.items.KeyboardRequestItem;
+import com.webimapp.android.sdk.impl.items.MessageItem;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -42,8 +43,9 @@ public class SQLiteHistoryStorage implements HistoryStorage {
             "avatar, " +
             "type, " +
             "text, " +
-            "data) " +
-            "VALUES (?,?,?,?,?,?,?,?,?)";
+            "data, " +
+            "quote) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_HISTORY_STATEMENT = "UPDATE history " +
             "SET " +
             "client_side_id=?, " +
@@ -53,11 +55,12 @@ public class SQLiteHistoryStorage implements HistoryStorage {
             "avatar=?, " +
             "type=?, " +
             "text=?, " +
-            "data=? " +
+            "data=?, " +
+            "quote=? " +
             "WHERE msg_id=?";
     private static final String DELETE_HISTORY_STATEMENT = "DELETE FROM history " +
             "WHERE msg_id=?";
-    private static final int VERSION = 4;
+    private static final int VERSION = 5;
 
     private final MyDBHelper dbHelper;
     private final Handler handler;
@@ -236,6 +239,23 @@ public class SQLiteHistoryStorage implements HistoryStorage {
         } else {
             statement.bindString((index + 7), data);
         }
+
+        Message.Quote quote = message.getQuote();
+        // Binding to quote
+        if (quote != null) {
+            statement.bindString(
+                    (index + 8),
+                    MessageItem.Quote.getRawQuote(
+                            quote.getState().toString().toLowerCase(),
+                            quote.getSenderName(),
+                            quote.getMessageText(),
+                            quote.getMessageType() == null
+                                    ? null
+                                    : quote.getMessageType().toString().toLowerCase(),
+                            quote.getMessageTimestamp(),
+                            quote.getAuthorId(),
+                            quote.getMessageId()));
+        }
     }
 
     private static int messageTypeToId(Message.Type type) {
@@ -253,8 +273,8 @@ public class SQLiteHistoryStorage implements HistoryStorage {
         String avatar = cursor.getString(5);
         Message.Type type = idToMessageType(cursor.getInt(6));
         String text = cursor.getString(7);
-
         String data = cursor.getString(8);
+        String rawQuote = cursor.getString(9);
 
         Message.Attachment attachment = null;
         String rawText;
@@ -275,6 +295,12 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                         + id + ", text: " + text + ". " + e,
                         Webim.SessionBuilder.WebimLogVerbosityLevel.ERROR);
             }
+        }
+
+        Message.Quote quote = null;
+        if (rawQuote != null) {
+            MessageItem.Quote fileParams = InternalUtils.fromJson(rawQuote, MessageItem.Quote.class);
+            quote = InternalUtils.getQuote(serverUrl, fileParams, client);
         }
 
         Message.Keyboard keyboardButton = null;
@@ -312,6 +338,8 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                 data,
                 isRead,
                 false,
+                false,
+                quote,
                 keyboardButton,
                 keyboardRequest);
     }
@@ -370,9 +398,10 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                         "avatar, " +
                         "type, " +
                         "text, " +
-                        "data) " +
+                        "data, " +
+                        "quote) " +
                         "VALUES " +
-                        "(?, ?, ?, ?, ?, ?, ?, ?)");
+                        "(?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
                 long newFirstKnownTs = Long.MAX_VALUE;
                 for (MessageImpl message : messages) {
@@ -488,7 +517,8 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                 + "    avatar VARCHAR(255),\n"
                 + "    type TINYINT NOT NULL,\n"
                 + "    text TEXT NOT NULL,\n"
-                + "    data TEXT\n"
+                + "    data TEXT,\n"
+                + "    quote TEXT\n"
                 + "); CREATE UNIQUE INDEX history_ts ON history (ts)";
 
         public MyDBHelper(Context context, String dbName) {

@@ -160,6 +160,31 @@ public class WebimActionsImpl implements WebimActions {
     }
 
     @Override
+    public void replyMessage(@NonNull final String message,
+                             @NonNull final String clientSideId,
+                             @NonNull final String quoteMessageId) {
+        message.getClass(); // NPE
+        clientSideId.getClass(); // NPE
+
+        enqueue(new ActionRequestLoop.WebimRequest<DefaultResponse>(true) {
+            @Override
+            public Call<DefaultResponse> makeRequest(AuthData authData) {
+                /*
+                Custom percent encoding for message because Retrofit/OkHTTP don't encode
+                semicolons.
+                */
+                return webim.replyMessage(
+                        ACTION_CHAT_MESSAGE,
+                        percentEncode(message),
+                        clientSideId,
+                        getReferenceToMessage(quoteMessageId),
+                        authData.getPageId(),
+                        authData.getAuthToken());
+            }
+        });
+    }
+
+    @Override
     public void sendFile(final @NonNull RequestBody body,
                          final @NonNull String filename,
                          final @NonNull String clientSideId,
@@ -433,5 +458,14 @@ public class WebimActionsImpl implements WebimActions {
         }
 
         return result.toString();
+    }
+
+    private String getReferenceToMessage(@NonNull String quotedMessage) {
+        return "{\"ref\":{" +
+                    "\"msgId\":\"" + quotedMessage + "\"," +
+                    "\"msgChannelSideId\":null," +
+                    "\"chatId\":null" +
+                    "}" +
+                "}";
     }
 }

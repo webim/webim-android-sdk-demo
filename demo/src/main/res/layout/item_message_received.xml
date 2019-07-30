@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginLeft="10dp"
     android:layout_marginRight="10dp"
-    android:paddingBottom="8dp">
+    android:paddingBottom="5dp">
 
     <TextView
         android:id="@+id/text_message_date"
@@ -15,7 +16,7 @@
         android:gravity="center_horizontal"
         android:text="@string/default_text"
         android:textAlignment="center"
-        android:textColor="@color/incomingMsgTimeText"
+        android:textColor="@color/receivedMsgTimeText"
         android:textSize="12sp"
         android:visibility="gone" />
 
@@ -24,58 +25,168 @@
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:layout_below="@id/text_message_date"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
-
-    <TextView
-        android:id="@+id/sender_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/chat_sent_message_margin"
-        android:layout_marginLeft="@dimen/chat_sent_message_margin"
-        android:text="@string/default_text"
-        android:textColor="@color/sendingMsgText"
-        android:textSize="14sp" />
+        android:layout_alignBottom="@+id/message"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true" />
 
     <LinearLayout
-        android:id="@+id/message_body"
+        android:id="@+id/message"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/sender_name"
-        android:layout_marginLeft="@dimen/chat_sent_message_margin"
         android:layout_marginStart="@dimen/chat_sent_message_margin"
-        android:layout_marginTop="2dp"
+        android:layout_marginLeft="@dimen/chat_sent_message_margin"
         android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/sender_name_for_image"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginStart="13dp"
+            android:layout_marginLeft="13dp"
+            android:layout_marginEnd="5dp"
+            android:layout_marginRight="5dp"
+            android:layout_marginBottom="3dp"
+            android:text="@string/default_text"
+            android:textColor="@color/colorAccent"
+            android:textSize="12sp"
+            android:visibility="gone" />
 
         <ImageView
             android:id="@+id/attached_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal" />
+            android:layout_gravity="center_horizontal"
+            android:visibility="gone"
+            tools:ignore="ContentDescription" />
 
-        <TextView
-            android:id="@+id/text_message_body"
+        <LinearLayout
+            android:id="@+id/message_body"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="start"
-            android:background="@drawable/received_message_background"
-            android:backgroundTint="@color/blue"
-            android:maxWidth="240dp"
-            android:textColor="@color/white" />
+            android:layout_marginEnd="20dp"
+            android:layout_marginRight="20dp"
+            android:background="@drawable/background_received_message"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/sender_name"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="5dp"
+                android:layout_marginRight="5dp"
+                android:text="@string/default_text"
+                android:textColor="@color/colorAccent"
+                android:textSize="12sp" />
+
+            <RelativeLayout
+                android:id="@+id/quote_message"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginTop="3dp"
+                android:layout_marginBottom="5dp"
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <View
+                    android:id="@+id/divider"
+                    android:layout_width="2dp"
+                    android:layout_height="match_parent"
+                    android:layout_alignTop="@+id/quote_body"
+                    android:layout_alignBottom="@+id/quote_body"
+                    android:background="@color/blue" />
+
+                <android.support.constraint.ConstraintLayout
+                    android:id="@+id/const_quoted_image"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignTop="@id/quote_body"
+                    android:layout_alignBottom="@id/quote_body"
+                    android:layout_toEndOf="@id/divider"
+                    android:layout_toRightOf="@id/divider"
+                    android:minWidth="40dp"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:id="@+id/quoted_image"
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:adjustViewBounds="false"
+                        android:maxWidth="40dp"
+                        android:maxHeight="40dp"
+                        android:minWidth="20dp"
+                        android:minHeight="20dp"
+                        android:scaleType="centerCrop"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintDimensionRatio="1:1"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        tools:ignore="ContentDescription" />
+                </android.support.constraint.ConstraintLayout>
+
+                <LinearLayout
+                    android:id="@+id/quote_body"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginLeft="6dp"
+                    android:layout_toEndOf="@id/const_quoted_image"
+                    android:layout_toRightOf="@id/const_quoted_image"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/quote_sender_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:singleLine="true"
+                        android:text="@string/default_text"
+                        android:textColor="@color/receivedMsgText"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/quote_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:paddingEnd="4dp"
+                        android:paddingRight="4dp"
+                        android:singleLine="true"
+                        android:text="@string/default_text"
+                        android:textColor="@color/receivedMsgText"
+                        android:textSize="12sp"
+                        android:visibility="gone"
+                        tools:ignore="RtlSymmetry" />
+                </LinearLayout>
+            </RelativeLayout>
+
+            <TextView
+                android:id="@+id/text_message_body"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="5dp"
+                android:layout_marginRight="5dp"
+                android:text="@string/default_text"
+                android:textColor="@color/receivedMsgText" />
+        </LinearLayout>
     </LinearLayout>
 
     <TextView
         android:id="@+id/text_message_time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/message_body"
-        android:layout_alignStart="@id/message_body"
-        android:layout_alignLeft="@id/message_body"
+        android:layout_below="@id/message"
+        android:layout_alignStart="@id/message"
+        android:layout_alignLeft="@id/message"
         android:maxWidth="100dp"
-        android:paddingStart="5dp"
-        android:paddingLeft="5dp"
-        android:text="@string/default_text"
-        android:textColor="@color/sendingMsgTimeText"
+        android:layout_marginTop="@dimen/message_time_marginTop"
+        android:paddingStart="8dp"
+        android:paddingLeft="8dp"
+        android:text="@string/default_time"
+        android:textColor="@color/receivedMsgTimeText"
         android:textSize="12sp"
         tools:ignore="RtlSymmetry" />
 
@@ -84,12 +195,12 @@
         style="?android:attr/progressBarStyleSmall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBottom="@id/message_body"
+        android:layout_alignBottom="@id/message"
         android:layout_centerVertical="true"
-        android:layout_marginLeft="4dp"
         android:layout_marginStart="4dp"
-        android:layout_toRightOf="@id/message_body"
-        android:layout_toEndOf="@id/message_body"
+        android:layout_marginLeft="4dp"
+        android:layout_toEndOf="@id/message"
+        android:layout_toRightOf="@id/message"
         android:visibility="gone" />
 
 </RelativeLayout>

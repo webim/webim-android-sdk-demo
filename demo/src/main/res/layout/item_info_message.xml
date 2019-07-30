@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/message_body"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_gravity="center"
@@ -7,7 +9,23 @@
     android:layout_marginRight="20dp"
     android:layout_marginBottom="8dp"
     android:foregroundGravity="center"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:paddingLeft="4dp"
+    android:paddingRight="4dp">
+
+    <TextView
+        android:id="@+id/text_message_body"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:autoLink="all"
+        android:background="@drawable/background_info_message"
+        android:gravity="center"
+        android:linksClickable="true"
+        android:padding="10dp"
+        android:textColor="@color/systemMsg"
+        android:textIsSelectable="true"
+        android:textSize="12sp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -19,10 +37,12 @@
             android:id="@+id/text_message_date"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/message_time_marginTop"
+            android:layout_marginEnd="4dp"
             android:layout_marginRight="4dp"
-            android:text="nov 12"
+            android:text="@string/default_date"
             android:textAlignment="center"
-            android:textColor="@color/systemMsg"
+            android:textColor="@color/systemMsgTime"
             android:textSize="12sp"
             android:visibility="gone" />
 
@@ -30,24 +50,11 @@
             android:id="@+id/text_message_time"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="12:40"
+            android:layout_marginTop="@dimen/message_time_marginTop"
+            android:text="@string/default_time"
             android:textAlignment="center"
-            android:textColor="@color/systemMsg"
+            android:textColor="@color/systemMsgTime"
             android:textSize="12sp"
             android:visibility="visible" />
     </LinearLayout>
-
-    <TextView
-        android:id="@+id/text_message_body"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:autoLink="all"
-        android:gravity="center"
-        android:linksClickable="true"
-        android:textColor="@color/systemMsg"
-        android:textIsSelectable="true"
-        android:textSize="12sp"
-        android:textStyle="italic" />
-
 </LinearLayout>
