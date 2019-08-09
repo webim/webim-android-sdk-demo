@@ -159,7 +159,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                                     message);
                         } catch (SQLiteConstraintException ignored) {
                             bindMessageFields(updateStatement, 1, message);
-                            updateStatement.bindString(9, message.getId().toString()/*historyId.getDbId()*/);
+                            updateStatement.bindString(10, message.getId().toString()/*historyId.getDbId()*/);
                             updateStatement.executeUpdateDelete();
                             runMessageChanged(callback, message);
                         } catch (SQLException e) {
@@ -240,8 +240,8 @@ public class SQLiteHistoryStorage implements HistoryStorage {
             statement.bindString((index + 7), data);
         }
 
-        Message.Quote quote = message.getQuote();
         // Binding to quote
+        Message.Quote quote = message.getQuote();
         if (quote != null) {
             statement.bindString(
                     (index + 8),
@@ -251,7 +251,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                             quote.getMessageText(),
                             quote.getMessageType() == null
                                     ? null
-                                    : quote.getMessageType().toString().toLowerCase(),
+                                    : quote.getMessageType().toString(),
                             quote.getMessageTimestamp(),
                             quote.getAuthorId(),
                             quote.getMessageId()));
@@ -299,8 +299,8 @@ public class SQLiteHistoryStorage implements HistoryStorage {
 
         Message.Quote quote = null;
         if (rawQuote != null) {
-            MessageItem.Quote fileParams = InternalUtils.fromJson(rawQuote, MessageItem.Quote.class);
-            quote = InternalUtils.getQuote(serverUrl, fileParams, client);
+            MessageItem.Quote quoteParams = InternalUtils.fromJson(rawQuote, MessageItem.Quote.class);
+            quote = InternalUtils.getQuote(serverUrl, quoteParams, client);
         }
 
         Message.Keyboard keyboardButton = null;
@@ -311,7 +311,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
         }
 
         Message.KeyboardRequest keyboardRequest = null;
-        if (type == Message.Type.KEYBOARD_RESPONCE) {
+        if (type == Message.Type.KEYBOARD_RESPONSE) {
             Type mapType = new TypeToken<KeyboardRequestItem>() {}.getType();
             KeyboardRequestItem keyboard = InternalUtils.getKeyboard(data, true, mapType);
             keyboardRequest = InternalUtils.getKeyboardRequest(keyboard);

@@ -71,7 +71,8 @@ public final class MessageFactories {
             keyboardRequest = InternalUtils.getKeyboardRequest(keyboard);
         }
 
-        return new MessageImpl(serverUrl,
+        return new MessageImpl(
+                serverUrl,
                 StringId.forMessage(message.getClientSideId()),
                 InternalUtils.getOperatorId(message),
                 message.getSenderAvatarUrl(),
@@ -170,20 +171,27 @@ public final class MessageFactories {
         }
 
         public MessageSending createText(Message.Id id, String text) {
-            return new MessageSending(serverUrl, id, "", Message.Type.VISITOR,
-                    text, System.currentTimeMillis() * 1000, null);
+            return new MessageSending(
+                    serverUrl,
+                    id,
+                    "",
+                    Message.Type.VISITOR,
+                    text,
+                    System.currentTimeMillis() * 1000,
+                    null);
         }
 
         public MessageSending createTextWithQuote(
                 Message.Id id,
                 String text,
+                Message.Type quoteType,
                 String quoteAuthor,
                 String quoteText) {
             MessageImpl.QuoteImpl quote = new MessageImpl.QuoteImpl(
                     null,
                     null,
-                    "",
-                    Message.Type.VISITOR,
+                    null,
+                    quoteType,
                     quoteAuthor,
                     Message.Quote.State.PENDING,
                     quoteText,
@@ -199,8 +207,14 @@ public final class MessageFactories {
         }
 
         public MessageSending createFile(Message.Id id) {
-            return new MessageSending(serverUrl, id, "", Message.Type.FILE_FROM_VISITOR,
-                    "", System.currentTimeMillis() * 1000, null);
+            return new MessageSending(
+                    serverUrl,
+                    id,
+                    "",
+                    Message.Type.FILE_FROM_VISITOR,
+                    "",
+                    System.currentTimeMillis() * 1000,
+                    null);
         }
     }
 
@@ -215,9 +229,12 @@ public final class MessageFactories {
         public Operator createOperator(@Nullable OperatorItem operatorItem) {
             return operatorItem == null
                     ? null
-                    : new OperatorImpl(StringId.forOperator(operatorItem.getId()),
-                    operatorItem.getFullname(),
-                    operatorItem.getAvatar() == null ? null : serverUrl + operatorItem.getAvatar());
+                    : new OperatorImpl(
+                            StringId.forOperator(operatorItem.getId()),
+                            operatorItem.getFullname(),
+                            operatorItem.getAvatar() == null
+                                    ? null
+                                    : serverUrl + operatorItem.getAvatar());
         }
     }
 }

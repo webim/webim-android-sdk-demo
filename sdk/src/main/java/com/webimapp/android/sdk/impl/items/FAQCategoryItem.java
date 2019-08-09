@@ -4,12 +4,11 @@ import com.google.gson.annotations.SerializedName;
 import com.webimapp.android.sdk.FAQCategory;
 import com.webimapp.android.sdk.FAQCategoryInfo;
 import com.webimapp.android.sdk.FAQItem;
-import com.webimapp.android.sdk.impl.items.responses.ErrorResponse;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class FAQCategoryItem extends ErrorResponse implements FAQCategory {
+public class FAQCategoryItem implements FAQCategory {
     @SerializedName("categoryid")
     private int categoryId;
     @SerializedName("title")

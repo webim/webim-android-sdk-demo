@@ -243,6 +243,84 @@ public abstract class AbstractRequestLoop {
         throw new InterruptedRuntimeException();
     }
 
+    @Nullable
+    protected <T> T performFAQRequest(@NonNull Call<T> request) {
+
+        int errorCounter = 0;
+        int lastHttpCode = -1;
+
+        while (isRunning()) {
+            long startTime = System.nanoTime();
+            String error = null;
+            String argumentName = null;
+            int httpCode = 200;
+
+            try {
+                Call<T> cloned = request.clone();
+                currentRequest = cloned;
+                Response<T> response = cloned.execute();
+
+                currentRequest = null;
+
+                blockUntilPaused();
+                if (!isRunning()) {
+                    break;
+                }
+
+                if (response.isSuccessful()) {
+                    return response.body();
+                } else {
+                    try {
+                        ErrorResponse errorResponse = InternalUtils.fromJson(
+                                response.errorBody().string(),
+                                ErrorResponse.class
+                        );
+                        error = errorResponse.getError();
+                        argumentName = errorResponse.getArgumentName();
+                    } catch (Exception ignored) { }
+
+                    httpCode = response.code();
+                }
+            } catch (UnknownHostException ignored) {
+            } catch (SSLHandshakeException e) {
+                error = "ssl_error";
+                argumentName = null;
+            } catch (IOException e) {
+                if (!isRunning()) {
+                    break;
+                }
+            }
+
+            blockUntilPaused();
+            if (!isRunning()) {
+                break;
+            }
+
+            if ((error != null) && !error.equals(WebimInternalError.SERVER_NOT_READY)) {
+                throw new AbortByWebimErrorException(request, error, httpCode, argumentName);
+            } else if ((httpCode != 200) && (httpCode != 502)) {
+                // 502 Bad Gateway - always the same as 'server-not-ready'
+                if (httpCode == lastHttpCode) {
+                    throw new AbortByWebimErrorException(request, null, httpCode);
+                }
+
+                errorCounter = 10;
+            }
+            lastHttpCode = httpCode;
+
+            errorCounter++;
+            long elapsedMillis = (System.nanoTime() - startTime) / 1000_000;
+            long toSleepMillis = ((errorCounter >= 5) ? 5000 : errorCounter * 1000);
+            if (elapsedMillis < toSleepMillis) {
+                try {
+                    Thread.sleep(toSleepMillis - elapsedMillis);
+                } catch (InterruptedException ignored) { }
+            }
+        }
+
+        throw new InterruptedRuntimeException();
+    }
+
     private void logRequest(Request request) {
             String ln = System.getProperty("line.separator");
             String log = "Webim request:"

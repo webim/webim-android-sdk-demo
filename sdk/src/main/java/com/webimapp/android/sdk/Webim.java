@@ -624,6 +624,8 @@ public final class Webim {
         @Nullable
         private String accountName;
         @Nullable
+        private Context context;
+        @Nullable
         private SSLSocketFactory sslSocketFactory;
         @Nullable
         private X509TrustManager trustManager;
@@ -642,6 +644,20 @@ public final class Webim {
         public FAQBuilder setAccountName(@NonNull String accountName) {
             accountName.getClass(); // NPE
             this.accountName = accountName;
+            return this;
+        }
+
+        /**
+         * Context is used to create a DB (to store cache).
+         *
+         * @param context Your {@link android.app.Activity} or {@link android.app.Application}
+         * @return this builder object
+         * @see android.app.Activity
+         * @see android.app.Application
+         */
+        public FAQBuilder setContext(@NonNull Context context) {
+            context.getClass(); // NPE
+            this.context = context;
             return this;
         }
 
@@ -676,8 +692,14 @@ public final class Webim {
                         "Use setAccountName() to set appropriate account name");
             }
 
+            if (context == null) {
+                throw new IllegalArgumentException("context can't be null! " +
+                        "Use setContext() to set appropriate context");
+            }
+
             return FAQImpl.newInstance(
                     accountName,
+                    context,
                     sslSocketFactory,
                     trustManager
             );

@@ -4,10 +4,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.webimapp.android.sdk.Webim;
-import com.webimapp.android.sdk.impl.items.responses.ErrorResponse;
 
-import java.io.FileNotFoundException;
-import java.net.SocketTimeoutException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
@@ -43,10 +40,6 @@ public class FAQRequestLoop extends AbstractRequestLoop {
                     } else {
                         running = false;
                     }
-                } catch (SocketTimeoutException e) {
-                    WebimInternalLog.getInstance().log(e.toString(),
-                            Webim.SessionBuilder.WebimLogVerbosityLevel.DEBUG);
-                    this.lastRequest = null;
                 } catch (InterruptedRuntimeException ignored) { }
             }
         } catch (final Throwable t) {
@@ -57,7 +50,7 @@ public class FAQRequestLoop extends AbstractRequestLoop {
     }
 
     @SuppressWarnings("unchecked")
-    private void runIteration() throws SocketTimeoutException {
+    private void runIteration() {
         FAQRequestLoop.WebimRequest<?> currentRequest = this.lastRequest;
         if (currentRequest == null) {
             try {
@@ -69,7 +62,6 @@ public class FAQRequestLoop extends AbstractRequestLoop {
 
         try {
             performRequestAndCallback(currentRequest);
-        } catch (final FileNotFoundException ignored) {
         } catch (AbortByWebimErrorException exception) {
             if ((exception.getError() != null)
                     && currentRequest.isHandleError(exception.getError())) {
@@ -91,10 +83,8 @@ public class FAQRequestLoop extends AbstractRequestLoop {
         this.lastRequest = null;
     }
 
-    private <T extends ErrorResponse> void performRequestAndCallback
-            (FAQRequestLoop.WebimRequest<T> currentRequest)
-            throws SocketTimeoutException, FileNotFoundException {
-        final T response = performRequest(currentRequest.makeRequest());
+    private <T> void performRequestAndCallback(FAQRequestLoop.WebimRequest<T> currentRequest) {
+        final T response = performFAQRequest(currentRequest.makeRequest());
 
         if (currentRequest.hasCallback) {
             final FAQRequestLoop.WebimRequest<T> callback = currentRequest;
@@ -113,7 +103,7 @@ public class FAQRequestLoop extends AbstractRequestLoop {
         } catch (InterruptedException ignored) { }
     }
 
-    static abstract class WebimRequest<T extends ErrorResponse> {
+    static abstract class WebimRequest<T> {
         private final boolean hasCallback;
 
         protected WebimRequest(boolean hasCallback) {

@@ -315,11 +315,11 @@ public final class MessageItem implements Comparable<MessageItem> {
                     "\"message\":{" +
                         "\"channelSideId\":null," +
                         "\"name\":" + checkOnNull(senderName) + "," +
-                        "\"text\":" + checkOnNull(text) + "," +
-                        "\"kind\":" + checkOnNull(type) + "," +
+                        "\"text\":" + checkOnAttachment(text, type) + "," +
+                        "\"kind\":" + convertingKind(type) + "," +
                         "\"ts\":" + tsSeconds + "," +
                         "\"authorId\":" + checkOnNull(authorId) +  "," +
-                        "\"id\":" + checkOnNull(id) + "" +
+                        "\"id\":" + checkOnNull(id) +
                         "}" +
                     "}";
         }
@@ -327,5 +327,70 @@ public final class MessageItem implements Comparable<MessageItem> {
         private static String checkOnNull(String checkValue) {
             return (checkValue != null) ? "\"" + checkValue + "\"" : null;
         }
+
+        private static String checkOnAttachment(String checkValue, String messageType) {
+            if (messageType != null) {
+                return (messageType.equals(WMMessageKind.FILE_FROM_OPERATOR.toString())
+                        || messageType.equals(WMMessageKind.FILE_FROM_VISITOR.toString()))
+                        ? checkOnNull(percentEncode(checkValue))
+                        : checkOnNull(checkValue);
+            } else {
+                return null;
+            }
+        }
+
+        private static String convertingKind(String type) {
+            return (type != null)
+                    ? checkOnNull(WMMessageKindForSaveInDb.valueOf(type).toString())
+                    : null;
+        }
+
+        private static String percentEncode(String input) {
+            if ((input == null) || input.isEmpty()) {
+                return input;
+            }
+
+            String CHARACTERS_TO_ENCODE = "\n\"\\%";
+            StringBuilder result = new StringBuilder(input);
+            for (int i = (input.length() - 1); i >= 0; i--) {
+                if (CHARACTERS_TO_ENCODE.indexOf(input.charAt(i)) != -1) {
+                    result.replace(
+                            i,
+                            (i + 1),
+                            ("%" + Integer.toHexString(0x100 | input.charAt(i))
+                                    .substring(1).toUpperCase())
+                    );
+                }
+            }
+
+            return result.toString();
+        }
+
+        public enum WMMessageKindForSaveInDb {
+            ACTION_REQUEST ("action_request"),
+            CONTACT_REQUEST ("cont_req"),
+            CONTACTS ("contacts"),
+            FILE_FROM_OPERATOR ("file_operator"),
+            FOR_OPERATOR ("for_operator"),
+            FILE_FROM_VISITOR ("file_visitor"),
+            INFO ("info"),
+            KEYBOARD ("keyboard"),
+            KEYBOARD_RESPONCE ("keyboard_response"),
+            OPERATOR ("operator"),
+            OPERATOR_BUSY ("operator_busy"),
+            VISITOR ("visitor");
+
+            private final String kind;
+
+            WMMessageKindForSaveInDb(String jsonKind) {
+                kind = jsonKind;
+            }
+
+            @Override
+            public String toString() {
+                return kind;
+            }
+        }
+
     }
 }

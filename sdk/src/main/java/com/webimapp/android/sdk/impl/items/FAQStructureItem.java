@@ -2,12 +2,11 @@ package com.webimapp.android.sdk.impl.items;
 
 import com.google.gson.annotations.SerializedName;
 import com.webimapp.android.sdk.FAQStructure;
-import com.webimapp.android.sdk.impl.items.responses.ErrorResponse;
 
 import java.util.LinkedList;
 import java.util.List;
 
-public class FAQStructureItem extends ErrorResponse implements FAQStructure {
+public class FAQStructureItem implements FAQStructure {
     @SerializedName("id")
     private String id;
     @SerializedName("type")

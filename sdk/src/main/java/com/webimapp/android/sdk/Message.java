@@ -139,7 +139,7 @@ public interface Message {
         /**
          * A system message from the chat bot containing information about the button that the user selected.
          */
-        KEYBOARD_RESPONCE,
+        KEYBOARD_RESPONSE,
         /**
          * A text message sent by an operator.
          */

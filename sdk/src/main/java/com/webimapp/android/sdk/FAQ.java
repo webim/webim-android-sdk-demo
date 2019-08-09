@@ -1,8 +1,7 @@
 package com.webimapp.android.sdk;
 
-/**
- *
- */
+import java.util.List;
+
 public interface FAQ {
 
     /**
@@ -41,11 +40,39 @@ public interface FAQ {
     void getCategory(int id, GetCategoryCallback callback);
 
     /**
+     * Requests category from cache. If nil is passed inside completion, there no category with this id.
+     * @param id category id
+     * @param callback callback to be called on category if method call succeeded
+     */
+    void getCachedCategory(int id, GetCategoryCallback callback);
+
+    /**
      * Requests item. If nil is passed inside completion, there no item with this id.
      * @param id item id
      * @param callback callback to be called on category if method call succeeded
      */
     void getItem(String id, GetItemCallback callback);
+
+    /**
+     * Requests search. If nil is passed inside completion, there no search result with this query.
+     * @param query search query
+     * @param id item id
+     * @param limit limit the number of items in the response.
+     * @param callback callback to be called on category if method call succeeded
+     */
+    void search(String query, int id, int limit, GetSearchCallback callback);
+
+    /**
+     * Requests like.
+     * @param item item to like
+     */
+    void like(FAQItem item);
+
+    /**
+     * Requests dislike.
+     * @param item item to dislike
+     */
+    void dislike(FAQItem item);
 
     /**
      * @see FAQ#getStructure(int, GetStructureCallback)
@@ -66,5 +93,12 @@ public interface FAQ {
      */
     interface GetItemCallback {
         void receive(FAQItem item);
+    }
+
+    /**
+     * @see FAQ#search(String, int, int, GetSearchCallback)
+     */
+    interface GetSearchCallback {
+        void receive(List<FAQSearchItem> items);
     }
 }

@@ -29,12 +29,32 @@ public interface FAQItem {
     String getContent();
 
     /**
-     * @return like count of the item.
+     * @return like count of the item
      */
     int getLikeCount();
 
     /**
-     * @return dislike count of the item.
+     * @return dislike count of the item
      */
     int getDislikeCount();
+
+    /**
+     * @return user rate of the item
+     */
+    UserRate getUserRate();
+
+    public enum UserRate {
+        /**
+         * Item is liked by user.
+         */
+        LIKE,
+        /**
+         * Item is disliked by user.
+         */
+        DISLIKE,
+        /**
+         * User doesn't rate the item.
+         */
+        NO_RATE
+    }
 }

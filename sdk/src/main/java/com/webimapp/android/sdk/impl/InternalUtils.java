@@ -23,7 +23,9 @@ import java.lang.reflect.Type;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -167,7 +169,7 @@ public final class InternalUtils {
             case KEYBOARD:
                 return Message.Type.KEYBOARD;
             case KEYBOARD_RESPONCE:
-                return Message.Type.KEYBOARD_RESPONCE;
+                return Message.Type.KEYBOARD_RESPONSE;
             default:
                 throw new IllegalStateException(kind.toString());
         }
@@ -380,15 +382,13 @@ public final class InternalUtils {
             String quoteAuthorId = null;
             long quoteTimeSeconds = 0;
             Message.Type quoteState = null;
-            if (quote.getState() != MessageItem.Quote.State.NOT_FOUND) {
+            if ((quote.getState() == MessageItem.Quote.State.FILLED)) {
                 if ((quote.getType() == MessageItem.WMMessageKind.FILE_FROM_VISITOR)
                         || (quote.getType() == MessageItem.WMMessageKind.FILE_FROM_OPERATOR)) {
                     attachment = extractAttachment(serverUrl, quote, client);
-                    quoteText = attachment.getFileName();
-                } else {
-                    quoteText = quote.getText();
                 }
-                quoteAuthorId =quote.getAuthorId();
+                quoteText = quote.getText();
+                quoteAuthorId = quote.getAuthorId();
                 quoteId = quote.getId();
                 quoteState = toPublicMessageType(quote.getType());
                 quoteSenderName = quote.getName();
@@ -424,9 +424,25 @@ public final class InternalUtils {
             @NonNull MessageItem.Quote quotedMessage,
             @NonNull WebimClient client) {
         MessageItem messageItem = new MessageItem();
-        messageItem.setMessage(quotedMessage.getText());
+        messageItem.setMessage(percentDecode(quotedMessage.getText()));
         messageItem.setType(quotedMessage.getType());
         messageItem.setId(quotedMessage.getId());
         return getAttachment(serverUrl, messageItem, client);
+    }
+
+    private static String percentDecode(String text) {
+        if ((text == null) || text.isEmpty()) {
+            return text;
+        }
+        Map<String, String> charactersForDecode = new HashMap<>();
+        charactersForDecode.put("%0A", "\n");
+        charactersForDecode.put("%22", "\"");
+        charactersForDecode.put("%5C", "\\");
+        charactersForDecode.put("%25", "%");
+
+        for (String key : charactersForDecode.keySet()) {
+            text = text.replace(key, charactersForDecode.get(key));
+        }
+        return text;
     }
 }

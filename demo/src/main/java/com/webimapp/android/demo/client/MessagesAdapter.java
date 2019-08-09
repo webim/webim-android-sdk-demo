@@ -273,6 +273,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                         textQuote = (message.getType() == OPERATOR)
                                 ? webimChatFragment.getResources().getString(R.string.quote_is_pending)
                                 : message.getQuote().getMessageText();
+                        textQuoteSenderName = (message.getType() == OPERATOR)
+                                ? ""
+                                : message.getQuote().getMessageText();
                     }
                     if (message.getQuote().getState() == Quote.State.FILLED) {
                         if (message.getQuote().getMessageType() == FILE_FROM_OPERATOR ||
@@ -368,7 +371,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             }
             textView.setText(
                     Html.fromHtml(webimChatFragment.getResources().getString(R.string.file_send)
-                    + "<a href=\"" + attachment.getUrl() + "\">" + attachment.getFileName() + "</a>"));
+                            + "<a href=\"" + attachment.getUrl() + "\">" + attachment.getFileName() + "</a>"));
             textView.setVisibility(View.VISIBLE);
         }
 
@@ -395,11 +398,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                 public void onClick(View view) {
                     Intent openImgIntent = new Intent(view.getContext(), ImageActivity.class);
                     openImgIntent.setData(fileUrl);
-                    Context context = view.getContext();
-                    if (context instanceof ContextWrapper) {
-                        context = ((ContextWrapper)context).getBaseContext();
-                    }
-                    Activity activity = (Activity) context;
+                    Activity activity = getRequiredActivity(view);
                     activity.startActivity(openImgIntent);
                     activity.overridePendingTransition(R.anim.pull_in_right, R.anim.push_out_left);
                 }
@@ -407,6 +406,17 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             textView.setText(attachment.getFileName());
             textView.setVisibility(View.VISIBLE);
             imageView.setVisibility(View.VISIBLE);
+        }
+
+        private Activity getRequiredActivity(View view) {
+            Context context = view.getContext();
+            while (context instanceof ContextWrapper) {
+                if (context instanceof Activity) {
+                    return (Activity)context;
+                }
+                context = ((ContextWrapper)context).getBaseContext();
+            }
+            return null;
         }
 
         private Size getThumbSize(ImageInfo imageInfo) {
@@ -690,11 +700,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                 DrawableCompat.wrap(unwrappedDrawable),
                 view.getResources().getColor(colorForSelect));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            messageBody.setBackground(
-                    view.getResources().getDrawable(drawableResource));
+            messageBody.setBackground(view.getResources().getDrawable(drawableResource));
         } else {
-            messageBody.setBackgroundDrawable(
-                    view.getResources().getDrawable(drawableResource));
+            messageBody.setBackgroundDrawable(view.getResources().getDrawable(drawableResource));
         }
     }
 }

@@ -19,6 +19,7 @@ public class WebimActionsImpl implements WebimActions {
     private static final MediaType PLAIN_TEXT = MediaType.parse("text/plain");
     private static final RequestBody CHAT_MODE_ONLINE = RequestBody.create(PLAIN_TEXT, "online");
     private static final String ACTION_CHAT_CLOSE = "chat.close";
+    private static final String ACTION_CHAT_KEYBOARD_RESPONSE = "chat.keyboard_response";
     private static final String ACTION_CHAT_READ_BY_VISITOR = "chat.read_by_visitor";
     private static final String ACTION_CHAT_START = "chat.start";
     private static final String ACTION_CHAT_MESSAGE = "chat.message";
@@ -31,7 +32,6 @@ public class WebimActionsImpl implements WebimActions {
     private static final String ACTION_VISITOR_TYPING = "chat.visitor_typing";
     private static final String ACTION_WIDGET_UPDATE = "widget.update";
     private static final String CHARACTERS_TO_ENCODE = "\n!#$&'()*+,/:;=?@[] \"%-.<>\\^_`{|}~";
-    private static final String ACTION_CHAT_KEYBOARD_RESPONSE = "chat.keyboard_response";
     @NonNull
     private final ActionRequestLoop requestLoop;
     @NonNull

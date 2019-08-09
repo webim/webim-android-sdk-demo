@@ -2,11 +2,10 @@ package com.webimapp.android.sdk.impl.items;
 
 import com.google.gson.annotations.SerializedName;
 import com.webimapp.android.sdk.FAQItem;
-import com.webimapp.android.sdk.impl.items.responses.ErrorResponse;
 
 import java.util.List;
 
-public class FAQItemItem extends ErrorResponse implements FAQItem {
+public class FAQItemItem implements FAQItem {
     @SerializedName("id")
     private String id;
     @SerializedName("categories")
@@ -21,6 +20,8 @@ public class FAQItemItem extends ErrorResponse implements FAQItem {
     private int likes;
     @SerializedName("dislikes")
     private int dislikes;
+    @SerializedName("userRate")
+    private String userRate;
 
     @Override
     public String getId() {
@@ -55,5 +56,27 @@ public class FAQItemItem extends ErrorResponse implements FAQItem {
     @Override
     public int getDislikeCount() {
         return dislikes;
+    }
+
+    @Override
+    public UserRate getUserRate() {
+        if (userRate == null) {
+            return UserRate.NO_RATE;
+        }
+        switch (userRate) {
+            case "like":
+                return UserRate.LIKE;
+            case "dislike":
+                return UserRate.DISLIKE;
+            default:
+                return UserRate.NO_RATE;
+        }
+    }
+
+    public enum FAQUserRateKind {
+        @SerializedName("item")
+        ITEM,
+        @SerializedName("category")
+        CATEGORY
     }
 }

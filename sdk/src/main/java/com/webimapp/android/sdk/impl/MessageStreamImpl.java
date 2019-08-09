@@ -269,6 +269,7 @@ public class MessageStreamImpl implements MessageStream {
                 sendingMessageFactory.createTextWithQuote(
                         messageId,
                         message,
+                        quotedMessage.getType(),
                         quotedMessage.getSenderName(),
                         quotedMessage.getText()));
 
