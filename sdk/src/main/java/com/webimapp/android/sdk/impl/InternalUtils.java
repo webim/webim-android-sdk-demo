@@ -1,6 +1,5 @@
 package com.webimapp.android.sdk.impl;
 
-import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
@@ -41,40 +40,13 @@ public final class InternalUtils {
     }
 
     public static String createServerUrl(String accountName) {
-        if (accountName == null) {
-            return null;
-        } else if (accountName.contains("://")) {
-            return accountName;
-        } else {
-            return String.format("https://%s.webim.ru", accountName);
-        }
-    }
-
-    @Nullable
-    public static WebimPushNotification parseGcmPushNotification(@NonNull Bundle bundle) {
-        bundle.getClass(); //NPE
-        if (!bundle.containsKey("data")) {
-            return null;
-        }
-        try {
-            WebimPushNotification push
-                    = fromJson(bundle.getString("data"), WebimPushNotificationImpl.class);
-            //noinspection ConstantConditions
-            if (push == null
-                    || push.getType() == null
-                    || push.getEvent() == null
-                    || push.getParams() == null) {
-                return null;
-            }
-            return push;
-        } catch (JsonSyntaxException e) {
-            return null;
-        }
+        return (accountName == null || accountName.contains("://"))
+                ? accountName
+                : String.format("https://%s.webim.ru", accountName);
     }
 
     @Nullable
     public static WebimPushNotification parseFcmPushNotification(@NonNull String message) {
-        message.getClass(); //NPE
         try {
             WebimPushNotification push
                     = fromJson(message, WebimPushNotificationImpl.class);
@@ -94,7 +66,6 @@ public final class InternalUtils {
     @Nullable
     public static WebimPushNotification parseFcmPushNotification(@NonNull String message,
                                                                  @NonNull String visitorId) {
-        message.getClass(); //NPE
         try {
             WebimPushNotification push
                     = fromJson(message, WebimPushNotificationImpl.class);
@@ -139,12 +110,8 @@ public final class InternalUtils {
         return gson.fromJson(je, cls);
     }
 
-    public static int compare(int x, int y) {
-        return (x < y) ? -1 : ((x == y) ? 0 : 1);
-    }
-
-    public static int compare(long x, long y) {
-        return (x < y) ? -1 : ((x == y) ? 0 : 1);
+    public static <T extends Comparable<T>> int compare(T x, T y) {
+        return x.compareTo(y);
     }
 
     @NonNull
@@ -176,39 +143,43 @@ public final class InternalUtils {
     }
 
     @Nullable
-    public static Operator.Id getOperatorId(@NonNull MessageItem msg) {
-        switch (msg.getType()) {
+    public static Operator.Id getOperatorId(@NonNull MessageItem messageItem) {
+        switch (messageItem.getType()) {
             case OPERATOR:
             case CONTACT_REQUEST:
             case FILE_FROM_OPERATOR:
-                return msg.getSenderId() == null ? null : StringId.forOperator(msg.getSenderId());
+                return messageItem.getSenderId() == null
+                        ? null
+                        : StringId.forOperator(messageItem.getSenderId());
             default:
                 return null;
         }
     }
 
     @Nullable
-    public static String getAvatarUrl(@NonNull String serverUrl, @NonNull MessageItem msg) {
-        return msg.getSenderAvatarUrl() == null ? null : serverUrl + msg.getSenderAvatarUrl();
+    public static String getAvatarUrl(@NonNull String serverUrl, @NonNull MessageItem messageItem) {
+        return messageItem.getSenderAvatarUrl() == null
+                ? null
+                : serverUrl + messageItem.getSenderAvatarUrl();
     }
 
     @Nullable
     public static Message.Attachment getAttachment(@NonNull String serverUrl,
-                                                   @NonNull MessageItem msg,
+                                                   @NonNull MessageItem messageItem,
                                                    @NonNull WebimClient client) {
-        if (msg.getType() == MessageItem.WMMessageKind.FILE_FROM_VISITOR
-                || msg.getType() == MessageItem.WMMessageKind.FILE_FROM_OPERATOR) {
+        if (messageItem.getType() == MessageItem.WMMessageKind.FILE_FROM_VISITOR
+                || messageItem.getType() == MessageItem.WMMessageKind.FILE_FROM_OPERATOR) {
             if (client.getAuthData() != null) {
                 try {
-                    return getAttachment(serverUrl, msg.getMessage(), client);
+                    return getAttachment(serverUrl, messageItem.getMessage(), client);
                 } catch (Exception e) {
                     WebimInternalLog.getInstance().log(
                             "Failed to parse file params for message: "
-                                    + msg.getId()
+                                    + messageItem.getId()
                                     + ", "
-                                    + msg.getClientSideId()
+                                    + messageItem.getClientSideId()
                                     + ", text: "
-                                    + msg.getMessage()
+                                    + messageItem.getMessage()
                                     + "."
                                     + e,
                             Webim.SessionBuilder.WebimLogVerbosityLevel.ERROR
@@ -230,25 +201,17 @@ public final class InternalUtils {
                                                    @NonNull WebimClient client) {
         try {
             FileParametersItem fileParams = InternalUtils.fromJson(text, FileParametersItem.class);
-            String fileUrl;
+            String fileUrl = HttpUrl.parse(serverUrl).toString().replaceFirst("/*$", "/")
+                    + "l/v/m/download/"
+                    + fileParams.getGuid() + "/"
+                    + URLEncoder.encode(fileParams.getFilename(), "utf-8") + "?";
             if (client.getAuthData() != null) {
                 String pageId = client.getAuthData().getPageId();
                 long expires = currentTimeSeconds() + ATTACHMENT_URL_EXPIRES_PERIOD;
                 String data = fileParams.getGuid() + expires;
                 String key = client.getAuthData().getAuthToken();
                 String hash = sha256(data, key);
-                fileUrl = HttpUrl.parse(serverUrl).toString().replaceFirst("/*$", "/")
-                        + "l/v/m/download/"
-                        + fileParams.getGuid() + "/"
-                        + URLEncoder.encode(fileParams.getFilename(), "utf-8")
-                        + "?page-id=" + pageId
-                        + "&expires=" + expires
-                        + "&hash=" + hash;
-            } else {
-                fileUrl = HttpUrl.parse(serverUrl).toString().replaceFirst("/*$", "/")
-                        + "l/v/m/download/"
-                        + fileParams.getGuid() + "/"
-                        + URLEncoder.encode(fileParams.getFilename(), "utf-8") + "?";
+                fileUrl += "page-id=" + pageId + "&expires=" + expires + "&hash=" + hash;
             }
             return new MessageImpl.AttachmentImpl(fileUrl,
                     fileParams.getSize(),
@@ -283,19 +246,14 @@ public final class InternalUtils {
     @Nullable
     private static Message.ImageInfo extractImageData(@Nullable FileParametersItem fileParams,
                                                       @Nullable String fileUrl) {
-        if (fileParams == null) {
+        if (fileParams == null || fileUrl == null || fileParams.getImageParams() == null) {
             return null;
         }
-        FileParametersItem.WMImageParams.WMImageSize size = fileParams.getImageParams() == null
-                ? null
-                : fileParams.getImageParams().getSize();
+        FileParametersItem.WMImageParams.WMImageSize size = fileParams.getImageParams().getSize();
         if (size == null) {
             return null;
         }
-        String url = fileUrl == null ? null : fileUrl + "&thumb=android";
-        if (url == null) {
-            return null;
-        }
+        String url = fileUrl + "&thumb=android";
 
         return new MessageImpl.ImageInfoImpl(url, size.getWidth(), size.getHeight());
     }
