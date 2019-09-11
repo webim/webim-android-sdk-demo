@@ -112,6 +112,24 @@ public class FAQActions {
         });
     }
 
+    public void getCategoriesForApplication(final String application,
+                                            final String language,
+                                            final String departmentKey,
+                                            final DefaultCallback<List<Integer>> callback) {
+        enqueue(new FAQRequestLoop.WebimRequest<List<Integer>>(true) {
+            @Override
+            public Call<List<Integer>> makeRequest() {
+                return faq.getCategoriesForApplication(application, "android", language, departmentKey);
+            }
+
+            @Override
+            public void runCallback(List<Integer> response) {
+                callback.onSuccess(response);
+            }
+        });
+
+    }
+
     private static String percentEncode(String input) {
         if ((input == null) || input.isEmpty()) {
             return input;

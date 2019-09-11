@@ -166,6 +166,23 @@ public class FAQImpl implements FAQ {
     }
 
     @Override
+    public void getCategoriesForApplication(String application,
+                                            String language,
+                                            String departmentKey,
+                                            final GetCallback<List<Integer>> callback) {
+        accessChecker.checkAccess();
+
+        client.getActions().getCategoriesForApplication(application, language, departmentKey,
+                new DefaultCallback<List<Integer>>() {
+            @Override
+            public void onSuccess(List<Integer> response) {
+                callback.receive(response);
+            }
+        });
+
+    }
+
+    @Override
     public void getCachedCategory(int id, GetCategoryCallback callback) {
         accessChecker.checkAccess();
 

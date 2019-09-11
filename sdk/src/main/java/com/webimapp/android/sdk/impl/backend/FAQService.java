@@ -17,13 +17,18 @@ import retrofit2.http.Query;
 
 public interface FAQService {
 
+    String PARAMETER_APP = "app";
+    String PARAMETER_DEPARTMENT_KEY = "department-key";
     String PARAMETER_ITEM_ID = "itemid";
     String PARAMETER_CATEGORY_ID = "categoryid";
-    String PARAMETER_QUERY = "query";
+    String PARAMETER_LANGUAGE = "lang";
     String PARAMETER_LIMIT = "limit";
+    String PARAMETER_PLATFORM = "platform";
+    String PARAMETER_QUERY = "query";
     String PARAMETER_USER_ID = "userid";
     String URL_SUFFIX_ITEM = "/services/faq/v1/item";
     String URL_SUFFIX_CATEGORY = "/services/faq/v1/category";
+    String URL_SUFFIX_CATEGORIES = "/webim/api/v1/faq/category";
     String URL_SUFFIX_STRUCTURE = "/services/faq/v1/structure";
     String URL_SUFFIX_SEARCH = "/services/faq/v1/search";
     String URL_SUFFIX_LIKE = "/services/faq/v1/like";
@@ -39,6 +44,14 @@ public interface FAQService {
     Call<FAQCategoryItem> getCategory(
             @Query(PARAMETER_CATEGORY_ID) int categoryId,
             @Query(PARAMETER_USER_ID) String userId
+    );
+
+    @GET(URL_SUFFIX_CATEGORIES)
+    Call<List<Integer>> getCategoriesForApplication(
+            @Query(PARAMETER_APP) String application,
+            @Query(PARAMETER_PLATFORM) String platform,
+            @Query(PARAMETER_LANGUAGE) String language,
+            @Query(PARAMETER_DEPARTMENT_KEY) String departmentKey
     );
 
     @GET(URL_SUFFIX_STRUCTURE)

@@ -1,5 +1,13 @@
-<h2>С чего начать</h2>
-Для работы с блоком часто задаваемых вопросов (FAQ), необходимо вызвать метод Webim.newFAQBuilder() для получения экземпляра класса FAQBuilder. С помощью метода setAccountName(String accountName) необходимо установить имя аккаунта. Метод faqBuilder.build() вернёт экземпляр класса FAQ. После вызова метода faq.resume() можно начинать работать с получением необходимых структур.
+<h2>Как использовать</h2>
+<ul>
+<li>Получить <em><strong>FAQBuilder</strong></em> с помощью статичного метода <em><strong>Webim.newFAQBuilder()</strong></em>;</li>
+<li>Установить название аккаунта с помощью метода <strong><em>setAccountName(String accountName) </em></strong>экземляра класса&nbsp;<em><strong>FAQBuilder</strong></em> и <em><strong>Context</strong></em>, который необходим для кэширования данных в локальную базу данных, с помощью метода <strong><em>setContext(Context context)</em></strong>;</li>
+<li>Получить экземпляр протокола <em><strong>FAQ</strong></em> с помощью метода <strong><em>build()</em></strong>&nbsp;экземляра класса <em><strong>FAQBuilder</strong></em>;</li>
+<li>Для возможности обращения к серверу необходимо вызывать метод <strong><em>resume()</em></strong> экземпляра класса <strong><em>FAQ</em></strong>;</li>
+<li>Далее можно вызывать все методы интерфейса <em><strong>FAQ</strong></em>.</li>
+</ul>
+<p>Пример использования:</p>
+<pre>FAQ faq = Webim.<span>newFAQBuilder</span>().setAccountName(<span>"wmdemo3"</span>).setContext(<span>this</span>.getContext()).build()<span>;<br /></span>faq.resume()<span>;</span></pre>
 
 <h2>метод newFAQBuilder() класса Webim</h2>
 Метод, необходимый для получения объекта FAQBuilder, который в свою очередь необходим для создания экземпляра класса FAQ.
@@ -109,7 +117,7 @@
 
 Параметр id – ID категории блока часто задаваемых вопросов. Тип – Int.
 
-Параметр callback– объект, реализующий интерфейс GetCategoryCallback.
+Параметр callback – объект, реализующий интерфейс GetCategoryCallback.
 
 Ничего не возвращает.
 
@@ -117,6 +125,22 @@
 
 Для правильной работы метода требуется вызов метод resume().
 
+<h3>метод экземпляра getCategoriesForApplication(String application, String language, String, departmentKey, GetCallback<List<Integer>> callback)</h3>
+Метод, который используется для получения массива идентификаторов категорий, подходящих для заданных параметров, через completion. Если запрос завершился с ошибкой, то полученный массив будет пустой.
+
+Параметр application – название приложения. Тип – String.
+
+Параметр language – язык. Тип – String.
+
+Параметр departmentKey – ключ отдела. Тип – String.
+
+Параметр callback – объект, реализующий интерфейс GetCallback<List<Integer>>.
+
+Ничего не возвращает.
+
+Выбрасывает RuntimeException, если метод был вызван из потока, отличного от того, в котором был создан объект класса.
+
+Для правильной работы метода требуется вызов метод resume().
 
 <h3>метод экземпляра getCachedCategory(int id, GetCategoryCallback completion)</h3>
 Метод, который используется для получения объекта класса FAQCategory через completion из сохранённого кэша. Если запрос завершился с ошибкой, то полученная категория будет равна null.
@@ -442,16 +466,29 @@
 Страница может быть отмечена пользователем.
 
 
-<h3>случай LIKE</h3>
-Пользователю понравилась страница.
-
-
-<h3>случай DISLIKE</h3>
-Пользователю не понравилась страница.
-
-
-<h3>случай NO_RATE</h3>
-Страница не оценена пользователем.
+<table border="1" style="border-collapse: collapse; width: 47.30787803532008%; height: 54px;">
+<tbody>
+<tr style="height: 18px;">
+<td style="width: 8.719646799117001%; height: 18px;">LIKE</td>
+<td style="width: 38.59130842271465%; height: 18px;">
+<p>Пользователю понравилась страница.</p>
+</td>
+</tr>
+<tr style="height: 18px;">
+<td style="width: 8.719646799117001%; height: 18px;">DISLIKE</td>
+<td style="width: 38.59130842271465%; height: 18px;">
+<p>Пользователю не понравилась страница.</p>
+</td>
+</tr>
+<tr style="height: 18px;">
+<td style="width: 8.719646799117001%; height: 18px;">NO_RATE</td>
+<td style="width: 38.59130842271465%; height: 18px;">
+<p>Страница не оценена пользователем.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p></p>
 
 
 <h2>интерфейс FAQSearchItem</h2>
@@ -544,13 +581,26 @@
 Возможные типы корня дерева блока часто задаваемых вопросов (см. метод getType() интерфейса FAQStructure).
 
 
-<h3>случай ITEM</h3>
-Корень дерева является страницей.
-
-
-<h3>случай CATEGORY</h3>
-Корень дерева является категорией.
-
-
-<h3>случай UNKNOWN</h3>
-Корень дерева имеет неизвестный тип для данной версии SDK.
+<table border="1" style="border-collapse: collapse; width: 68.98454746136865%;">
+<tbody>
+<tr>
+<td style="width: 15.2317880794702%;">ITEM</td>
+<td style="width: 53.752759381898464%;">
+<p>Корень дерева является страницей.</p>
+</td>
+</tr>
+<tr>
+<td style="width: 15.2317880794702%;">CATEGORY</td>
+<td style="width: 53.752759381898464%;">
+<p>Корень дерева является категорией.</p>
+</td>
+</tr>
+<tr>
+<td style="width: 15.2317880794702%;">UNKNOWN</td>
+<td style="width: 53.752759381898464%;">
+<p>Корень дерева имеет неизвестный тип для данной версии SDK.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<pre><span>&nbsp;</span></pre>

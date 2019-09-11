@@ -40,6 +40,18 @@ public interface FAQ {
     void getCategory(int id, GetCategoryCallback callback);
 
     /**
+     * Requests category. If nil is passed inside completion, there no category with this id.
+     * @param application application name
+     * @param language language
+     * @param departmentKey department key
+     * @param callback callback to be called on category if method call succeeded
+     */
+    void getCategoriesForApplication(String application,
+                                     String language,
+                                     String departmentKey,
+                                     GetCallback<List<Integer>> callback);
+
+    /**
      * Requests category from cache. If nil is passed inside completion, there no category with this id.
      * @param id category id
      * @param callback callback to be called on category if method call succeeded
@@ -100,5 +112,9 @@ public interface FAQ {
      */
     interface GetSearchCallback {
         void receive(List<FAQSearchItem> items);
+    }
+
+    interface GetCallback<T> {
+        void receive(T item);
     }
 }
