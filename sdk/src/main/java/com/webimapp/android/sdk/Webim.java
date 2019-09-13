@@ -152,6 +152,7 @@ public final class Webim {
         private FatalErrorHandler errorHandler;
         @Nullable
         private String location;
+        @NonNull String multivisitorSection = "";
         @Nullable
         private SharedPreferences preferences;
         @Nullable
@@ -495,6 +496,16 @@ public final class Webim {
         }
 
         /**
+         * If set different section for visitors, different visitors can receive remote notifications on one device.
+         *
+         * @return this builder object
+         */
+        public SessionBuilder setMultivisitorSection(String multivisitorSection) {
+            this.multivisitorSection = multivisitorSection;
+            return this;
+        }
+
+        /**
          * Builds new {@link WebimSession} object. This method must be called from the thread
          * {@link android.os.Looper}
          * (for instance, from the main thread of the application), and all the follow-up work with
@@ -557,7 +568,8 @@ public final class Webim {
                     storeHistoryLocally,
                     clearVisitorData,
                     sslSocketFactory,
-                    trustManager
+                    trustManager,
+                    multivisitorSection
             );
         }
 

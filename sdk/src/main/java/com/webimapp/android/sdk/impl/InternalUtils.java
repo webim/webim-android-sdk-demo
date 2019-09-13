@@ -51,10 +51,7 @@ public final class InternalUtils {
             WebimPushNotification push
                     = fromJson(message, WebimPushNotificationImpl.class);
             //noinspection ConstantConditions
-            if (push == null
-                    || push.getType() == null
-                    || push.getEvent() == null
-                    || push.getParams() == null) {
+            if (push == null || push.getEvent() == null) {
                 return null;
             }
             return push;
@@ -70,15 +67,20 @@ public final class InternalUtils {
             WebimPushNotification push
                     = fromJson(message, WebimPushNotificationImpl.class);
             List<String> params = push.getParams();
+            WebimPushNotification.NotificationType type = push.getType();
             //noinspection ConstantConditions
-            if (push == null
-                    || push.getType() == null
-                    || push.getEvent() == null
-                    || params == null) {
+            if (push == null || push.getEvent() == null) {
                 return null;
             }
+            if (push.getEvent().equals("del")) {
+                return push;
+            }
+            if (type == null || params == null) {
+                return null;
+            }
+
             int indexOfId;
-            switch (push.getType()) {
+            switch (type) {
                 case OPERATOR_ACCEPTED:
                     indexOfId = 1;
                     break;

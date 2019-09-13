@@ -178,7 +178,8 @@ public class WebimSessionImpl implements WebimSession {
             boolean storeHistoryLocally,
             boolean clearVisitorData,
             SSLSocketFactory sslSocketFactory,
-            X509TrustManager trustManager
+            X509TrustManager trustManager,
+            @NonNull String multivisitorSection
     ) {
         context.getClass(); // NPE
         accountName.getClass(); // NPE
@@ -245,7 +246,7 @@ public class WebimSessionImpl implements WebimSession {
                 .setTitle((title != null) ? title : TITLE)
                 .setPushToken(pushSystem,
                         pushSystem != Webim.PushSystem.NONE ? pushToken : null)
-                .setDeviceId(getDeviceId(context))
+                .setDeviceId(getDeviceId(context, multivisitorSection))
                 .setPrechatFields(prechatFields)
                 .setSslSocketFactoryAndTrustManager(sslSocketFactory, trustManager)
                 .build();
@@ -335,14 +336,18 @@ public class WebimSessionImpl implements WebimSession {
         return session;
     }
 
-    private static @NonNull
-    String getDeviceId(@NonNull Context context) {
+    @NonNull
+    private static String getDeviceId(@NonNull Context context, @NonNull String suffix) {
         SharedPreferences guidPrefs
                 = context.getSharedPreferences(GUID_SHARED_PREFS_NAME, Context.MODE_PRIVATE);
-        String guid = guidPrefs.getString("guid", null);
+        if (!suffix.isEmpty()) {
+            suffix = "-" + suffix;
+        }
+        String name = "guid" + suffix;
+        String guid = guidPrefs.getString(name, null);
         if (guid == null) {
-            guid = UUID.randomUUID().toString();
-            guidPrefs.edit().putString("guid", guid).apply();
+            guid = UUID.randomUUID().toString() + suffix;
+            guidPrefs.edit().putString(name, guid).apply();
         }
 
         return guid;

@@ -1,6 +1,7 @@
 package com.webimapp.android.sdk.impl;
 
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -15,6 +16,10 @@ public class WebimPushNotificationImpl implements WebimPushNotification {
     private NotificationType type;
     @SerializedName("params")
     private List<String> params;
+    @SerializedName("location")
+    private String location;
+    @SerializedName("unread_by_visitor_msg_cnt")
+    private int unreadByVisitorMessageCount;
 
     @NonNull
     @Override
@@ -32,5 +37,16 @@ public class WebimPushNotificationImpl implements WebimPushNotification {
     @Override
     public List<String> getParams() {
         return params;
+    }
+
+    @Nullable
+    @Override
+    public String getLocation() {
+        return location;
+    }
+
+    @Override
+    public int getUnreadByVisitorMessagesCount() {
+        return unreadByVisitorMessageCount;
     }
 }

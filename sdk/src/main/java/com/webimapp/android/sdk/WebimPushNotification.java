@@ -1,6 +1,7 @@
 package com.webimapp.android.sdk;
 
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -14,7 +15,7 @@ public interface WebimPushNotification {
     /**
      * @return the type of the notification
      */
-    @NonNull NotificationType getType();
+    @Nullable NotificationType getType();
 
     /**
      * This method may return of two values:
@@ -30,7 +31,12 @@ public interface WebimPushNotification {
      * @return parameters of this notification. Each {@link NotificationType} has specific list of parameters
      * @see NotificationType
      */
-    @NonNull List<String> getParams();
+    @Nullable List<String> getParams();
+
+    @Nullable
+    String getLocation();
+
+    int getUnreadByVisitorMessagesCount();
 
     /**
      *
