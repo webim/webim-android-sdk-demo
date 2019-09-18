@@ -30,14 +30,14 @@ public interface FAQ {
      * @param rootId root id of FAQ tree
      * @param callback callback to be called on category if method call succeeded
      */
-    void getStructure(int rootId, GetStructureCallback callback);
+    void getStructure(int rootId, GetCallback<FAQStructure> callback);
 
     /**
      * Requests category. If nil is passed inside completion, there no category with this id.
      * @param id category id
      * @param callback callback to be called on category if method call succeeded
      */
-    void getCategory(int id, GetCategoryCallback callback);
+    void getCategory(int id, GetCallback<FAQCategory> callback);
 
     /**
      * Requests category. If nil is passed inside completion, there no category with this id.
@@ -56,14 +56,14 @@ public interface FAQ {
      * @param id category id
      * @param callback callback to be called on category if method call succeeded
      */
-    void getCachedCategory(int id, GetCategoryCallback callback);
+    void getCachedCategory(int id, GetCallback<FAQCategory> callback);
 
     /**
      * Requests item. If nil is passed inside completion, there no item with this id.
      * @param id item id
      * @param callback callback to be called on category if method call succeeded
      */
-    void getItem(String id, GetItemCallback callback);
+    void getItem(String id, GetCallback<FAQItem> callback);
 
     /**
      * Requests search. If nil is passed inside completion, there no search result with this query.
@@ -72,7 +72,7 @@ public interface FAQ {
      * @param limit limit the number of items in the response.
      * @param callback callback to be called on category if method call succeeded
      */
-    void search(String query, int id, int limit, GetSearchCallback callback);
+    void search(String query, int id, int limit, GetCallback<List<FAQSearchItem>> callback);
 
     /**
      * Requests like.
@@ -86,35 +86,9 @@ public interface FAQ {
      */
     void dislike(FAQItem item);
 
-    /**
-     * @see FAQ#getStructure(int, GetStructureCallback)
-     */
-    interface GetStructureCallback {
-        void receive(FAQStructure structure);
-    }
-
-    /**
-     * @see FAQ#getCategory(int, GetCategoryCallback)
-     */
-    interface GetCategoryCallback {
-        void receive(FAQCategory category);
-    }
-
-    /**
-     * @see FAQ#getItem(String, GetItemCallback)
-     */
-    interface GetItemCallback {
-        void receive(FAQItem item);
-    }
-
-    /**
-     * @see FAQ#search(String, int, int, GetSearchCallback)
-     */
-    interface GetSearchCallback {
-        void receive(List<FAQSearchItem> items);
-    }
-
     interface GetCallback<T> {
         void receive(T item);
+
+        void onError();
     }
 }

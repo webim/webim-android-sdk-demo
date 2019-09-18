@@ -78,7 +78,7 @@ public class FAQSQLiteHistoryStorage {
     }
 
     public void getCategory(final int id,
-                            @NonNull final FAQ.GetCategoryCallback callback) {
+                            @NonNull final FAQ.GetCallback<FAQCategory> callback) {
         executor.execute(new Runnable() {
             @Override
             public void run() {
@@ -100,7 +100,7 @@ public class FAQSQLiteHistoryStorage {
         });
     }
 
-    private void runCallback(final FAQ.GetCategoryCallback callback,
+    private void runCallback(final FAQ.GetCallback<FAQCategory> callback,
                              final FAQCategory category) {
         handler.post(new Runnable() {
             @Override

@@ -8,8 +8,10 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.webimapp.android.sdk.FAQ;
+import com.webimapp.android.sdk.FAQCategory;
 import com.webimapp.android.sdk.FAQItem;
 import com.webimapp.android.sdk.FAQSearchItem;
+import com.webimapp.android.sdk.FAQStructure;
 import com.webimapp.android.sdk.impl.backend.DefaultCallback;
 import com.webimapp.android.sdk.impl.backend.FAQClient;
 import com.webimapp.android.sdk.impl.backend.FAQClientBuilder;
@@ -141,26 +143,34 @@ public class FAQImpl implements FAQ {
     }
 
     @Override
-    public void getStructure(int id, final GetStructureCallback callback) {
+    public void getStructure(int id, final GetCallback<FAQStructure> callback) {
         accessChecker.checkAccess();
 
         client.getActions().getStructure(id, new DefaultCallback<FAQStructureItem>() {
             @Override
             public void onSuccess(FAQStructureItem response) {
-                callback.receive(response);
+                if (response == null) {
+                    callback.onError();
+                } else {
+                    callback.receive(response);
+                }
             }
         });
     }
 
     @Override
-    public void getCategory(final int id, final GetCategoryCallback callback) {
+    public void getCategory(final int id, final GetCallback<FAQCategory> callback) {
         accessChecker.checkAccess();
 
         client.getActions().getCategory(id, deviceId, new DefaultCallback<FAQCategoryItem>() {
             @Override
             public void onSuccess(FAQCategoryItem response) {
-                callback.receive(response);
-                cache.insertStructure(id, response);
+                if (response == null) {
+                    callback.onError();
+                } else {
+                    callback.receive(response);
+                    cache.insertStructure(id, response);
+                }
             }
         });
     }
@@ -183,20 +193,24 @@ public class FAQImpl implements FAQ {
     }
 
     @Override
-    public void getCachedCategory(int id, GetCategoryCallback callback) {
+    public void getCachedCategory(int id, GetCallback<FAQCategory> callback) {
         accessChecker.checkAccess();
 
         cache.getCategory(id, callback);
     }
 
     @Override
-    public void getItem(String id, final GetItemCallback callback) {
+    public void getItem(String id, final GetCallback<FAQItem> callback) {
         accessChecker.checkAccess();
 
         client.getActions().getItem(id, deviceId, new DefaultCallback<FAQItemItem>() {
             @Override
             public void onSuccess(FAQItemItem response) {
-                callback.receive(response);
+                if (response == null) {
+                    callback.onError();
+                } else {
+                    callback.receive(response);
+                }
             }
         });
     }
@@ -206,7 +220,7 @@ public class FAQImpl implements FAQ {
             String query,
             int categoryId,
             int limit,
-            final GetSearchCallback callback) {
+            final GetCallback<List<FAQSearchItem>> callback) {
         accessChecker.checkAccess();
 
         client.getActions().getSearch(
@@ -216,9 +230,13 @@ public class FAQImpl implements FAQ {
                 new DefaultCallback<List<FAQSearchItemItem>>() {
             @Override
             public void onSuccess(List<FAQSearchItemItem> response) {
-                List<FAQSearchItem> items = new ArrayList<>();
-                items.addAll(response);
-                callback.receive(items);
+                if (response == null) {
+                    callback.onError();
+                } else {
+                    List<FAQSearchItem> items = new ArrayList<>();
+                    items.addAll(response);
+                    callback.receive(items);
+                }
             }
         });
     }
