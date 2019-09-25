@@ -12,6 +12,7 @@ import com.webimapp.android.sdk.FAQCategory;
 import com.webimapp.android.sdk.FAQItem;
 import com.webimapp.android.sdk.FAQSearchItem;
 import com.webimapp.android.sdk.FAQStructure;
+import com.webimapp.android.sdk.NotFatalErrorHandler;
 import com.webimapp.android.sdk.impl.backend.DefaultCallback;
 import com.webimapp.android.sdk.impl.backend.FAQClient;
 import com.webimapp.android.sdk.impl.backend.FAQClientBuilder;
@@ -350,6 +351,10 @@ public class FAQImpl implements FAQ {
                     errorListener.onError(url, error, httpCode);
                 }
             }
+        }
+
+        @Override
+        public void onNotFatalError(@NonNull NotFatalErrorHandler.NotFatalErrorType error) {
         }
     }
 }

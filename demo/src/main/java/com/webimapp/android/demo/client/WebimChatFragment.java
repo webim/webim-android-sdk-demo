@@ -600,6 +600,10 @@ public class WebimChatFragment extends Fragment {
                                                     message = getContext().getString(
                                                             R.string.file_upload_failed_size);
                                                     break;
+                                                case FILE_NAME_INCORRECT:
+                                                    message = getContext().getString(
+                                                            R.string.file_upload_failed_name);
+                                                    break;
                                                 case UPLOADED_FILE_NOT_FOUND:
                                                 default:
                                                     message = getContext().getString(

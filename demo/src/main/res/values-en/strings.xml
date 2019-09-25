@@ -87,4 +87,5 @@
     <string name="reply">Reply</string>
     <string name="default_date">November 12</string>
     <string name="upload_file">Load file</string>
+    <string name="file_upload_failed_name">Failed to upload file: error in file name</string>
 </resources>

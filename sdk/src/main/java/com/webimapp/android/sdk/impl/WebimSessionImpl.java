@@ -13,6 +13,7 @@ import com.webimapp.android.sdk.FatalErrorHandler;
 import com.webimapp.android.sdk.FatalErrorHandler.FatalErrorType;
 import com.webimapp.android.sdk.Message;
 import com.webimapp.android.sdk.MessageStream;
+import com.webimapp.android.sdk.NotFatalErrorHandler;
 import com.webimapp.android.sdk.ProvidedAuthorizationTokenStateListener;
 import com.webimapp.android.sdk.Webim;
 import com.webimapp.android.sdk.WebimSession;
@@ -173,6 +174,7 @@ public class WebimSessionImpl implements WebimSession {
             @Nullable String providedAuthorizationToken,
             @Nullable String title,
             @Nullable FatalErrorHandler errorHandler,
+            @Nullable NotFatalErrorHandler notFatalErrorHandler,
             @Nullable Webim.PushSystem pushSystem,
             @Nullable String pushToken,
             boolean storeHistoryLocally,
@@ -234,7 +236,7 @@ public class WebimSessionImpl implements WebimSession {
                 .setDeltaCallback(deltaCallback)
                 .setSessionParamsListener(new SessionParamsListenerImpl(preferences))
                 .setErrorListener(new DestroyIfNotErrorListener(sessionDestroyer,
-                        new ErrorHandlerToInternalAdapter(errorHandler)))
+                        new ErrorHandlerToInternalAdapter(errorHandler), notFatalErrorHandler))
                 .setVisitorJson(preferences.getString(PREFS_KEY_VISITOR, null))
                 .setProvidedAuthorizationListener(providedAuthorizationTokenStateListener)
                 .setProvidedAuthorizationToken(providedAuthorizationToken)
@@ -1199,11 +1201,15 @@ public class WebimSessionImpl implements WebimSession {
         private final SessionDestroyer destroyer;
         @Nullable
         private final InternalErrorListener errorListener;
+        @Nullable
+        private final NotFatalErrorHandler notFatalErrorHandler;
 
         private DestroyIfNotErrorListener(@Nullable SessionDestroyer destroyer,
-                                          @Nullable InternalErrorListener errorListener) {
+                                          @Nullable InternalErrorListener errorListener,
+                                          @Nullable NotFatalErrorHandler notFatalErrorHandler) {
             this.destroyer = destroyer;
             this.errorListener = errorListener;
+            this.notFatalErrorHandler = notFatalErrorHandler;
         }
 
         @Override
@@ -1215,6 +1221,13 @@ public class WebimSessionImpl implements WebimSession {
                 if (errorListener != null) {
                     errorListener.onError(url, error, httpCode);
                 }
+            }
+        }
+
+        @Override
+        public void onNotFatalError(@NonNull NotFatalErrorHandler.NotFatalErrorType error) {
+            if (notFatalErrorHandler != null) {
+                notFatalErrorHandler.onNotFatalError(new WebimErrorImpl<>(error, null));
             }
         }
     }
@@ -1235,6 +1248,10 @@ public class WebimSessionImpl implements WebimSession {
                                 ? error
                                 : "Server responded HTTP code: " + httpCode + " from URL: " + url));
             }
+        }
+
+        @Override
+        public void onNotFatalError(@NonNull NotFatalErrorHandler.NotFatalErrorType error) {
         }
 
         @NonNull

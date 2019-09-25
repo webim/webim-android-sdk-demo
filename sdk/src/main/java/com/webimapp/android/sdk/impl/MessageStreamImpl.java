@@ -440,6 +440,17 @@ public class MessageStreamImpl implements MessageStream {
 
         final Message.Id id = StringId.generateForMessage();
         messageHolder.onSendingMessage(sendingMessageFactory.createFile(id));
+        for (char c: name.toCharArray()) {
+            if ((c <= '\u001f' && c != '\t') || c >= '\u007f') {
+                messageHolder.onMessageSendingCancelled(id);
+                if (callback != null) {
+                    callback.onFailure(id, (new WebimErrorImpl<>(
+                            SendFileCallback.SendFileError.FILE_NAME_INCORRECT,
+                            WebimInternalError.FILE_NAME_INCORRECT)));
+                }
+                return id;
+            }
+        }
         actions.sendFile(
                 RequestBody.create(MediaType.parse(mimeType), file),
                 name,

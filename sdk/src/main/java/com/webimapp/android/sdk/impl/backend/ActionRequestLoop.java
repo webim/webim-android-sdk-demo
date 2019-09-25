@@ -16,10 +16,6 @@ import retrofit2.Call;
 
 public class ActionRequestLoop extends AbstractRequestLoop {
     private final BlockingQueue<WebimRequest> queue = new ArrayBlockingQueue<>(128);
-    @NonNull
-    private final Executor callbackExecutor;
-    @NonNull
-    private final InternalErrorListener errorListener;
     @Nullable
     private volatile AuthData authData;
     @Nullable
@@ -27,8 +23,7 @@ public class ActionRequestLoop extends AbstractRequestLoop {
 
     public ActionRequestLoop(@NonNull Executor callbackExecutor,
                              @NonNull InternalErrorListener errorListener) {
-        this.callbackExecutor = callbackExecutor;
-        this.errorListener = errorListener;
+        super(callbackExecutor, errorListener);
     }
 
     public void setAuthData(@Nullable AuthData pageId) {

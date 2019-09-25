@@ -3,6 +3,7 @@ package com.webimapp.android.sdk.impl.backend;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import com.webimapp.android.sdk.NotFatalErrorHandler;
 import com.webimapp.android.sdk.Webim;
 import com.webimapp.android.sdk.impl.InternalUtils;
 import com.webimapp.android.sdk.impl.items.responses.ErrorResponse;
@@ -11,6 +12,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -32,11 +34,20 @@ public abstract class AbstractRequestLoop {
     private Thread thread;
     @Nullable
     private volatile Call<?> currentRequest;
+    @NonNull
+    protected final InternalErrorListener errorListener;
+    @NonNull
+    protected final Executor callbackExecutor;
 
     private /* non-volatile */ boolean paused = true;
     private final Lock pauseLock = new ReentrantLock();
     private final Condition pauseCond = pauseLock.newCondition();
 
+    public AbstractRequestLoop(@NonNull Executor callbackExecutor,
+                               @NonNull InternalErrorListener errorListener) {
+        this.callbackExecutor = callbackExecutor;
+        this.errorListener = errorListener;
+    }
 
     protected void cancelRequest() {
         Call<?> request = currentRequest;
@@ -175,10 +186,20 @@ public abstract class AbstractRequestLoop {
                             Webim.SessionBuilder.WebimLogVerbosityLevel.ERROR
                     );
                 }
-            } catch (SocketTimeoutException | FileNotFoundException exception) {
+            } catch (FileNotFoundException exception) {
                 WebimInternalLog.getInstance().log(exception.toString(),
                         Webim.SessionBuilder.WebimLogVerbosityLevel.DEBUG
                 );
+            } catch (SocketTimeoutException exception) {
+                WebimInternalLog.getInstance().log(exception.toString(),
+                        Webim.SessionBuilder.WebimLogVerbosityLevel.DEBUG
+                );
+                callbackExecutor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        errorListener.onNotFatalError(NotFatalErrorHandler.NotFatalErrorType.SOCKET_TIMEOUT_EXPIRED);
+                    }
+                });
                 throw exception;
             } catch (UnknownHostException exception) {
                 WebimInternalLog.getInstance().log(exception.toString(),
@@ -232,9 +253,15 @@ public abstract class AbstractRequestLoop {
 
             errorCounter++;
             long elapsedMillis = (System.nanoTime() - startTime) / 1000_000;
-            long toSleepMillis = ((errorCounter >= 5) ? 5000 : errorCounter * 1000);
+            long toSleepMillis = ((errorCounter > 4) ? 10000 : errorCounter * 2000);
             if (elapsedMillis < toSleepMillis) {
                 try {
+                    callbackExecutor.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            errorListener.onNotFatalError(NotFatalErrorHandler.NotFatalErrorType.NO_NETWORK_CONNECTION);
+                        }
+                    });
                     Thread.sleep(toSleepMillis - elapsedMillis);
                 } catch (InterruptedException ignored) { }
             }
@@ -310,7 +337,7 @@ public abstract class AbstractRequestLoop {
 
             errorCounter++;
             long elapsedMillis = (System.nanoTime() - startTime) / 1000_000;
-            long toSleepMillis = ((errorCounter >= 5) ? 5000 : errorCounter * 1000);
+            long toSleepMillis = ((errorCounter >= 5) ? 10000 : errorCounter * 2000);
             if (elapsedMillis < toSleepMillis) {
                 try {
                     Thread.sleep(toSleepMillis - elapsedMillis);

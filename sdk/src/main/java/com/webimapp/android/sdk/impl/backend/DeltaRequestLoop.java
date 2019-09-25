@@ -22,9 +22,7 @@ public class DeltaRequestLoop extends AbstractRequestLoop {
     private static int providedAuthTokenErrorCount = 0;
     private final @Nullable String appVersion;
     private final @NonNull DeltaCallback callback;
-    private final @NonNull Executor callbackExecutor;
     private final @NonNull String deviceId;
-    private final @NonNull InternalErrorListener errorListener;
     private final @NonNull String platform;
     private final @Nullable String prechatFields;
     private final @Nullable SessionParamsListener sessionParamsListener;
@@ -57,10 +55,9 @@ public class DeltaRequestLoop extends AbstractRequestLoop {
                             @Nullable String providedAuthorizationToken,
                             @NonNull String deviceId,
                             @Nullable String prechatFields) {
+        super(callbackExecutor, errorListener);
         this.callback = callback;
         this.sessionParamsListener = sessionParamsListener;
-        this.callbackExecutor = callbackExecutor;
-        this.errorListener = errorListener;
         this.webim = webim;
         this.platform = platform;
         this.title = title;

@@ -531,6 +531,12 @@ public class SQLiteHistoryStorage implements HistoryStorage {
         }
 
         @Override
+        public void onOpen(SQLiteDatabase db) {
+            db.enableWriteAheadLogging();
+            super.onOpen(db);
+        }
+
+        @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             if (oldVersion != newVersion) {
                 db.execSQL("DROP TABLE history");

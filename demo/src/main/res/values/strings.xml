@@ -27,6 +27,7 @@
     <string name="file_selection_failed">Не удалось выбрать файл</string>
     <string name="file_upload_failed_size">Не удалось загрузить файл: превышен максимальный размер файла</string>
     <string name="file_upload_failed_type">Не удалось загрузить файл: тип файла не разрешен сервером</string>
+    <string name="file_upload_failed_name">Не удалось загрузить файл: ошибка в имени файла</string>
     <string name="file_upload_failed_unknown">Не удалось загрузить файл: неизвестная ошибка</string>
     <string name="file_upload_message_text">Отправка файла…</string>
     <string name="file_send">Отправил(а) файл:\n</string>

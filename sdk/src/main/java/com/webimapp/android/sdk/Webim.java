@@ -152,7 +152,10 @@ public final class Webim {
         private FatalErrorHandler errorHandler;
         @Nullable
         private String location;
-        @NonNull String multivisitorSection = "";
+        @NonNull
+        String multivisitorSection = "";
+        @Nullable
+        private NotFatalErrorHandler notFatalErrorHandler;
         @Nullable
         private SharedPreferences preferences;
         @Nullable
@@ -411,6 +414,11 @@ public final class Webim {
             return this;
         }
 
+        public SessionBuilder setNotFatalErrorHandler(@NonNull NotFatalErrorHandler notFatalErrorHandler) {
+            this.notFatalErrorHandler = notFatalErrorHandler;
+            return this;
+        }
+
         /**
          * Webim-service can send push-notifications about new messages in a chat. By default pushes are not sent.
          * You have to receive push notifications by yourself via {@link android.content.BroadcastReceiver}.
@@ -563,6 +571,7 @@ public final class Webim {
                     providedAuthorizationToken,
                     title,
                     errorHandler,
+                    notFatalErrorHandler,
                     pushSystem,
                     pushToken,
                     storeHistoryLocally,

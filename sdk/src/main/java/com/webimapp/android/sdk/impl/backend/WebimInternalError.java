@@ -5,6 +5,7 @@ public class WebimInternalError {
 	public static final String CHAT_REQUIRED = "chat-required";
 	public static final String CONTENT_TYPE_NOT_RECOGNIZED = "content_type_not_recognized";
 	public static final String DOMAIN_NOT_FROM_WHITELIST = "domain-not-from-whitelist";
+	public static final String FILE_NAME_INCORRECT = "incorrect-file-name";
 	public static final String FILE_NOT_FOUND = "file_not_found";
 	public static final String FILE_SIZE_EXCEEDED = "max_file_size_exceeded";
 	public static final String FILE_TYPE_NOT_ALLOWED = "not_allowed_file_type";

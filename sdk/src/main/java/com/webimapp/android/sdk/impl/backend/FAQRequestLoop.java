@@ -13,13 +13,11 @@ import retrofit2.Call;
 
 public class FAQRequestLoop extends AbstractRequestLoop {
     private final BlockingQueue<FAQRequestLoop.WebimRequest> queue = new ArrayBlockingQueue<>(128);
-    @NonNull
-    private final Executor callbackExecutor;
     @Nullable
     private FAQRequestLoop.WebimRequest<?> lastRequest;
 
     public FAQRequestLoop(@NonNull Executor callbackExecutor) {
-        this.callbackExecutor = callbackExecutor;
+        super(callbackExecutor, null);
     }
 
     @Override

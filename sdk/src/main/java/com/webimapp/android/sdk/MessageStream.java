@@ -714,7 +714,11 @@ public interface MessageStream {
             /**
              * Received error is not supported by current WebimClientLibrary version.
              */
-            UNKNOWN
+            UNKNOWN,
+            /**
+             * The upload file has an incorrect or erroneous name
+             */
+            FILE_NAME_INCORRECT
         }
     }
 
