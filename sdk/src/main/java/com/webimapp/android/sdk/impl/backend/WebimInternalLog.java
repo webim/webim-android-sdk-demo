@@ -1,6 +1,5 @@
 package com.webimapp.android.sdk.impl.backend;
 
-import android.annotation.SuppressLint;
 import android.support.annotation.Nullable;
 
 import com.webimapp.android.sdk.Webim.SessionBuilder.WebimLogVerbosityLevel;
@@ -8,6 +7,7 @@ import com.webimapp.android.sdk.WebimLog;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 /**
  * Created by Nikita Kaberov on 01.02.18.
@@ -56,10 +56,9 @@ public class WebimInternalLog {
         log(log, verbosityLevel);
     }
 
-    @SuppressLint("SimpleDateFormat")
     public void log(String log, WebimLogVerbosityLevel verbosityLevel) {
         if ((this.logger != null) && (this.verbosityLevel != null)) {
-            log = new SimpleDateFormat("dd MMM yyyy HH:mm:ss:SSS z").format(new Date())
+            log = new SimpleDateFormat("dd MMM yyyy HH:mm:ss:SSS z", Locale.getDefault()).format(new Date())
                     + " "
                     + levelToString(verbosityLevel)
                     + "WEBIM LOG: "

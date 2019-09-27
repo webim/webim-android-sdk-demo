@@ -198,7 +198,8 @@ public class MessageHolderImpl implements MessageHolder {
                                 new MessageTracker.GetMessagesCallback() {
                                     @Override
                                     public void receive(@NonNull List<? extends Message> rest) {
-                                        List<Message> result = new ArrayList<>(messages);
+                                        List<Message> result =
+                                                Collections.synchronizedList(new ArrayList<>(messages));
                                         result.addAll(rest);
                                         callback.receive(unmodifiableList(result));
                                     }
