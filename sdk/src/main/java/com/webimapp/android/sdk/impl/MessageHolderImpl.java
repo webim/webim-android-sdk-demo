@@ -193,13 +193,13 @@ public class MessageHolderImpl implements MessageHolder {
                         isReachedEndOfLocalHistory = true;
                         getMessagesFromHistory(before, limit, callback);
                     } else if (messages.size() < limit && !isReachedEndOfRemoteHistory) {
+                        final List<Message> result =
+                                Collections.synchronizedList(new ArrayList<>(messages));
                         requestHistoryBefore(((MessageImpl) messages.get(0)).getHistoryId(),
                                 limit - messages.size(),
                                 new MessageTracker.GetMessagesCallback() {
                                     @Override
                                     public void receive(@NonNull List<? extends Message> rest) {
-                                        List<Message> result =
-                                                Collections.synchronizedList(new ArrayList<>(messages));
                                         result.addAll(rest);
                                         callback.receive(unmodifiableList(result));
                                     }
