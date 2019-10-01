@@ -34,8 +34,12 @@ public class FAQImpl implements FAQ {
     private static final String GUID_SHARED_PREFS_NAME = "com.webimapp.android.sdk.guid";
     @NonNull
     private final AccessChecker accessChecker;
+    @Nullable
+    private final String application;
     @NonNull
     private final FAQClient client;
+    @Nullable
+    private final String departmentKey;
     @NonNull
     private final FAQDestroyer destroyer;
     private boolean clientStarted;
@@ -43,19 +47,27 @@ public class FAQImpl implements FAQ {
     private FAQSQLiteHistoryStorage cache;
     @NonNull
     private final String deviceId;
+    @Nullable
+    private final String language;
 
     private FAQImpl(
             @NonNull AccessChecker accessChecker,
+            @Nullable String application,
+            @Nullable String departmentKey,
             @NonNull FAQDestroyer destroyer,
             @NonNull FAQClient client,
             @NonNull FAQSQLiteHistoryStorage cache,
-            @NonNull String deviceId
+            @NonNull String deviceId,
+            @Nullable String language
     ) {
         this.accessChecker = accessChecker;
+        this.application = application;
+        this.departmentKey = departmentKey;
         this.destroyer = destroyer;
         this.client = client;
         this.cache = cache;
         this.deviceId = deviceId;
+        this.language = language;
     }
 
     private static @NonNull
@@ -73,7 +85,10 @@ public class FAQImpl implements FAQ {
 
 
     public static FAQ newInstance(String accountName,
+                                  String application,
                                   Context context,
+                                  String departmentKey,
+                                  String language,
                                   SSLSocketFactory sslSocketFactory,
                                   X509TrustManager trustManager) {
         accountName.getClass(); // NPE
@@ -108,8 +123,15 @@ public class FAQImpl implements FAQ {
         FAQSQLiteHistoryStorage cache
                 = new FAQSQLiteHistoryStorage(context,handler, "faqcache.db");
 
-
-        return new FAQImpl(accessChecker, destroyer, client, cache, getDeviceId(context));
+        return new FAQImpl(
+                accessChecker,
+                application,
+                departmentKey,
+                destroyer,
+                client,
+                cache,
+                getDeviceId(context),
+                language);
     }
 
     private void checkAccess() {
@@ -177,11 +199,13 @@ public class FAQImpl implements FAQ {
     }
 
     @Override
-    public void getCategoriesForApplication(String application,
-                                            String language,
-                                            String departmentKey,
-                                            final GetCallback<List<Integer>> callback) {
+    public void getCategoriesForApplication(final GetCallback<List<Integer>> callback) {
         accessChecker.checkAccess();
+
+        if ((application == null) || (language == null) || (departmentKey == null)) {
+            callback.onError();
+            return;
+        }
 
         client.getActions().getCategoriesForApplication(application, language, departmentKey,
                 new DefaultCallback<List<Integer>>() {
@@ -190,7 +214,6 @@ public class FAQImpl implements FAQ {
                 callback.receive(response);
             }
         });
-
     }
 
     @Override

@@ -645,7 +645,13 @@ public final class Webim {
         @Nullable
         private String accountName;
         @Nullable
+        private String application;
+        @Nullable
         private Context context;
+        @Nullable
+        private String departmentKey;
+        @Nullable
+        private String language;
         @Nullable
         private SSLSocketFactory sslSocketFactory;
         @Nullable
@@ -663,8 +669,17 @@ public final class Webim {
          * @return this builder object
          */
         public FAQBuilder setAccountName(@NonNull String accountName) {
-            accountName.getClass(); // NPE
             this.accountName = accountName;
+            return this;
+        }
+
+        /**
+         * Sets application
+         * @param application application
+         * @return this builder object
+         */
+        public FAQBuilder setApplication(@NonNull String application) {
+            this.application = application;
             return this;
         }
 
@@ -677,8 +692,27 @@ public final class Webim {
          * @see android.app.Application
          */
         public FAQBuilder setContext(@NonNull Context context) {
-            context.getClass(); // NPE
             this.context = context;
+            return this;
+        }
+
+        /**
+         * Sets department key
+         * @param departmentKey department key
+         * @return this builder object
+         */
+        public FAQBuilder setDepartmentKey(@NonNull String departmentKey) {
+            this.departmentKey = departmentKey;
+            return this;
+        }
+
+        /**
+         * Sets language
+         * @param language language
+         * @return this builder object
+         */
+        public FAQBuilder setLanguage(@NonNull String language) {
+            this.language = language;
             return this;
         }
 
@@ -720,7 +754,10 @@ public final class Webim {
 
             return FAQImpl.newInstance(
                     accountName,
+                    application,
                     context,
+                    departmentKey,
+                    language,
                     sslSocketFactory,
                     trustManager
             );
