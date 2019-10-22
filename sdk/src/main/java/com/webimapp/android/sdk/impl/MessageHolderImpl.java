@@ -793,9 +793,14 @@ public class MessageHolderImpl implements MessageHolder {
                         headMessage = currentChatMessages.size() < headIndex
                                 ? null
                                 : currentChatMessages.get(headIndex);
+                    } else {
+                        if (!currentChatMessages.isEmpty() && headIndex == -1) {
+                            int offset = (currentChatMessages.size() > index) ? 0 : 1;
+                            headMessage = currentChatMessages.get(index - offset);
+                        }
                     }
-                    messageListener.messageRemoved(msg);
                 }
+                messageListener.messageRemoved(msg);
             }
         }
 
