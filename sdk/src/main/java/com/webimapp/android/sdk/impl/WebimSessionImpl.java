@@ -605,8 +605,8 @@ public class WebimSessionImpl implements WebimSession {
                 public void onSuccess(
                         List<MessageImpl> messages,
                         Set<String> deleted,
-                        boolean hasMore,
-                        boolean isInitial,
+                        final boolean hasMore,
+                        final boolean isInitial,
                         final @Nullable String revision
                 ) {
                     if (destroyer.isDestroyed()) {
@@ -614,10 +614,6 @@ public class WebimSessionImpl implements WebimSession {
                     }
                     lastPollTime = SystemClock.uptimeMillis();
                     lastRevision = revision;
-                    if (isInitial && !hasMore) {
-                        messageHolder.setReachedEndOfRemoteHistory(true);
-                        historyMeta.setHistoryEnded(true);
-                    }
                     messageHolder.receiveHistoryUpdate(messages, deleted, new Runnable() {
                         @Override
                         public void run() {
@@ -625,6 +621,10 @@ public class WebimSessionImpl implements WebimSession {
                             // Так, если история не сможет сохраниться,
                             // ревизия не будет перезаписана и история будет перезапрошена.
                             historyMeta.setRevision(revision);
+                            if (isInitial && !hasMore) {
+                                messageHolder.setReachedEndOfRemoteHistory(true);
+                                historyMeta.setHistoryEnded(true);
+                            }
                         }
                     });
                     if (!running) {
