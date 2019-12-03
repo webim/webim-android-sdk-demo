@@ -18,6 +18,11 @@ public interface Message {
     @NonNull Id getId();
 
     /**
+     * @return session id for current message.
+     */
+    @Nullable String getSessionId();
+
+    /**
      * @return current chat id of the message.
      */
     @NonNull String getCurrentChatId();

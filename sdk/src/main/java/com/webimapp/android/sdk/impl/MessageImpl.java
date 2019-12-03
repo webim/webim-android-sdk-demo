@@ -12,6 +12,7 @@ public class MessageImpl implements Message, TimeMicrosHolder {
 
     protected final @Nullable String avatarUrl;
     protected final @NonNull Id id;
+    protected final @Nullable  String sessionId;
     protected final @Nullable Keyboard keyboard;
     protected final @Nullable KeyboardRequest keyboardRequest;
     protected final @Nullable Operator.Id operatorId;
@@ -38,6 +39,7 @@ public class MessageImpl implements Message, TimeMicrosHolder {
     public MessageImpl(
             @NonNull String serverUrl,
             @NonNull Id id,
+            @Nullable String sessionId,
             @Nullable Operator.Id operatorId,
             @Nullable String avatarUrl,
             @NonNull String senderName,
@@ -70,6 +72,7 @@ public class MessageImpl implements Message, TimeMicrosHolder {
 
         this.serverUrl = serverUrl;
         this.id = id;
+        this.sessionId = sessionId;
         this.operatorId = operatorId;
         this.avatarUrl = avatarUrl;
         this.senderName = senderName;
@@ -146,6 +149,12 @@ public class MessageImpl implements Message, TimeMicrosHolder {
     @Override
     public Id getId() {
         return id;
+    }
+
+    @Nullable
+    @Override
+    public String getSessionId() {
+        return sessionId;
     }
 
     @NonNull

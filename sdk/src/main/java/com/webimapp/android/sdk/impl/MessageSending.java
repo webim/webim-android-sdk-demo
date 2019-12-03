@@ -15,6 +15,7 @@ public class MessageSending extends MessageImpl {
                 id,
                 null,
                 null,
+                null,
                 senderName,
                 type,
                 text,

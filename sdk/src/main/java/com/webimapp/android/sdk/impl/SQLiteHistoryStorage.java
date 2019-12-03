@@ -323,6 +323,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                 StringId.forMessage(clientSideId != null
                         ? clientSideId
                         : id),
+                null,
                 cursor.isNull(3)
                         ? null
                         : StringId.forOperator(Long.toString(cursor.getLong(3))),

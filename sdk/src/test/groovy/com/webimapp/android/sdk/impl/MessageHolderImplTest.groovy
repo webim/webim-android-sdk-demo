@@ -31,6 +31,7 @@ class MessageHolderImplTest extends Specification {
         for (int i in msgIndCounter ..< msgIndCounter+count) {
             history << new MessageImpl("",
                     StringId.forMessage(i as String),
+                    null,
                     StringId.forOperator("op"),
                     "",
                     "",
@@ -58,6 +59,7 @@ class MessageHolderImplTest extends Specification {
         for (int i in msgIndCounter ..< msgIndCounter+count) {
             curChat << new MessageImpl("",
                     StringId.forMessage(i as String),
+                    null,
                     StringId.forOperator("op"),
                     "",
                     "",
@@ -84,6 +86,7 @@ class MessageHolderImplTest extends Specification {
         return input.collect {
             new MessageImpl("",
                     it.getId(),
+                    it.getSessionId(),
                     it.getOperatorId(),
                     it.getAvatarUrlLastPart(),
                     it.getSenderName(),
@@ -108,6 +111,7 @@ class MessageHolderImplTest extends Specification {
         int i = msgIndCounter++
         new MessageImpl("",
                 StringId.forMessage(i as String),
+                null,
                 StringId.forOperator("op"),
                 "",
                 "",
@@ -130,6 +134,7 @@ class MessageHolderImplTest extends Specification {
     MessageImpl newEditedCurrentChat(MessageImpl orig) {
         new MessageImpl("",
                 orig.getId(),
+                orig.getSessionId(),
                 orig.getOperatorId(),
                 orig.getAvatarUrlLastPart(),
                 orig.getSenderName(),
@@ -152,6 +157,7 @@ class MessageHolderImplTest extends Specification {
     MessageImpl newEditedHistory(MessageImpl orig) {
         new MessageImpl("",
                 orig.getId(),
+                orig.getSessionId(),
                 orig.getOperatorId(),
                 orig.getAvatarUrlLastPart(),
                 orig.getSenderName(),

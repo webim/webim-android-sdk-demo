@@ -38,6 +38,8 @@ public final class MessageItem implements Comparable<MessageItem> {
     private String name;
     @SerializedName("read")
     private boolean read;
+    @SerializedName("sessionId")
+    private String sessionId;
     @SerializedName("text")
     private String text;
     @SerializedName("ts")
@@ -96,6 +98,10 @@ public final class MessageItem implements Comparable<MessageItem> {
 
     public void setMessage(String string) {
         text = string;
+    }
+
+    public String getSessionId() {
+        return sessionId;
     }
 
     public long getTimeMillis() {

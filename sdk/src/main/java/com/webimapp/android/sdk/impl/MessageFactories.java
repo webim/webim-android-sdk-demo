@@ -74,6 +74,7 @@ public final class MessageFactories {
         return new MessageImpl(
                 serverUrl,
                 StringId.forMessage(message.getClientSideId()),
+                message.getSessionId(),
                 InternalUtils.getOperatorId(message),
                 message.getSenderAvatarUrl(),
                 message.getSenderName(),

@@ -176,7 +176,17 @@ public class MessageHolderImpl implements MessageHolder {
         before.getSource().assertCurrentChat();
         int ind = currentChatMessages.indexOf(before);
         if (ind <= 0) {
-            throw new RuntimeException("Impossible");
+            String sessionId = before.sessionId;
+            String searchMessageId = before.getId().toString();
+            String borderChatMessagesId =
+                    currentChatMessages.get(0).getId().toString() +
+                    " / " +
+                    currentChatMessages.get(currentChatMessages.size() - 1).getId().toString();
+            throw new IllegalStateException(
+                    "Impossible: " +
+                    sessionId + " / " +
+                    searchMessageId + " / " +
+                    borderChatMessagesId);
         }
         respondMessages(callback, currentChatMessages, ind, limit);
     }
@@ -418,6 +428,7 @@ public class MessageHolderImpl implements MessageHolder {
             MessageImpl newMsg = new MessageImpl(
                     message.serverUrl,
                     message.id,
+                    message.sessionId,
                     message.operatorId,
                     message.avatarUrl,
                     message.senderName,
@@ -474,6 +485,7 @@ public class MessageHolderImpl implements MessageHolder {
             MessageImpl newMsg = new MessageImpl(
                     message.serverUrl,
                     message.id,
+                    message.sessionId,
                     message.operatorId,
                     message.avatarUrl,
                     message.senderName,
