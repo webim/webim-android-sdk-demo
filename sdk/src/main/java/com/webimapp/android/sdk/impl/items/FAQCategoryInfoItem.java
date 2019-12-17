@@ -5,12 +5,12 @@ import com.webimapp.android.sdk.FAQCategoryInfo;
 
 public class FAQCategoryInfoItem implements FAQCategoryInfo {
     @SerializedName("id")
-    private int id;
+    private String id;
     @SerializedName("title")
     private String title;
 
     @Override
-    public int getId() {
+    public String getId() {
         return id;
     }
 

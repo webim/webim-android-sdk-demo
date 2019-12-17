@@ -6,7 +6,7 @@ public interface FAQCategory {
     /**
      * @return category id
      */
-    int getId();
+    String getId();
 
     /**
      * @return category title

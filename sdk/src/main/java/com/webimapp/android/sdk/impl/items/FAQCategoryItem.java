@@ -10,14 +10,14 @@ import java.util.List;
 
 public class FAQCategoryItem implements FAQCategory {
     @SerializedName("categoryid")
-    private int categoryId;
+    private String categoryId;
     @SerializedName("title")
     private String title;
     @SerializedName("childs")
     private List<ChildItem> childs;
 
     @Override
-    public int getId() {
+    public String getId() {
         return categoryId;
     }
 

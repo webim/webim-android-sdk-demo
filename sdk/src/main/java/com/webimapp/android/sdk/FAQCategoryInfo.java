@@ -4,7 +4,7 @@ public interface FAQCategoryInfo {
     /**
      * @return category id
      */
-    int getId();
+    String getId();
 
     /**
      * @return category title

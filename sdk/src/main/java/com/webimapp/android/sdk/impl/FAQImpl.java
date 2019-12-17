@@ -21,6 +21,7 @@ import com.webimapp.android.sdk.impl.items.FAQCategoryItem;
 import com.webimapp.android.sdk.impl.items.FAQItemItem;
 import com.webimapp.android.sdk.impl.items.FAQSearchItemItem;
 import com.webimapp.android.sdk.impl.items.FAQStructureItem;
+import com.webimapp.android.sdk.impl.items.responses.DefaultResponse;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +32,6 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
 
 public class FAQImpl implements FAQ {
-    private static final String GUID_SHARED_PREFS_NAME = "com.webimapp.android.sdk.guid";
     @NonNull
     private final AccessChecker accessChecker;
     @Nullable
@@ -71,16 +71,9 @@ public class FAQImpl implements FAQ {
     }
 
     private static @NonNull
-    String getDeviceId(@NonNull Context context) {
-        SharedPreferences guidPrefs
-                = context.getSharedPreferences(GUID_SHARED_PREFS_NAME, Context.MODE_PRIVATE);
-        String guid = guidPrefs.getString("guid", null);
-        if (guid == null) {
-            guid = UUID.randomUUID().toString();
-            guidPrefs.edit().putString("guid", guid).apply();
-        }
+    String getDeviceId() {
 
-        return guid;
+        return UUID.randomUUID().toString();
     }
 
 
@@ -130,7 +123,7 @@ public class FAQImpl implements FAQ {
                 destroyer,
                 client,
                 cache,
-                getDeviceId(context),
+                getDeviceId(),
                 language);
     }
 
@@ -163,31 +156,16 @@ public class FAQImpl implements FAQ {
             return;
         }
         checkAccess();
+        destroyer.destroy();
     }
 
     @Override
-    public void getStructure(int id, final GetCallback<FAQStructure> callback) {
+    public void getStructure(final String id, final GetCallback<FAQStructure> callback) {
         accessChecker.checkAccess();
 
         client.getActions().getStructure(id, new DefaultCallback<FAQStructureItem>() {
             @Override
             public void onSuccess(FAQStructureItem response) {
-                if (response == null) {
-                    callback.onError();
-                } else {
-                    callback.receive(response);
-                }
-            }
-        });
-    }
-
-    @Override
-    public void getCategory(final int id, final GetCallback<FAQCategory> callback) {
-        accessChecker.checkAccess();
-
-        client.getActions().getCategory(id, deviceId, new DefaultCallback<FAQCategoryItem>() {
-            @Override
-            public void onSuccess(FAQCategoryItem response) {
                 if (response == null) {
                     callback.onError();
                 } else {
@@ -199,7 +177,31 @@ public class FAQImpl implements FAQ {
     }
 
     @Override
-    public void getCategoriesForApplication(final GetCallback<List<Integer>> callback) {
+    public void getCachedStructure(String id, GetCallback<FAQStructure> callback) {
+        accessChecker.checkAccess();
+
+        cache.getStructure(id, callback);
+    }
+
+    @Override
+    public void getCategory(final String id, final GetCallback<FAQCategory> callback) {
+        accessChecker.checkAccess();
+
+        client.getActions().getCategory(id, deviceId, new DefaultCallback<FAQCategoryItem>() {
+            @Override
+            public void onSuccess(FAQCategoryItem response) {
+                if (response == null) {
+                    callback.onError();
+                } else {
+                    callback.receive(response);
+                    cache.insertCategory(id, response);
+                }
+            }
+        });
+    }
+
+    @Override
+    public void getCategoriesForApplication(final GetCallback<List<String>> callback) {
         accessChecker.checkAccess();
 
         if ((application == null) || (language == null) || (departmentKey == null)) {
@@ -208,24 +210,28 @@ public class FAQImpl implements FAQ {
         }
 
         client.getActions().getCategoriesForApplication(application, language, departmentKey,
-                new DefaultCallback<List<Integer>>() {
+                new DefaultCallback<List<String>>() {
             @Override
-            public void onSuccess(List<Integer> response) {
+            public void onSuccess(List<String> response) {
                 callback.receive(response);
             }
         });
     }
 
     @Override
-    public void getCachedCategory(int id, GetCallback<FAQCategory> callback) {
+    public void getCachedCategory(String id, GetCallback<FAQCategory> callback) {
         accessChecker.checkAccess();
 
         cache.getCategory(id, callback);
     }
 
     @Override
-    public void getItem(String id, final GetCallback<FAQItem> callback) {
+    public void getItem(String id, @Nullable FAQItemSource openFrom, final GetCallback<FAQItem> callback) {
         accessChecker.checkAccess();
+
+        if (openFrom != null) {
+            client.getActions().track(id, openFrom);
+        }
 
         client.getActions().getItem(id, deviceId, new DefaultCallback<FAQItemItem>() {
             @Override
@@ -240,9 +246,19 @@ public class FAQImpl implements FAQ {
     }
 
     @Override
+    public void getCachedItem(String id, @Nullable FAQItemSource openFrom, GetCallback<FAQItem> callback) {
+        accessChecker.checkAccess();
+
+        if (openFrom != null) {
+            client.getActions().track(id, openFrom);
+        }
+        cache.getItem(id, callback);
+    }
+
+    @Override
     public void search(
             String query,
-            int categoryId,
+            String categoryId,
             int limit,
             final GetCallback<List<FAQSearchItem>> callback) {
         accessChecker.checkAccess();
@@ -266,15 +282,25 @@ public class FAQImpl implements FAQ {
     }
 
     @Override
-    public void like(FAQItem item) {
+    public void like(final FAQItem item, final GetCallback<FAQItem> callback) {
         accessChecker.checkAccess();
-        client.getActions().like(item.getId(), deviceId);
+        client.getActions().like(item.getId(), deviceId, new DefaultCallback<DefaultResponse>() {
+            @Override
+            public void onSuccess(DefaultResponse response) {
+                callback.receive(new FAQItemItem(item, FAQItem.UserRate.LIKE));
+            }
+        });
     }
 
     @Override
-    public void dislike(FAQItem item) {
+    public void dislike(final FAQItem item, final GetCallback<FAQItem> callback) {
         accessChecker.checkAccess();
-        client.getActions().dislike(item.getId(), deviceId);
+        client.getActions().dislike(item.getId(), deviceId, new DefaultCallback<DefaultResponse>() {
+            @Override
+            public void onSuccess(DefaultResponse response) {
+                callback.receive(new FAQItemItem(item, FAQItem.UserRate.DISLIKE));
+            }
+        });
     }
 
     private static class FAQDestroyer {

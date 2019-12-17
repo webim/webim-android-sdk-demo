@@ -9,7 +9,7 @@ public class FAQItemItem implements FAQItem {
     @SerializedName("id")
     private String id;
     @SerializedName("categories")
-    private List<Integer> categories;
+    private List<String> categories;
     @SerializedName("title")
     private String title;
     @SerializedName("tags")
@@ -21,7 +21,23 @@ public class FAQItemItem implements FAQItem {
     @SerializedName("dislikes")
     private int dislikes;
     @SerializedName("userRate")
-    private String userRate;
+    private FAQUserRateKind userRate;
+
+    public FAQItemItem(FAQItem faqItem, UserRate userRate) {
+        UserRate previousUserRate = faqItem.getUserRate();
+        this.id = faqItem.getId();
+        this.categories = faqItem.getCategories();
+        this.title = faqItem.getTitle();
+        this.tags = faqItem.getTags();
+        this.content = faqItem.getContent();
+        this.likes = faqItem.getLikeCount()
+                + (userRate == UserRate.LIKE ? 1 : 0)
+                - (previousUserRate == UserRate.LIKE ? 1 : 0);
+        this.dislikes = faqItem.getDislikeCount()
+                + (userRate == UserRate.DISLIKE ? 1 : 0)
+                - (previousUserRate == UserRate.DISLIKE ? 1 : 0);
+        this.userRate = toFAQUesrRateKind(userRate);
+    }
 
     @Override
     public String getId() {
@@ -29,7 +45,7 @@ public class FAQItemItem implements FAQItem {
     }
 
     @Override
-    public List<Integer> getCategories() {
+    public List<String> getCategories() {
         return categories;
     }
 
@@ -64,19 +80,23 @@ public class FAQItemItem implements FAQItem {
             return UserRate.NO_RATE;
         }
         switch (userRate) {
-            case "like":
+            case LIKE:
                 return UserRate.LIKE;
-            case "dislike":
+            case DISLIKE:
                 return UserRate.DISLIKE;
             default:
                 return UserRate.NO_RATE;
         }
     }
 
-    public enum FAQUserRateKind {
-        @SerializedName("item")
-        ITEM,
-        @SerializedName("category")
-        CATEGORY
+    private enum FAQUserRateKind {
+        @SerializedName("like")
+        LIKE,
+        @SerializedName("dislike")
+        DISLIKE
+    }
+
+    private FAQUserRateKind toFAQUesrRateKind(UserRate userRate) {
+        return userRate == UserRate.LIKE ? FAQUserRateKind.LIKE : FAQUserRateKind.DISLIKE;
     }
 }

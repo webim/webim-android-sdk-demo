@@ -13,7 +13,11 @@ import android.support.annotation.NonNull;
 import com.google.gson.Gson;
 import com.webimapp.android.sdk.FAQ;
 import com.webimapp.android.sdk.FAQCategory;
+import com.webimapp.android.sdk.FAQItem;
+import com.webimapp.android.sdk.FAQStructure;
 import com.webimapp.android.sdk.impl.items.FAQCategoryItem;
+import com.webimapp.android.sdk.impl.items.FAQItemItem;
+import com.webimapp.android.sdk.impl.items.FAQStructureItem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,15 +29,15 @@ import java.util.concurrent.TimeUnit;
 public class FAQSQLiteHistoryStorage {
     private static final Executor executor = new ThreadPoolExecutor(0, 1, 60,
             TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
-    private static final String INSERT_HISTORY_STATEMENT = "INSERT OR FAIL INTO categories" +
+    private static final String INSERT_HISTORY_STATEMENT = "INSERT OR FAIL INTO name" +
             "(id, " +
             "data) " +
             "VALUES (?,?)";
-    private static final String UPDATE_HISTORY_STATEMENT = "UPDATE categories " +
+    private static final String UPDATE_HISTORY_STATEMENT = "UPDATE name " +
             "SET " +
             "data=? " +
             "WHERE id=?";
-    private static final int VERSION = 1;
+    private static final int VERSION = 2;
 
     private final FAQSQLiteHistoryStorage.MyDBHelper dbHelper;
     private final Handler handler;
@@ -45,22 +49,38 @@ public class FAQSQLiteHistoryStorage {
         this.handler = handler;
     }
 
-    public void insertStructure(final int id, final FAQCategoryItem category) {
+    public void insertCategory(final String id, final FAQCategoryItem category) {
+        String data = new Gson().toJson(category);
+        insert(id, data, "categories");
+    }
+
+    public void insertStructure(final String id, final FAQStructureItem structure) {
+        String data = new Gson().toJson(structure);
+        insert(id, data, "structures");
+    }
+
+    public void insertItem(final String id, final FAQItemItem item) {
+        String data = new Gson().toJson(item);
+        insert(id, data, "items");
+    }
+
+    private void insert(final String id, final String data, final String tableName) {
         executor.execute(new Runnable() {
             @Override
             public void run() {
-                String data = new Gson().toJson(category);
                 SQLiteDatabase db = dbHelper.getWritableDatabase();
 
-                SQLiteStatement insertStatement = db.compileStatement(INSERT_HISTORY_STATEMENT);
-                SQLiteStatement updateStatement = db.compileStatement(UPDATE_HISTORY_STATEMENT);
+                SQLiteStatement insertStatement
+                        = db.compileStatement(INSERT_HISTORY_STATEMENT.replace("name", tableName));
+                SQLiteStatement updateStatement
+                        = db.compileStatement(UPDATE_HISTORY_STATEMENT.replace("name", tableName));
                 try {
-                    insertStatement.bindLong(1, (long) id);
+                    insertStatement.bindString(1, id);
                     insertStatement.bindString(2, data);
                     insertStatement.executeInsert();
 
                 } catch (SQLiteConstraintException ignored) {
-                    updateStatement.bindLong(1, (long) id);
+                    updateStatement.bindString(1, id);
                     updateStatement.bindString(2, data);
                     updateStatement.executeUpdateDelete();
                 } catch (SQLException ignored) {
@@ -77,7 +97,7 @@ public class FAQSQLiteHistoryStorage {
         });
     }
 
-    public void getCategory(final int id,
+    public void getCategory(final String id,
                             @NonNull final FAQ.GetCallback<FAQCategory> callback) {
         executor.execute(new Runnable() {
             @Override
@@ -100,6 +120,52 @@ public class FAQSQLiteHistoryStorage {
         });
     }
 
+    public void getStructure(final String id,
+                            @NonNull final FAQ.GetCallback<FAQStructure> callback) {
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                SQLiteDatabase db = dbHelper.getWritableDatabase();
+                Cursor cursor
+                        = db.rawQuery("SELECT data FROM structures WHERE id == " + id + " LIMIT 1",
+                        new String[0]);
+                List<FAQStructure> list = new ArrayList<>();
+                try {
+                    while (cursor.moveToNext()) {
+                        list.add(toStructure(cursor));
+                    }
+                } finally {
+                    cursor.close();
+                    db.close();
+                }
+                runCallback(callback, list.get(0));
+            }
+        });
+    }
+
+    public void getItem(final String id,
+                            @NonNull final FAQ.GetCallback<FAQItem> callback) {
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                SQLiteDatabase db = dbHelper.getWritableDatabase();
+                Cursor cursor
+                        = db.rawQuery("SELECT data FROM itemss WHERE id == " + id + " LIMIT 1",
+                        new String[0]);
+                List<FAQItem> list = new ArrayList<>();
+                try {
+                    while (cursor.moveToNext()) {
+                        list.add(toItem(cursor));
+                    }
+                } finally {
+                    cursor.close();
+                    db.close();
+                }
+                runCallback(callback, list.get(0));
+            }
+        });
+    }
+
     private void runCallback(final FAQ.GetCallback<FAQCategory> callback,
                              final FAQCategory category) {
         handler.post(new Runnable() {
@@ -110,9 +176,40 @@ public class FAQSQLiteHistoryStorage {
         });
     }
 
+    private void runCallback(final FAQ.GetCallback<FAQStructure> callback,
+                             final FAQStructure structure) {
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                callback.receive(structure);
+            }
+        });
+    }
+
+    private void runCallback(final FAQ.GetCallback<FAQItem> callback,
+                             final FAQItem item) {
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                callback.receive(item);
+            }
+        });
+    }
+
+
     private FAQCategory toCategory(Cursor cursor) {
         String data = cursor.getString(0);
         return new Gson().fromJson(data, FAQCategoryItem.class);
+    }
+
+    private FAQStructure toStructure(Cursor cursor) {
+        String data = cursor.getString(0);
+        return new Gson().fromJson(data, FAQStructureItem.class);
+    }
+
+    private FAQItem toItem(Cursor cursor) {
+        String data = cursor.getString(0);
+        return new Gson().fromJson(data, FAQItemItem.class);
     }
 
     private static class MyDBHelper extends SQLiteOpenHelper {
@@ -129,7 +226,14 @@ public class FAQSQLiteHistoryStorage {
 
         @Override
         public void onCreate(SQLiteDatabase db) {
-            db.execSQL(CREATE_TABLE);
+            String[] tableNames = { "categories", "structures", "items" };
+            for (String name : tableNames) {
+                db.execSQL("CREATE TABLE " + name + "\n"
+                        + "(\n"
+                        + "    id INT PRIMARY KEY NOT NULL,\n"
+                        + "    data TEXT\n"
+                        + ")");
+            }
         }
 
         @Override

@@ -2,6 +2,7 @@ package com.webimapp.android.sdk.impl.backend;
 
 import android.support.annotation.NonNull;
 
+import com.webimapp.android.sdk.FAQ;
 import com.webimapp.android.sdk.impl.items.FAQCategoryItem;
 import com.webimapp.android.sdk.impl.items.FAQItemItem;
 import com.webimapp.android.sdk.impl.items.FAQSearchItemItem;
@@ -45,7 +46,7 @@ public class FAQActions {
         });
     }
 
-    public void getStructure(final int structureId,
+    public void getStructure(final String structureId,
                             @NonNull final DefaultCallback<FAQStructureItem> callback) {
         callback.getClass(); // NPE
         enqueue(new FAQRequestLoop.WebimRequest<FAQStructureItem>(true) {
@@ -61,7 +62,7 @@ public class FAQActions {
         });
     }
 
-    public void getCategory(final int categoryId,
+    public void getCategory(final String categoryId,
                             final String deviceId,
                             @NonNull final DefaultCallback<FAQCategoryItem> callback) {
         callback.getClass(); // NPE
@@ -78,7 +79,7 @@ public class FAQActions {
         });
     }
 
-    public void getSearch(final String query, final int categoryId, final int limit,
+    public void getSearch(final String query, final String categoryId, final int limit,
                           @NonNull final DefaultCallback<List<FAQSearchItemItem>> callback) {
         callback.getClass(); //NPE
         enqueue(new FAQRequestLoop.WebimRequest<List<FAQSearchItemItem>>(true) {
@@ -94,20 +95,52 @@ public class FAQActions {
         });
     }
 
-    public void like(final String itemId, final String deviceId) {
+    public void like(final String itemId, final String deviceId,
+                     @NonNull final DefaultCallback<DefaultResponse> callback) {
         enqueue(new FAQRequestLoop.WebimRequest<DefaultResponse>(true) {
             @Override
             public Call<DefaultResponse> makeRequest() {
                 return faq.like(itemId, deviceId);
             }
+
+            @Override
+            public void runCallback(DefaultResponse response) {
+                callback.onSuccess(response);
+            }
         });
     }
 
-    public void dislike(final String itemId, final String deviceId) {
+    public void dislike(final String itemId, final String deviceId,
+                        @NonNull final DefaultCallback<DefaultResponse> callback) {
         enqueue(new FAQRequestLoop.WebimRequest<DefaultResponse>(true) {
             @Override
             public Call<DefaultResponse> makeRequest() {
                 return faq.dislike(itemId, deviceId);
+            }
+
+            @Override
+            public void runCallback(DefaultResponse response) {
+                callback.onSuccess(response);
+            }
+        });
+    }
+
+    public void track(final String itemId, FAQ.FAQItemSource openFrom) {
+        final String open;
+        switch (openFrom) {
+            case SEARCH:
+                open = "search";
+                break;
+            case TREE:
+                open = "tree";
+                break;
+            default:
+                open = "";
+        }
+        enqueue(new FAQRequestLoop.WebimRequest<DefaultResponse>(true) {
+            @Override
+            public Call<DefaultResponse> makeRequest() {
+                return faq.track(itemId, open);
             }
         });
     }
@@ -115,15 +148,15 @@ public class FAQActions {
     public void getCategoriesForApplication(final String application,
                                             final String language,
                                             final String departmentKey,
-                                            final DefaultCallback<List<Integer>> callback) {
-        enqueue(new FAQRequestLoop.WebimRequest<List<Integer>>(true) {
+                                            final DefaultCallback<List<String>> callback) {
+        enqueue(new FAQRequestLoop.WebimRequest<List<String>>(true) {
             @Override
-            public Call<List<Integer>> makeRequest() {
+            public Call<List<String>> makeRequest() {
                 return faq.getCategoriesForApplication(application, "android", language, departmentKey);
             }
 
             @Override
-            public void runCallback(List<Integer> response) {
+            public void runCallback(List<String> response) {
                 callback.onSuccess(response);
             }
         });

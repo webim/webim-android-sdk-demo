@@ -11,7 +11,7 @@ public interface FAQItem {
     /**
      * @return list of categories that contains the item
      */
-    List<Integer> getCategories();
+    List<String> getCategories();
 
     /**
      * @return item title
@@ -43,7 +43,7 @@ public interface FAQItem {
      */
     UserRate getUserRate();
 
-    public enum UserRate {
+    enum UserRate {
         /**
          * Item is liked by user.
          */
