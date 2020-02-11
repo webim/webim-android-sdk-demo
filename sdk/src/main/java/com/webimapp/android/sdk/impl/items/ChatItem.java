@@ -157,7 +157,9 @@ public final class ChatItem {
         CLOSED("closed"),
         CLOSED_BY_OPERATOR("closed_by_operator"),
         CLOSED_BY_VISITOR("closed_by_visitor"),
+        DELETED("deleted"),
         INVITATION("invitation"),
+        ROUTING("routing"),
         QUEUE("queue"),
         UNKNOWN("unknown");
 
@@ -171,6 +173,14 @@ public final class ChatItem {
             return this == CLOSED
                     || this == CLOSED_BY_OPERATOR
                     || this == CLOSED_BY_VISITOR
+                    || this == DELETED
+                    || this == UNKNOWN;
+        }
+
+        public boolean cantSendImageMessage() {
+            return  this == CLOSED
+                    || this == DELETED
+                    || this == ROUTING
                     || this == UNKNOWN;
         }
 

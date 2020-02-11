@@ -49,6 +49,7 @@ public interface WebimActions {
                           boolean deleteDraft);
 
     void rateOperator(@Nullable String operatorId,
+                      @Nullable String note,
                       int rate,
                       @Nullable MessageStream.RateOperatorCallback rateOperatorCallback);
 

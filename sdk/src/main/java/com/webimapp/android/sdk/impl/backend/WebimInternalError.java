@@ -53,6 +53,7 @@ public class WebimInternalError {
     // Rate operator errors.
 	public static final String NO_CHAT = "no-chat";
 	public static final String OPERATOR_NOT_IN_CHAT = "operator-not-in-chat";
+	public static final String NOTE_IS_TOO_LONG = "note-is-too-long";
 
 	//Errors for sending keyboard
 	public static final String BUTTON_ID_NO_SET = "button-id-not-set";

@@ -23,9 +23,8 @@ public class MessageImpl implements Message, TimeMicrosHolder {
     protected final @NonNull Type type;
 
     protected @NonNull SendStatus sendStatus = SendStatus.SENT;
-    protected @Nullable Attachment attachment;
 
-    private final @Nullable String data;
+    private final @Nullable Attachment attachment;
     private final @Nullable String rawText;
 
     private String currentChatId;
@@ -46,11 +45,10 @@ public class MessageImpl implements Message, TimeMicrosHolder {
             @NonNull Type type,
             @NonNull String text,
             long timeMicros,
-            @Nullable Attachment attachment,
             String internalId,
             @Nullable String rawText,
             boolean isHistoryMessage,
-            @Nullable String data,
+            @Nullable Attachment attachment,
             boolean readByOperator,
             boolean canBeEdited,
             boolean canBeReplied,
@@ -66,8 +64,6 @@ public class MessageImpl implements Message, TimeMicrosHolder {
 
         if (isHistoryMessage) {
             historyId = new HistoryId(internalId, timeMicros);
-        } else {
-            this.currentChatId = internalId;
         }
 
         this.serverUrl = serverUrl;
@@ -79,10 +75,10 @@ public class MessageImpl implements Message, TimeMicrosHolder {
         this.type = type;
         this.text = text;
         this.timeMicros = timeMicros;
-        this.attachment = attachment;
+        this.currentChatId = internalId;
         this.rawText = rawText;
         this.isHistoryMessage = isHistoryMessage;
-        this.data = data;
+        this.attachment = attachment;
         this.readByOperator = readByOperator;
         this.canBeEdited = canBeEdited;
         this.canBeReplied = canBeReplied;
@@ -131,12 +127,12 @@ public class MessageImpl implements Message, TimeMicrosHolder {
     }
 
     @Nullable
-    public String getData() {
-        return data;
+    public Attachment getAttachment() {
+        return attachment;
     }
 
     @Nullable
-    public String getRawText() {
+    public String getData() {
         return rawText;
     }
 
@@ -201,12 +197,6 @@ public class MessageImpl implements Message, TimeMicrosHolder {
     @Override
     public long getTime() {
         return timeMicros / 1000;
-    }
-
-    @Nullable
-    @Override
-    public Attachment getAttachment() {
-        return attachment;
     }
 
     @NonNull
@@ -339,36 +329,78 @@ public class MessageImpl implements Message, TimeMicrosHolder {
     }
 
     public static class AttachmentImpl implements Message.Attachment {
-        private final @NonNull String url;
-        private final long size;
-        private final String filename;
-        private final String contentType;
-        private final @Nullable ImageInfo imageInfo;
+        private int downloadProgress;
+        private @Nullable String errorMessage;
+        private @Nullable String errorType;
+        private @NonNull FileInfo fileInfo;
+        private @NonNull AttachmentState state;
 
-        public AttachmentImpl(@NonNull String url,
-                              long size,
-                              String filename,
-                              String contentType,
-                              @Nullable ImageInfo imageInfo) {
-            url.getClass(); // NPE
-            filename.getClass(); // NPE
-            contentType.getClass(); // NPE
-            this.url = url;
-            this.size = size;
-            this.filename = filename;
-            this.contentType = contentType;
-            this.imageInfo = imageInfo;
+        public AttachmentImpl(int downloadProgress,
+                              @Nullable String errorMessage,
+                              @Nullable String errorType,
+                              @NonNull FileInfo fileInfo,
+                              @NonNull AttachmentState state) {
+            this.downloadProgress = downloadProgress;
+            this.errorMessage = errorMessage;
+            this.errorType = errorType;
+            this.fileInfo = fileInfo;
+            this.state = state;
         }
 
+        @Override
+        public int getDownloadProgress() {
+            return downloadProgress;
+        }
+
+        @Override
+        @Nullable
+        public String getErrorMessage() {
+            return errorMessage;
+        }
+
+        @Override
+        @Nullable
+        public String getErrorType() {
+            return errorType;
+        }
+
+        @Override
         @NonNull
-        @Override
-        public String getUrl() {
-            return url;
+        public FileInfo getFileInfo() {
+            return fileInfo;
         }
 
         @Override
-        public long getSize() {
-            return size;
+        @NonNull
+        public AttachmentState getState() {
+            return state;
+        }
+    }
+
+    public static class FileInfoImpl implements Message.FileInfo {
+        private final @Nullable String contentType;
+        private final @NonNull String filename;
+        private final @Nullable ImageInfo imageInfo;
+        private final long size;
+        private final @Nullable String url;
+
+        public FileInfoImpl(@Nullable String contentType,
+                            @NonNull String filename,
+                            @Nullable ImageInfo imageInfo,
+                            long size,
+                            @Nullable String url) {
+
+            this.contentType = contentType;
+            this.filename = filename;
+            this.imageInfo = imageInfo;
+            this.size = size;
+            this.url = url;
+        }
+
+        @Nullable
+        @Override
+        public String getContentType() {
+            return contentType;
         }
 
         @NonNull
@@ -377,16 +409,21 @@ public class MessageImpl implements Message, TimeMicrosHolder {
             return filename;
         }
 
-        @NonNull
-        @Override
-        public String getContentType() {
-            return contentType;
-        }
-
         @Nullable
         @Override
         public ImageInfo getImageInfo() {
             return imageInfo;
+        }
+
+        @Override
+        public long getSize() {
+            return size;
+        }
+
+        @Nullable
+        @Override
+        public String getUrl() {
+            return url;
         }
     }
 
@@ -446,7 +483,7 @@ public class MessageImpl implements Message, TimeMicrosHolder {
 
     public static class QuoteImpl implements Message.Quote {
         @Nullable
-        private final Attachment attachment;
+        private final FileInfo attachment;
         @Nullable
         private final String authorId;
         @Nullable
@@ -463,7 +500,7 @@ public class MessageImpl implements Message, TimeMicrosHolder {
         long timeSeconds;
 
         public QuoteImpl(
-                @Nullable Attachment attachment,
+                @Nullable FileInfo attachment,
                 @Nullable String authorId,
                 @Nullable String id,
                 @Nullable Type type,
@@ -483,7 +520,7 @@ public class MessageImpl implements Message, TimeMicrosHolder {
 
         @Nullable
         @Override
-        public Attachment getMessageAttachment() {
+        public FileInfo getMessageAttachment() {
             return attachment;
         }
 

@@ -4,10 +4,12 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.drawable.AnimationDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -56,6 +58,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.webimapp.android.sdk.Message.Type.FILE_FROM_VISITOR;
+import static com.webimapp.android.sdk.Message.Type.VISITOR;
 
 public class WebimChatFragment extends Fragment {
     private static final int FILE_SELECT_CODE = 0;
@@ -314,8 +319,8 @@ public class WebimChatFragment extends Fragment {
         });
     }
 
-    private void initSendButton(View v) {
-        sendButton = v.findViewById(R.id.imageButtonSendMessage);
+    private void initSendButton(View rootView) {
+        sendButton = rootView.findViewById(R.id.imageButtonSendMessage);
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -340,8 +345,8 @@ public class WebimChatFragment extends Fragment {
         });
     }
 
-    private void initEditButton(View v) {
-        editButton = v.findViewById(R.id.imageButtonAcceptChanges);
+    private void initEditButton(View rootView) {
+        editButton = rootView.findViewById(R.id.imageButtonAcceptChanges);
         editButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -559,16 +564,30 @@ public class WebimChatFragment extends Fragment {
                             file = File.createTempFile("webim",
                                     extension, getActivity().getCacheDir());
                             writeFully(file, inp);
+                            Cursor cursor = getActivity().getContentResolver().query(
+                                    uri,
+                                    null,
+                                    null,
+                                    null,
+                                    null);
+                            if (cursor != null && cursor.moveToFirst()) {
+                                name = cursor.getString(
+                                        cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                                cursor.close();
+                            }
                         }
                     } catch (IOException e) {
                         Log.e("WEBIM", "failed to copy selected file", e);
                         if (file != null) {
-                            file.delete();
+                            boolean fileDeleted = file.delete();
+                            if (!fileDeleted) {
+                                Log.w("WEBIM", "failed to deleted file " + file.getName());
+                            }
                             file = null;
                         }
                     }
 
-                    if (file != null && name != null) {
+                    if (file != null && name != null && mime != null) {
                         final File fileToUpload = file;
                         session.getStream().sendFile(
                                 fileToUpload,
@@ -582,13 +601,13 @@ public class WebimChatFragment extends Fragment {
 
                                     @Override
                                     public void onSuccess(@NonNull Message.Id id) {
-                                        fileToUpload.delete();
+                                        deleteFile(fileToUpload);
                                     }
 
                                     @Override
                                     public void onFailure(@NonNull Message.Id id,
                                                           @NonNull WebimError<SendFileError> error) {
-                                        fileToUpload.delete();
+                                        deleteFile(fileToUpload);
                                         if (getContext() != null) {
                                             String message;
                                             switch (error.getErrorType()) {
@@ -603,6 +622,10 @@ public class WebimChatFragment extends Fragment {
                                                 case FILE_NAME_INCORRECT:
                                                     message = getContext().getString(
                                                             R.string.file_upload_failed_name);
+                                                    break;
+                                                case CHAT_NOT_STARTED:
+                                                    message = getContext().getString(
+                                                            R.string.file_upload_failed_no_chat);
                                                     break;
                                                 case UPLOADED_FILE_NOT_FOUND:
                                                 default:
@@ -654,6 +677,12 @@ public class WebimChatFragment extends Fragment {
         }
     }
 
+    private void deleteFile(File file) {
+        if (!file.delete()) {
+            Log.w("WEBIM", "failed to deleted file " + file.getName());
+        }
+    }
+
     void onEditAction(Message message) {
         inEdit = message;
         sendButton.setVisibility(View.GONE);
@@ -664,20 +693,33 @@ public class WebimChatFragment extends Fragment {
 
     void onDeleteMessageAction(Message message) {
         session.getStream().deleteMessage(message, null);
+        clearEditableMessage(message);
     }
 
     void onReplyMessageAction(Message message, int position) {
         quotedMessage = message;
         replyLayout.setVisibility(View.VISIBLE);
         replyMessagePosition = position;
-        textSenderName.setText(quotedMessage.getSenderName());
+        textSenderName.setText(
+                (quotedMessage.getType() == VISITOR || quotedMessage.getType() == FILE_FROM_VISITOR)
+                ? this.getResources().getString(R.string.visitor_sender_name)
+                : quotedMessage.getSenderName());
         textReplyId.setText(quotedMessage.getCurrentChatId());
-        if (quotedMessage.getAttachment() != null) {
-            String replyMessage = getResources().getString(R.string.reply_message_with_image);
-            String replyMessageWithImage = replyMessage + quotedMessage.getText();
-            textReplyMessage.setText(replyMessageWithImage);
-        } else {
-            textReplyMessage.setText(quotedMessage.getText());
+        Message.Attachment quotedMessageAttachment = quotedMessage.getAttachment();
+        String replyMessage =
+                (quotedMessageAttachment != null
+                        && quotedMessageAttachment.getFileInfo().getImageInfo() != null)
+                ? getResources().getString(R.string.reply_message_with_image)
+                : quotedMessage.getText();
+        textReplyMessage.setText(replyMessage);
+    }
+
+    void clearEditableMessage(Message message) {
+        if (editButton.getVisibility() == View.VISIBLE
+                && inEdit.getCurrentChatId().equals(message.getCurrentChatId())) {
+            editTextMessage.getText().clear();
+            editButton.setVisibility(View.GONE);
+            sendButton.setVisibility(View.VISIBLE);
         }
     }
 

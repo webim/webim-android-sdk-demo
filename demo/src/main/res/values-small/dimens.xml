@@ -9,6 +9,7 @@
     <dimen name="text_size_normal_header_bold">18sp</dimen>
     <dimen name="text_size_normal_header">16sp</dimen>
     <dimen name="text_size_normal">12sp</dimen>
+    <dimen name="text_size_small">10sp</dimen>"
 
     <dimen name="badge_background_size">32dp</dimen>
     <dimen name="badge_text_size">12sp</dimen>

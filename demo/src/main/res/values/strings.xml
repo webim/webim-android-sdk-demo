@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">Webim демо-чат</string>
     <string name="first_screen_text1">Добро пожаловать в демо-приложение\nWebim Mobile SDK!</string>
-    <string name="first_screen_text2">Для того чтобы начать чат, нажмите на кнопку ниже.</string>
+    <string name="first_screen_text2">Для того, чтобы начать чат, нажмите на кнопку ниже.</string>
     <string name="first_screen_text3">Принять чат со стороны оператора вы можете на странице:</string>
     <string name="first_screen_text4">https://demo.webim.ru</string>
     <string name="first_screen_text5">Логин: o@webim.ru</string>
@@ -20,8 +20,8 @@
     <string name="choose_department">Выберите отдел</string>
     <string name="empty_chat_text">Введите сообщение, чтобы начать чат с оператором</string>
     <string name="content_desc_send_message">send message</string>
-    <string name="rate_operator_button">Оценить</string>
-    <string name="rate_operator_title">Оценить оператора?</string>
+    <string name="rate_operator_button">Отправить</string>
+    <string name="rate_operator_title">Оценить оператора</string>
     <string name="file_chooser_title">Выберите файл для загрузки</string>
     <string name="file_chooser_not_found">Для загрузки файла, пожалуйста, установите файловый менеджер</string>
     <string name="file_selection_failed">Не удалось выбрать файл</string>
@@ -29,6 +29,7 @@
     <string name="file_upload_failed_type">Не удалось загрузить файл: тип файла не разрешен сервером</string>
     <string name="file_upload_failed_name">Не удалось загрузить файл: ошибка в имени файла</string>
     <string name="file_upload_failed_unknown">Не удалось загрузить файл: неизвестная ошибка</string>
+    <string name="file_upload_failed_no_chat">Чтобы начать чат, отправьте текстовое сообщение</string>
     <string name="file_upload_message_text">Отправка файла…</string>
     <string name="file_send">Отправил(а) файл:\n</string>
     <string name="error_user_banned_header">Вы забанены оператором</string>
@@ -58,8 +59,9 @@
 
     <string name="options">Опции</string>
     <string name="save_image">Сохранить изображение?</string>
-    <string name="saving_image">Загрузка файла %1$s…</string>
-    <string name="uploading_file">Загрузка файла…</string>
+    <string name="saving_file">Загрузка файла %1$s</string>
+    <string name="sending_file">"Отправка файла: "</string>
+    <string name="file_transfer_by_operator">"Передача файла "</string>
     <string name="def_image_name">image_%1$d.jpg</string>
     <string name="saved_file">Файл %1$s сохранён</string>
     <string name="saving_failed">Не удалось загрузить файл</string>
@@ -73,7 +75,7 @@
     <string name="operator_name">%1$s</string>
     <string name="reply">Ответить</string>
     <string name="copy">Копировать</string>
-    <string name="edit">Редактировать</string>
+    <string name="edit">Изменить</string>
     <string name="delete">Удалить</string>
 
     <string name="copied_message">Текст сообщения скопирован</string>
@@ -88,4 +90,5 @@
     <string name="default_date">Ноябрь 12</string>
     <string name="channel_id">com.webimapp.android.demo.client.fcm</string>
     <string name="channel_name">Webim notification</string>
+    <string name="visitor_sender_name">Вы</string>
 </resources>

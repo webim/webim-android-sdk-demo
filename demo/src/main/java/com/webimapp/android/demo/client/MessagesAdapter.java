@@ -2,21 +2,26 @@ package com.webimapp.android.demo.client;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.app.DownloadManager;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.content.res.AppCompatResources;
 import android.support.v7.widget.RecyclerView;
-import android.text.Html;
 import android.text.format.DateFormat;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
@@ -41,10 +46,13 @@ import com.webimapp.android.sdk.Message;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 
-import jp.wasabeef.glide.transformations.RoundedCornersTransformation;
-
-import static com.webimapp.android.sdk.Message.*;
+import static com.webimapp.android.sdk.Message.Attachment;
+import static com.webimapp.android.sdk.Message.FileInfo;
+import static com.webimapp.android.sdk.Message.ImageInfo;
+import static com.webimapp.android.sdk.Message.Quote;
+import static com.webimapp.android.sdk.Message.SendStatus;
 import static com.webimapp.android.sdk.Message.Type.*;
 
 public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.MessageHolder> {
@@ -119,20 +127,17 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                 return ViewType.OPERATOR.ordinal();
             case VISITOR:
                 return ViewType.VISITOR.ordinal();
-            case INFO:
-                return ViewType.INFO.ordinal();
             case OPERATOR_BUSY:
                 return ViewType.INFO_OPERATOR_BUSY.ordinal();
             case FILE_FROM_VISITOR:
-                return message.getAttachment() == null
-                        || message.getAttachment().getImageInfo() != null
+                return message.getAttachment() == null || message.getAttachment().getFileInfo().getImageInfo() != null
                         ? ViewType.VISITOR.ordinal()
                         : ViewType.FILE_FROM_VISITOR.ordinal();
             case FILE_FROM_OPERATOR:
-                return message.getAttachment() == null
-                        || message.getAttachment().getImageInfo() != null
+                return message.getAttachment() == null || message.getAttachment().getFileInfo().getImageInfo() != null
                         ? ViewType.OPERATOR.ordinal()
                         : ViewType.FILE_FROM_OPERATOR.ordinal();
+            case INFO:
             default:
                 return ViewType.INFO.ordinal();
         }
@@ -154,10 +159,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             case INFO_OPERATOR_BUSY:
                 return R.layout.item_op_busy_message;
             case INFO:
-                return R.layout.item_info_message;
             case KEYBOARD:
-            case KEYBOARD_RESPONCE:
-                return R.layout.item_info_message;
+            case KEYBOARD_RESPONSE:
             default:
                 return R.layout.item_info_message;
         }
@@ -212,7 +215,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
         TextView quoteText;
         LinearLayout messageBody;
 
-
         MessageHolder(View itemView) {
             super(itemView);
             messageText = itemView.findViewById(R.id.text_message_body);
@@ -229,8 +231,11 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
         public void bind(final Message message, boolean showDate) {
             this.message = message;
 
-            messageBody.setVisibility(View.VISIBLE);
-            if (messageText != null) {
+            messageBody.setVisibility(View.GONE);
+            if (messageText != null &&
+                    message.getType() != FILE_FROM_OPERATOR &&
+                    message.getType() != FILE_FROM_VISITOR) {
+                messageBody.setVisibility(View.VISIBLE);
                 messageText.setText(message.getText());
                 messageText.setVisibility(View.VISIBLE);
             }
@@ -252,11 +257,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             }
 
             if (messageTick != null) {
-                if (message.isReadByOperator()) {
-                    messageTick.setImageResource(R.drawable.ic_double_tick);
-                } else {
-                    messageTick.setImageResource(R.drawable.ic_tick);
-                }
+                messageTick.setImageResource(message.isReadByOperator()
+                        ? R.drawable.ic_double_tick
+                        : R.drawable.ic_tick);
                 messageTick.setVisibility(message.getSendStatus() == SendStatus.SENT
                         ? View.VISIBLE
                         : View.GONE);
@@ -267,29 +270,35 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                     quoteLayout.setVisibility(View.VISIBLE);
                     quoteSenderName.setVisibility(View.VISIBLE);
                     quoteText.setVisibility(View.VISIBLE);
+                    Resources resources = webimChatFragment.getResources();
+                    Quote quote = message.getQuote();
                     String textQuoteSenderName = "";
                     String textQuote = "";
-                    if (message.getQuote().getState() == Quote.State.PENDING) {
-                        textQuote = (message.getType() == OPERATOR)
-                                ? webimChatFragment.getResources().getString(R.string.quote_is_pending)
-                                : message.getQuote().getMessageText();
-                        textQuoteSenderName = (message.getType() == OPERATOR)
-                                ? ""
-                                : message.getQuote().getMessageText();
-                    }
-                    if (message.getQuote().getState() == Quote.State.FILLED) {
-                        if (message.getQuote().getMessageType() == FILE_FROM_OPERATOR ||
-                                message.getQuote().getMessageType() == FILE_FROM_VISITOR) {
+                    switch (quote.getState()) {
+                        case PENDING:
+                            textQuote = (message.getType() == OPERATOR)
+                                    ? resources.getString(R.string.quote_is_pending)
+                                    : quote.getMessageText();
+                            textQuoteSenderName = (message.getType() == OPERATOR)
+                                    ? ""
+                                    : resources.getString(R.string.visitor_sender_name);
+                            break;
+                        case FILLED:
                             textQuote =
-                                    message.getQuote().getMessageAttachment().getFileName();
-                        } else {
-                            textQuote = message.getQuote().getMessageText();
-                        }
-                        textQuoteSenderName = message.getQuote().getSenderName();
-                    }
-                    if (message.getQuote().getState() == Quote.State.NOT_FOUND) {
-                        quoteSenderName.setVisibility(View.GONE);
-                        textQuote = webimChatFragment.getResources().getString(R.string.quote_is_not_found);
+                                    (quote.getMessageType() == FILE_FROM_OPERATOR
+                                            || quote.getMessageType() == FILE_FROM_VISITOR)
+                                    ? quote.getMessageAttachment().getFileName()
+                                    : quote.getMessageText();
+                            textQuoteSenderName =
+                                    (quote.getMessageType() == VISITOR
+                                            || quote.getMessageType() == FILE_FROM_VISITOR)
+                                    ? resources.getString(R.string.visitor_sender_name)
+                                    : quote.getSenderName();
+                            break;
+                        case NOT_FOUND:
+                            textQuote = resources.getString(R.string.quote_is_not_found);
+                            quoteSenderName.setVisibility(View.GONE);
+                            break;
                     }
                     quoteSenderName.setText(textQuoteSenderName);
                     quoteText.setText(textQuote);
@@ -304,12 +313,11 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
 
     class FileMessageHolder extends MessageHolder {
 
-        private final double PORTRAIT_ORIENTATION = 0.6;
-        private final double LANDSCAPE_ORIENTATION = 0.8;
-
-        ImageView thumbView, quoteView;
-        ConstraintLayout layoutQuotedView;
-        TextView senderNameForImage;
+        ImageView thumbView, quoteView, fileImage;
+        ConstraintLayout layoutQuotedView, layoutFileImage;
+        TextView senderNameForImage, fileName, fileSize, fileError;
+        RelativeLayout layoutAttachedFile;
+        ProgressBar progressFileUpload;
 
         FileMessageHolder(View itemView) {
             super(itemView);
@@ -317,6 +325,13 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             quoteView = itemView.findViewById(R.id.quoted_image);
             layoutQuotedView = itemView.findViewById(R.id.const_quoted_image);
             senderNameForImage = itemView.findViewById(R.id.sender_name_for_image);
+            layoutAttachedFile = itemView.findViewById(R.id.attached_file);
+            fileImage = itemView.findViewById(R.id.file_image);
+            layoutFileImage = itemView.findViewById(R.id.file_image_const);
+            fileName = itemView.findViewById(R.id.file_name);
+            fileSize = itemView.findViewById(R.id.file_size);
+            fileError = itemView.findViewById(R.id.error_text);
+            progressFileUpload = itemView.findViewById(R.id.progress_file_upload);
         }
 
         @Override
@@ -324,112 +339,224 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             super.bind(message, showDate);
 
             thumbView.setVisibility(View.GONE);
+            layoutAttachedFile.setVisibility(View.GONE);
             layoutQuotedView.setVisibility(View.GONE);
-
             Attachment attachment = message.getAttachment();
             if (attachment == null) {
                 if (thumbView != null && message.getType().equals(FILE_FROM_VISITOR)) {
                     thumbView.setVisibility(View.GONE);
-                    messageText.setText(R.string.uploading_file);
+                    messageBody.setVisibility(View.VISIBLE);
+                    String textMessage =
+                            webimChatFragment.getResources().getString(R.string.sending_file) +
+                            message.getText();
+                    messageText.setText(textMessage);
                     messageText.setVisibility(View.VISIBLE);
                 }
             } else {
-                if (attachment.getImageInfo() == null) {
-                    getMessageForEmptyImage(attachment, thumbView, messageText);
-                    return;
-                }
-
-                if (thumbView != null) {
-                    setViewSize(thumbView, getThumbSize(attachment.getImageInfo()));
-                    addImageInView(attachment, thumbView, messageText);
-                    messageBody.setVisibility(View.GONE);
+                messageBody.setVisibility(View.GONE);
+                ImageInfo imageInfo = attachment.getFileInfo().getImageInfo();
+                if (imageInfo == null || mustShowAttachmentView(imageInfo)) {
+                    showAttachmentView(attachment);
+                } else {
+                    setViewSize(thumbView, getThumbSize(imageInfo));
+                    addImageInView(attachment.getFileInfo(), thumbView, messageText);
                 }
             }
 
-            if (message.getQuote() != null && message.getQuote() != null) {
-                attachment = message.getQuote().getMessageAttachment();
-                if (attachment != null) {
-                    if (attachment.getImageInfo() == null) {
-                        getMessageForEmptyImage(attachment, quoteView, quoteText);
-                        return;
-                    }
+            Message.Quote messageQuote = message.getQuote();
+            if (messageQuote != null &&
+                    messageQuote.getMessageAttachment() != null &&
+                    messageQuote.getMessageAttachment().getImageInfo() != null) {
+                FileInfo fileInfo = messageQuote.getMessageAttachment();
+                addImageInView(fileInfo, quoteView, quoteText);
+                layoutQuotedView.setVisibility(View.VISIBLE);
+            }
+        }
 
-                    if (quoteView != null) {
-                        addImageInView(attachment, quoteView, quoteText);
-                        layoutQuotedView.setVisibility(View.VISIBLE);
+        private boolean mustShowAttachmentView(ImageInfo imageInfo) {
+            int maxSide = Math.max(imageInfo.getWidth(), imageInfo.getHeight());
+            int minSide = Math.min(imageInfo.getWidth(), imageInfo.getHeight());
+            int imageSideRatio = maxSide / minSide;
+            int MAX_ALLOWED_ASPECT_RATIO = 10;
+            return imageSideRatio > MAX_ALLOWED_ASPECT_RATIO;
+        }
+
+        private void showAttachmentView(final Attachment attachment) {
+            layoutAttachedFile.setVisibility(View.VISIBLE);
+            fileName.setText(attachment.getFileInfo().getFileName());
+            fileSize.setVisibility(View.GONE);
+
+            switch (attachment.getState()) {
+                case READY:
+                    fileImage.setVisibility(View.VISIBLE);
+                    if (attachment.getFileInfo().getImageInfo() != null) {
+                        fileImage.setImageDrawable(webimChatFragment.getResources()
+                                .getDrawable(R.drawable.ic_image_attachment));
+                        layoutAttachedFile.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                openImageActivity(
+                                        view,
+                                        Uri.parse(attachment.getFileInfo().getUrl()));
+                            }
+                        });
+                    } else {
+                        fileImage.setImageDrawable(webimChatFragment.getResources()
+                                .getDrawable(R.drawable.ic_download_file));
+                        fileImage.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                downloadFile(attachment.getFileInfo());
+                            }
+                        });
                     }
+                    progressFileUpload.setVisibility(View.GONE);
+                    fileSize.setVisibility(View.VISIBLE);
+                    String size = humanReadableByteCountBin(attachment.getFileInfo().getSize());
+                    fileSize.setText(size);
+                    fileError.setVisibility(View.GONE);
+                    break;
+                case UPLOAD:
+                    if (progressFileUpload.getVisibility() == View.GONE) {
+                        fileImage.setVisibility(View.INVISIBLE);
+                        progressFileUpload.setVisibility(View.VISIBLE);
+                    }
+                    fileError.setVisibility(View.VISIBLE);
+                    fileError.setText(webimChatFragment.getResources().getString(R.string.file_transfer_by_operator));
+                    break;
+                case ERROR:
+                    fileImage.setImageDrawable(webimChatFragment.getResources()
+                            .getDrawable(R.drawable.ic_error_download_file));
+                    progressFileUpload.setVisibility(View.GONE);
+                    fileError.setVisibility(View.VISIBLE);
+                    fileError.setText(attachment.getErrorMessage());
+                    fileImage.setVisibility(View.VISIBLE);
+                    break;
+            }
+        }
+
+        private void downloadFile(FileInfo file) {
+            Context context = webimChatFragment.getContext();
+            if (Build.VERSION.SDK_INT >= 23
+                    && ActivityCompat.checkSelfPermission(
+                            context,
+                            android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(
+                        webimChatFragment.getActivity(),
+                        new String[] { android.Manifest.permission.WRITE_EXTERNAL_STORAGE },
+                        1);
+            } else {
+                String fileName = file.getFileName();
+                showMessage(context.getString(R.string.saving_file, fileName), itemView);
+
+                DownloadManager manager =
+                        (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+                if (manager != null) {
+                    DownloadManager.Request downloadRequest = new DownloadManager.Request(
+                            Uri.parse(file.getUrl()));
+                    downloadRequest.setTitle(fileName);
+                    downloadRequest.allowScanningByMediaScanner();
+                    downloadRequest.setNotificationVisibility(
+                            DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                    downloadRequest.setDestinationInExternalPublicDir(
+                            Environment.DIRECTORY_DOWNLOADS,
+                            fileName);
+
+                    manager.enqueue(downloadRequest);
+                } else {
+                    showMessage(context.getString(R.string.saving_failed), itemView);
                 }
             }
         }
 
-        private void getMessageForEmptyImage(
-                Attachment attachment,
-                ImageView imageView,
-                TextView textView) {
-            if (imageView != null) {
-                imageView.setVisibility(View.GONE);
-            }
-            textView.setText(
-                    Html.fromHtml(webimChatFragment.getResources().getString(R.string.file_send)
-                            + "<a href=\"" + attachment.getUrl() + "\">" + attachment.getFileName() + "</a>"));
-            textView.setVisibility(View.VISIBLE);
+        private String humanReadableByteCountBin(long bytes) {
+            long b = bytes == Long.MIN_VALUE ? Long.MAX_VALUE : Math.abs(bytes);
+            return b < 1024L ? bytes + " B"
+                    : b <= 0xfffccccccccccccL >> 40 ? String.format(Locale.getDefault(), "%.0f kB", bytes / 0x1p10)
+                    : b <= 0xfffccccccccccccL >> 30 ? String.format(Locale.getDefault(), "%.0f MB", bytes / 0x1p20)
+                    : b <= 0xfffccccccccccccL >> 20 ? String.format(Locale.getDefault(), "%.0f GB", bytes / 0x1p30)
+                    : b <= 0xfffccccccccccccL >> 10 ? String.format(Locale.getDefault(), "%.0f TB", bytes / 0x1p40)
+                    : b <= 0xfffccccccccccccL ? String.format(Locale.getDefault(), "%.0f PiB", (bytes >> 10) / 0x1p40)
+                    : String.format(Locale.getDefault(), "%.0f EiB", (bytes >> 20) / 0x1p40);
         }
 
-        private void addImageInView(
-                Attachment attachment,
-                ImageView imageView,
-                TextView textView) {
+        private void addImageInView(FileInfo attachment,
+                                    ImageView imageView,
+                                    TextView textView) {
             String imageUrl = attachment.getImageInfo().getThumbUrl();
             final Uri fileUrl = Uri.parse(attachment.getUrl());
-            RoundedCornersTransformation.CornerType cornerType;
-            if (message.getType().equals(FILE_FROM_OPERATOR)) {
-                cornerType = RoundedCornersTransformation.CornerType.OTHER_BOTTOM_LEFT;
-            } else {
-                cornerType = RoundedCornersTransformation.CornerType.OTHER_BOTTOM_RIGHT;
-            }
             Glide.with(webimChatFragment)
                     .load(imageUrl)
                     .diskCacheStrategy(DiskCacheStrategy.SOURCE)
-                    .bitmapTransform(new RoundedCornersTransformation(
-                            webimChatFragment.getContext(), 12, 0, cornerType))
                     .into(imageView);
             imageView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    Intent openImgIntent = new Intent(view.getContext(), ImageActivity.class);
-                    openImgIntent.setData(fileUrl);
-                    Activity activity = getRequiredActivity(view);
-                    activity.startActivity(openImgIntent);
-                    activity.overridePendingTransition(R.anim.pull_in_right, R.anim.push_out_left);
+                    openImageActivity(view, fileUrl);
                 }
             });
-            textView.setText(attachment.getFileName());
+            textView.setText(
+                    webimChatFragment.getResources().getString(R.string.reply_message_with_image));
             textView.setVisibility(View.VISIBLE);
             imageView.setVisibility(View.VISIBLE);
         }
 
-        private Activity getRequiredActivity(View view) {
-            Context context = view.getContext();
-            while (context instanceof ContextWrapper) {
-                if (context instanceof Activity) {
-                    return (Activity)context;
-                }
-                context = ((ContextWrapper)context).getBaseContext();
-            }
-            return null;
-        }
 
         private Size getThumbSize(ImageInfo imageInfo) {
+            Size size;
+            int imageWidth = imageInfo.getWidth();
+            int imageHeight = imageInfo.getHeight();
+            boolean isPortraitOrientation = imageHeight > imageWidth;
+            if (isPortraitOrientation) {
+                ScaledSize scaledSize = scalingThumbSize(
+                        imageWidth,
+                        imageHeight,
+                        isPortraitOrientation);
+                size = new Size(scaledSize.getShotSide(), scaledSize.getLongSide());
+            } else {
+                ScaledSize scaledSize = scalingThumbSize(
+                        imageHeight,
+                        imageWidth,
+                        isPortraitOrientation);
+                size = new Size(scaledSize.getLongSide(), scaledSize.getShotSide());
+            }
+            return size;
+        }
+
+        private ScaledSize scalingThumbSize(double shotSide,
+                                            double longSide,
+                                            boolean portraitOrientationImage) {
+            double maxRatioForView = portraitOrientationImage
+                    ? 1
+                    : 0.6;
+            double minRatioForView = 0.17;
+            int orientation = webimChatFragment.getActivity()
+                    .getResources().getConfiguration().orientation;
             DisplayMetrics displayMetrics = new DisplayMetrics();
-            webimChatFragment.getActivity().getWindowManager().
-                    getDefaultDisplay().getMetrics(displayMetrics);
-            int imageWidth =  Math.min(displayMetrics.widthPixels, displayMetrics.heightPixels);
-            double width = imageInfo.getWidth();
-            double height = imageInfo.getHeight();
-            double sideImageRatio = width / height;
-            width = imageWidth * (height > width ? PORTRAIT_ORIENTATION : LANDSCAPE_ORIENTATION);
-            height = width / sideImageRatio;
-            return new Size((int) width, (int) height);
+            webimChatFragment.getActivity().getWindowManager()
+                    .getDefaultDisplay().getMetrics(displayMetrics);
+            double shorterScreenSide = orientation == Configuration.ORIENTATION_PORTRAIT
+                    ? displayMetrics.widthPixels
+                    : displayMetrics.heightPixels;
+            double maxSize = shorterScreenSide * maxRatioForView;
+            double minSize = shorterScreenSide * minRatioForView;
+            double newShotSide = maxSize / longSide * shotSide;
+            if (newShotSide < minSize) {
+                shotSide = minSize;
+            } else {
+                shotSide =  newShotSide > maxSize ? maxSize : newShotSide;
+            }
+            longSide = maxSize;
+            if (portraitOrientationImage) {
+                double maxRatioForPortraitView = 0.6;
+                double maxWidth = shorterScreenSide * maxRatioForPortraitView;
+                if (shotSide > maxWidth) {
+                    longSide = maxWidth / shotSide * maxSize;
+                    shotSide = maxWidth;
+                }
+            }
+            return new ScaledSize((int) shotSide, (int) longSide);
         }
 
         private void setViewSize(ImageView view, Size size) {
@@ -443,6 +570,27 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             }
         }
 
+        private void openImageActivity(View view, Uri fileUrl) {
+            Intent openImgIntent = new Intent(view.getContext(), ImageActivity.class);
+            openImgIntent.setData(fileUrl);
+            Activity activity = getRequiredActivity(view);
+            if (activity != null) {
+                activity.startActivity(openImgIntent);
+                activity.overridePendingTransition(R.anim.pull_in_right, R.anim.push_out_left);
+            }
+        }
+
+        private Activity getRequiredActivity(View view) {
+            Context context = view.getContext();
+            while (context instanceof ContextWrapper) {
+                if (context instanceof Activity) {
+                    return (Activity)context;
+                }
+                context = ((ContextWrapper)context).getBaseContext();
+            }
+            return null;
+        }
+
         private class Size {
             private final int width;
             private final int height;
@@ -452,12 +600,30 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                 this.height = height;
             }
 
-            public int getWidth() {
+            int getWidth() {
                 return width;
             }
 
-            public int getHeight() {
+            int getHeight() {
                 return height;
+            }
+        }
+
+        private class ScaledSize {
+            private final int shotSide;
+            private final int longSide;
+
+            private ScaledSize(int shotSide, int longSide) {
+                this.shotSide = shotSide;
+                this.longSide = longSide;
+            }
+
+            int getShotSide() {
+                return shotSide;
+            }
+
+            int getLongSide() {
+                return longSide;
             }
         }
     }
@@ -475,21 +641,24 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(final View view) {
-                    changeBackgroundDrawable(
-                            view,
-                            messageBody,
-                            R.drawable.background_send_message,
-                            R.color.sendingMsgSelect);
                     final Dialog dialog = new Dialog(view.getContext());
                     dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
                     dialog.setContentView(R.layout.dialog_message_menu);
-                    WindowManager.LayoutParams layoutParams = dialog.getWindow().getAttributes();
-                    layoutParams.dimAmount = LEVEL_SHADING;
-                    dialog.getWindow().setAttributes(layoutParams);
+                    if (dialog.getWindow() != null) {
+                        WindowManager.LayoutParams layoutParams = dialog.getWindow().getAttributes();
+                        layoutParams.dimAmount = LEVEL_SHADING;
+                        dialog.getWindow().setAttributes(layoutParams);
+                    }
                     RelativeLayout replyLayout = dialog.findViewById(R.id.relLayoutReply);
                     RelativeLayout copyLayout = dialog.findViewById(R.id.relLayoutCopy);
                     RelativeLayout editLayout = dialog.findViewById(R.id.relLayoutEdit);
                     RelativeLayout deleteLayout = dialog.findViewById(R.id.relLayoutDelete);
+
+                    replyLayout.setVisibility(View.GONE);
+                    copyLayout.setVisibility(View.GONE);
+                    editLayout.setVisibility(View.GONE);
+                    deleteLayout.setVisibility(View.GONE);
+
                     if (message.canBeReplied()) {
                         replyLayout.setVisibility(View.VISIBLE);
                         replyLayout.setOnClickListener(new View.OnClickListener() {
@@ -499,37 +668,42 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                                 dialog.dismiss();
                             }
                         });
-                    } else {
-                        replyLayout.setVisibility(View.GONE);
                     }
-                    copyLayout.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            ClipData clip =
-                                    ClipData.newPlainText("message", message.getText());
-                            ClipboardManager clipboard =
-                                    (ClipboardManager) view.getContext()
-                                            .getSystemService(Context.CLIPBOARD_SERVICE);
-                            if (clipboard != null) {
-                                clipboard.setPrimaryClip(clip);
-                                showMessage(view.getResources()
-                                        .getString(R.string.copied_message), view);
-                            } else {
-                                showMessage(view.getResources()
-                                        .getString(R.string.copy_failed), view);
-                            }
-                            dialog.dismiss();
-                        }
-                    });
-                    if (message.canBeEdited()) {
-                        editLayout.setVisibility(View.VISIBLE);
-                        editLayout.setOnClickListener(new View.OnClickListener() {
+
+                    if (message.getType() != FILE_FROM_VISITOR) {
+                        copyLayout.setVisibility(View.VISIBLE);
+                        copyLayout.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View view) {
-                                webimChatFragment.onEditAction(message);
+                                ClipData clip =
+                                        ClipData.newPlainText("message", message.getText());
+                                ClipboardManager clipboard =
+                                        (ClipboardManager) view.getContext()
+                                                .getSystemService(Context.CLIPBOARD_SERVICE);
+                                if (clipboard != null) {
+                                    clipboard.setPrimaryClip(clip);
+                                    showMessage(view.getResources()
+                                            .getString(R.string.copied_message), view);
+                                } else {
+                                    showMessage(view.getResources()
+                                            .getString(R.string.copy_failed), view);
+                                }
                                 dialog.dismiss();
                             }
                         });
+                        if (message.canBeEdited()) {
+                            editLayout.setVisibility(View.VISIBLE);
+                            editLayout.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+                                    webimChatFragment.onEditAction(message);
+                                    dialog.dismiss();
+                                }
+                            });
+                        }
+                    }
+
+                    if (message.canBeEdited()) {
                         deleteLayout.setVisibility(View.VISIBLE);
                         deleteLayout.setOnClickListener(new View.OnClickListener() {
                             @Override
@@ -538,21 +712,31 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                                 dialog.dismiss();
                             }
                         });
-                    } else {
-                        editLayout.setVisibility(View.GONE);
-                        deleteLayout.setVisibility(View.GONE);
                     }
+
                     dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
                         @Override
                         public void onDismiss(DialogInterface dialogInterface) {
                             changeBackgroundDrawable(
-                                    view,
-                                    messageBody,
+                                    (message.getType() == FILE_FROM_VISITOR)
+                                            ? layoutAttachedFile
+                                            : messageBody,
                                     R.drawable.background_send_message,
                                     R.color.sendingMsgBubble);
                         }
                     });
-                    dialog.show();
+
+                    if (replyLayout.getVisibility() == View.VISIBLE
+                            || copyLayout.getVisibility() == View.VISIBLE
+                            || deleteLayout.getVisibility() == View.VISIBLE) {
+                        changeBackgroundDrawable(
+                                (message.getType() == FILE_FROM_VISITOR)
+                                        ? layoutAttachedFile
+                                        : messageBody,
+                                R.drawable.background_send_message,
+                                R.color.sendingMsgSelect);
+                        dialog.show();
+                    }
 
                 }
             });
@@ -574,7 +758,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
 
     private class ReceivedMessageHolder extends FileMessageHolder {
         boolean showSenderInfo = true;
-        TextView timeText, nameText, nameTextForImage;
+        TextView timeText, nameText, nameTextForImage, nameTextForFile;
         ImageView profileImage;
 
         private float LEVEL_SHADING = 0.6f;
@@ -584,26 +768,30 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             timeText = itemView.findViewById(R.id.text_message_time);
             nameText = itemView.findViewById(R.id.sender_name);
             nameTextForImage = itemView.findViewById(R.id.sender_name_for_image);
+            nameTextForFile = itemView.findViewById(R.id.sender_name_for_file);
             profileImage = itemView.findViewById(R.id.sender_photo);
 
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(final View view) {
-                    changeBackgroundDrawable(
-                            view,
-                            messageBody,
-                            R.drawable.background_received_message,
-                            R.color.receivedMsgSelect);
                     final Dialog dialog = new Dialog(view.getContext());
                     dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
                     dialog.setContentView(R.layout.dialog_message_menu);
-                    WindowManager.LayoutParams layoutParams = dialog.getWindow().getAttributes();
-                    layoutParams.dimAmount = LEVEL_SHADING;
-                    dialog.getWindow().setAttributes(layoutParams);
+                    if (dialog.getWindow() != null) {
+                        WindowManager.LayoutParams layoutParams = dialog.getWindow().getAttributes();
+                        layoutParams.dimAmount = LEVEL_SHADING;
+                        dialog.getWindow().setAttributes(layoutParams);
+                    }
                     RelativeLayout replyLayout = dialog.findViewById(R.id.relLayoutReply);
                     RelativeLayout copyLayout = dialog.findViewById(R.id.relLayoutCopy);
                     RelativeLayout editLayout = dialog.findViewById(R.id.relLayoutEdit);
                     RelativeLayout deleteLayout = dialog.findViewById(R.id.relLayoutDelete);
+
+                    replyLayout.setVisibility(View.GONE);
+                    copyLayout.setVisibility(View.GONE);
+                    editLayout.setVisibility(View.GONE);
+                    deleteLayout.setVisibility(View.GONE);
+
                     if (message.canBeReplied()) {
                         replyLayout.setVisibility(View.VISIBLE);
                         replyLayout.setOnClickListener(new View.OnClickListener() {
@@ -613,41 +801,52 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                                 dialog.dismiss();
                             }
                         });
-                    } else {
-                        replyLayout.setVisibility(View.GONE);
                     }
-                    copyLayout.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            ClipData clip =
-                                    ClipData.newPlainText("message", message.getText());
-                            ClipboardManager clipboard =
-                                    (ClipboardManager) view.getContext()
-                                            .getSystemService(Context.CLIPBOARD_SERVICE);
-                            if (clipboard != null) {
-                                clipboard.setPrimaryClip(clip);
-                                showMessage(view.getResources()
-                                        .getString(R.string.copied_message), view);
-                            } else {
-                                showMessage(view.getResources()
-                                        .getString(R.string.copy_failed), view);
+                    if (message.getType() != FILE_FROM_OPERATOR) {
+                        copyLayout.setVisibility(View.VISIBLE);
+                        copyLayout.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                ClipData clip =
+                                        ClipData.newPlainText("message", message.getText());
+                                ClipboardManager clipboard =
+                                        (ClipboardManager) view.getContext()
+                                                .getSystemService(Context.CLIPBOARD_SERVICE);
+                                if (clipboard != null) {
+                                    clipboard.setPrimaryClip(clip);
+                                    showMessage(view.getResources()
+                                            .getString(R.string.copied_message), view);
+                                } else {
+                                    showMessage(view.getResources()
+                                            .getString(R.string.copy_failed), view);
+                                }
+                                dialog.dismiss();
                             }
-                            dialog.dismiss();
-                        }
-                    });
-                    editLayout.setVisibility(View.GONE);
-                    deleteLayout.setVisibility(View.GONE);
+                        });
+                    }
+
                     dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
                         @Override
                         public void onDismiss(DialogInterface dialogInterface) {
                             changeBackgroundDrawable(
-                                    view,
-                                    messageBody,
+                                    (message.getType() == FILE_FROM_OPERATOR)
+                                            ? layoutAttachedFile
+                                            : messageBody,
                                     R.drawable.background_received_message,
                                     R.color.receivedMsgBubble);
                         }
                     });
-                    dialog.show();
+
+                    if (replyLayout.getVisibility() == View.VISIBLE
+                            || copyLayout.getVisibility() == View.VISIBLE) {
+                        changeBackgroundDrawable(
+                                (message.getType() == FILE_FROM_OPERATOR)
+                                        ? layoutAttachedFile
+                                        : messageBody,
+                                R.drawable.background_received_message,
+                                R.color.receivedMsgSelect);
+                        dialog.show();
+                    }
                 }
             });
         }
@@ -658,13 +857,18 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             timeText.setText(DateFormat.getTimeFormat(webimChatFragment.getContext())
                     .format(message.getTime()));
             if (showSenderInfo) {
-                if (message.getType().equals(FILE_FROM_OPERATOR)) {
+                if (message.getType().equals(FILE_FROM_OPERATOR) && fileIsImage(message)) {
                     nameTextForImage.setVisibility(View.VISIBLE);
                     nameTextForImage.setText(message.getSenderName());
                 } else {
                     nameTextForImage.setVisibility(View.GONE);
-                    nameText.setVisibility(View.VISIBLE);
-                    nameText.setText(message.getSenderName());
+                    if (message.getType().equals(FILE_FROM_OPERATOR)) {
+                        nameTextForFile.setVisibility(View.VISIBLE);
+                        nameTextForFile.setText(message.getSenderName());
+                    } else {
+                        nameText.setVisibility(View.VISIBLE);
+                        nameText.setText(message.getSenderName());
+                    }
                 }
 
                 String avatarUrl = message.getSenderAvatarUrl();
@@ -689,20 +893,24 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
         }
     }
 
-    private void changeBackgroundDrawable(
-            View view,
-            LinearLayout messageBody,
-            int drawableResource,
-            int colorForSelect) {
+    private boolean fileIsImage(Message message) {
+        return message.getAttachment() != null
+                && message.getAttachment().getFileInfo().getImageInfo() != null;
+    }
+
+    private void changeBackgroundDrawable(View layout, int drawableResource, int colorForSelect) {
         Drawable unwrappedDrawable =
-                AppCompatResources.getDrawable(view.getContext(), drawableResource);
-        DrawableCompat.setTint(
-                DrawableCompat.wrap(unwrappedDrawable),
-                view.getResources().getColor(colorForSelect));
+                AppCompatResources.getDrawable(layout.getContext(), drawableResource);
+        if (unwrappedDrawable != null) {
+            DrawableCompat.setTint(
+                    DrawableCompat.wrap(unwrappedDrawable),
+                    layout.getResources().getColor(colorForSelect));
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            messageBody.setBackground(view.getResources().getDrawable(drawableResource));
+            layout.setBackground(layout.getResources().getDrawable(drawableResource));
         } else {
-            messageBody.setBackgroundDrawable(view.getResources().getDrawable(drawableResource));
+            layout.setBackgroundDrawable(layout.getResources().getDrawable(drawableResource));
         }
     }
 }

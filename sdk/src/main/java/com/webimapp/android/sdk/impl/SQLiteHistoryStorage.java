@@ -60,7 +60,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
             "WHERE msg_id=?";
     private static final String DELETE_HISTORY_STATEMENT = "DELETE FROM history " +
             "WHERE msg_id=?";
-    private static final int VERSION = 5;
+    private static final int VERSION = 6;
 
     private final MyDBHelper dbHelper;
     private final Handler handler;
@@ -229,8 +229,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
         statement.bindLong((index + 5), messageTypeToId(message.getType()));
 
         // Binding to text
-        statement.bindString((index + 6),
-                (message.getRawText() != null) ? message.getRawText() : message.getText());
+        statement.bindString((index + 6), message.getText());
 
         // Binding to data
         String data = message.getData();
@@ -273,23 +272,14 @@ public class SQLiteHistoryStorage implements HistoryStorage {
         String avatar = cursor.getString(5);
         Message.Type type = idToMessageType(cursor.getInt(6));
         String text = cursor.getString(7);
-        String data = cursor.getString(8);
+        String rawText = cursor.getString(8);
         String rawQuote = cursor.getString(9);
 
         Message.Attachment attachment = null;
-        String rawText;
-
-        if ((type == Message.Type.FILE_FROM_OPERATOR)
-                || (type == Message.Type.FILE_FROM_VISITOR)) {
-            rawText = text;
-            text = "";
-        } else {
-            rawText = null;
-        }
-
         if (rawText != null) {
             try {
-                attachment = InternalUtils.getAttachment(serverUrl, rawText, client);
+                MessageItem messageItem = InternalUtils.fromJson(rawText, MessageItem.class);
+                attachment = InternalUtils.getAttachment(serverUrl, messageItem, client);
             } catch (Exception e) {
                 WebimInternalLog.getInstance().log("Failed to parse file params for message: "
                         + id + ", text: " + text + ". " + e,
@@ -306,20 +296,21 @@ public class SQLiteHistoryStorage implements HistoryStorage {
         Message.Keyboard keyboardButton = null;
         if (type == Message.Type.KEYBOARD) {
             Type mapType = new TypeToken<KeyboardItem>() {}.getType();
-            KeyboardItem keyboard = InternalUtils.getKeyboard(data, true, mapType);
+            KeyboardItem keyboard = InternalUtils.getKeyboard(rawText, true, mapType);
             keyboardButton = InternalUtils.getKeyboardButton(keyboard);
         }
 
         Message.KeyboardRequest keyboardRequest = null;
         if (type == Message.Type.KEYBOARD_RESPONSE) {
             Type mapType = new TypeToken<KeyboardRequestItem>() {}.getType();
-            KeyboardRequestItem keyboard = InternalUtils.getKeyboard(data, true, mapType);
+            KeyboardRequestItem keyboard = InternalUtils.getKeyboard(rawText, true, mapType);
             keyboardRequest = InternalUtils.getKeyboardRequest(keyboard);
         }
 
         boolean isRead = ts <= readBeforeTimestamp || readBeforeTimestamp == -1;
 
-        return new MessageImpl(serverUrl,
+        return new MessageImpl(
+                serverUrl,
                 StringId.forMessage(clientSideId != null
                         ? clientSideId
                         : id),
@@ -332,11 +323,10 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                 type,
                 text,
                 ts,
-                attachment,
                 id,
                 rawText,
                 true,
-                data,
+                attachment,
                 isRead,
                 false,
                 false,

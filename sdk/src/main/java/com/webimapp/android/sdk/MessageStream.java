@@ -78,7 +78,7 @@ public interface MessageStream {
      * Rates an operator. To get an id of the current operator use
      * {@link MessageStream#getCurrentOperator()}
      * @see RateOperatorCallback
-     * @param operatorId id of the operator to be rated 
+     * @param operatorId id of the operator to be rated
      * @param rate a number in range [1, 5]
      * @param rateOperatorCallback callback handler object
      * @throws IllegalArgumentException if 'rate' is not in range [1, 5]
@@ -87,6 +87,24 @@ public interface MessageStream {
      * created in
      */
     void rateOperator(@NonNull Operator.Id operatorId,
+                      int rate,
+                      @Nullable RateOperatorCallback rateOperatorCallback);
+
+    /**
+     * Rates an operator. To get an id of the current operator use
+     * {@link MessageStream#getCurrentOperator()}
+     * @see RateOperatorCallback
+     * @param operatorId id of the operator to be rated
+     * @param note a comment for rating
+     * @param rate a number in range [1, 5]
+     * @param rateOperatorCallback callback handler object
+     * @throws IllegalArgumentException if 'rate' is not in range [1, 5]
+     * @throws IllegalStateException if the WebimSession was destroyed
+     * @throws RuntimeException if the method was called not from the thread the WebimSession was
+     * created in
+     */
+    void rateOperator(@NonNull Operator.Id operatorId,
+                      @Nullable String note,
                       int rate,
                       @Nullable RateOperatorCallback rateOperatorCallback);
 
@@ -242,7 +260,7 @@ public interface MessageStream {
      * {@link MessageStream#newMessageTracker}),
      * {@link MessageListener#messageAdded(Message, Message)} with a message
      * {@link Message.SendStatus#SENDING} in the status is also called.
-     * @see Message#getData()
+     * @see Message#getAttachment()
      * @param message text of the message
      * @param data custom message parameters fields formatted to JSON string
      * @param dataMessageCallback shows if a call is completed or failed
@@ -302,14 +320,14 @@ public interface MessageStream {
      * {@link MessageStream#newMessageTracker}),
      * {@link MessageListener#messageAdded(Message, Message)} with a message
      * @see Message#getKeyboard()
-     * @param requestMessageId id of the message
+     * @param requestMessageCurrentChatId currentChatId of the message
      * @param buttonId the id of the button that the user selected
      * @param sendKeyboardCallback shows if a call is completed or failed
      * @throws IllegalStateException if the WebimSession was destroyed
      * @throws RuntimeException if the method was called not from the thread the WebimSession was
      * created in
      */
-    void sendKeyboardRequest(@NonNull String requestMessageId,
+    void sendKeyboardRequest(@NonNull String requestMessageCurrentChatId,
                              @NonNull String buttonId,
                              @Nullable SendKeyboardCallback sendKeyboardCallback);
 
@@ -718,7 +736,11 @@ public interface MessageStream {
             /**
              * The upload file has an incorrect or erroneous name
              */
-            FILE_NAME_INCORRECT
+            FILE_NAME_INCORRECT,
+            /**
+             * When sending a file there is no started chat
+             */
+            CHAT_NOT_STARTED
         }
     }
 
@@ -746,7 +768,12 @@ public interface MessageStream {
              * Arises when there was a try to rate an operator if this operator does not belong to
              * existing chat.
              */
-            OPERATOR_NOT_IN_CHAT
+            OPERATOR_NOT_IN_CHAT,
+
+            /**
+             * Note length is more than 2000 characters.
+             */
+            NOTE_IS_TOO_LONG
         }
     }
 
@@ -779,6 +806,7 @@ public interface MessageStream {
          * <ul>
          * <li>{@link ChatState#CHATTING}, if an operator intercepted the chat</li>
          * <li>{@link ChatState#CLOSED_BY_VISITOR}, if a visitor closes the chat ({@link MessageStream#closeChat()})</li>
+         * <li>{@link ChatState#ROUTING}, if canceled by the robot</li>
          * <li>{@link ChatState#NONE}, automatically during long-term absence of activity.</li>
          * </ul>
          */
@@ -788,6 +816,7 @@ public interface MessageStream {
          * Means that an operator has closed the chat.
          * From this state a chat can be turned into:
          * <ul>
+         * <li>{@link ChatState#CHATTING}, if an operator intercepted the chat</li>
          * <li>{@link ChatState#NONE}, if the chat is also closed by a visitor ({@link MessageStream#closeChat()}), or automatically during long-term absence of activity</li>
          * <li>{@link ChatState#QUEUE}, if a visitor sends a new message({@link MessageStream#sendMessage(String)})</li>
          * </ul>
@@ -805,6 +834,11 @@ public interface MessageStream {
         CLOSED_BY_VISITOR,
 
         /**
+         * The final state in which the chat can go.
+         */
+        DELETED,
+
+        /**
          * Means that a chat has been started by an operator and at this moment is waiting for a visitor's response.
          * From this state a chat can be turned into:
          * <ul>
@@ -813,6 +847,16 @@ public interface MessageStream {
          * </ul>
          */
         INVITATION,
+
+        /**
+         * Means that the chat was sent to the router (a service that determines which operator or department
+         * should service the chat), which will send it to the queue.
+         * From this state a chat can be turned into:
+         * <ul>
+         * <li>{@link ChatState#QUEUE}, if a visitor sends a new message ({@link MessageStream#sendMessage(String)})</li>
+         * </ul>
+         */
+        ROUTING,
 
         /**
          * Means the absence of a chat as such, i.e. a chat has not been started by a visitor nor by an operator.

@@ -3,13 +3,13 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_width="200dp"
+    android:layout_height="wrap_content"
     android:background="@color/colorBackgroundDialog">
 
     <RelativeLayout
         android:id="@+id/relLayoutReply"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingStart="@dimen/alert_dialog_marginLeft"
         android:paddingLeft="@dimen/alert_dialog_marginLeft"
@@ -26,6 +26,7 @@
             android:layout_margin="@dimen/alert_dialog_image_margin"
             android:tint="@color/white"
             app:srcCompat="@drawable/arrow_forward"
+            android:layout_centerVertical="true"
             android:contentDescription="@string/reply" />
 
         <TextView
@@ -36,8 +37,6 @@
             android:layout_centerVertical="true"
             android:layout_marginLeft="@dimen/alert_dialog_marginLeft"
             android:layout_marginStart="@dimen/alert_dialog_marginLeft"
-            android:layout_marginEnd="5dp"
-            android:layout_marginRight="5dp"
             android:layout_toEndOf="@id/imageReply"
             android:layout_toRightOf="@id/imageReply"
             android:text="@string/reply"
@@ -46,7 +45,7 @@
 
     <RelativeLayout
         android:id="@+id/relLayoutCopy"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/relLayoutReply"
         android:paddingStart="@dimen/alert_dialog_marginLeft"
@@ -54,7 +53,6 @@
         android:paddingTop="@dimen/alert_dialog_marginLeft"
         android:paddingEnd="@dimen/alert_dialog_relative_marginEnd"
         android:paddingRight="@dimen/alert_dialog_relative_marginEnd"
-        android:paddingBottom="@dimen/alert_dialog_marginLeft"
         android:orientation="horizontal"
         tools:visibility="gone">
 
@@ -65,6 +63,7 @@
             android:layout_margin="@dimen/alert_dialog_image_margin"
             android:tint="@color/white"
             app:srcCompat="@drawable/ic_copy"
+            android:layout_centerVertical="true"
             android:contentDescription="@string/copy" />
 
         <TextView
@@ -75,8 +74,6 @@
             android:layout_centerVertical="true"
             android:layout_marginLeft="@dimen/alert_dialog_marginLeft"
             android:layout_marginStart="@dimen/alert_dialog_marginLeft"
-            android:layout_marginRight="5dp"
-            android:layout_marginEnd="5dp"
             android:layout_toEndOf="@id/imageCopy"
             android:layout_toRightOf="@id/imageCopy"
             android:text="@string/copy"
@@ -86,14 +83,14 @@
 
     <RelativeLayout
         android:id="@+id/relLayoutEdit"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/relLayoutCopy"
         android:paddingStart="@dimen/alert_dialog_marginLeft"
         android:paddingLeft="@dimen/alert_dialog_marginLeft"
+        android:paddingTop="@dimen/alert_dialog_marginLeft"
         android:paddingEnd="@dimen/alert_dialog_relative_marginEnd"
         android:paddingRight="@dimen/alert_dialog_relative_marginEnd"
-        android:paddingBottom="@dimen/alert_dialog_relative_marginBottom"
         android:orientation="horizontal"
         tools:visibility="gone">
 
@@ -104,6 +101,7 @@
             android:layout_margin="@dimen/alert_dialog_image_margin"
             android:tint="@color/white"
             app:srcCompat="@drawable/ic_group"
+            android:layout_centerVertical="true"
             android:contentDescription="@string/edit" />
 
         <TextView
@@ -114,8 +112,6 @@
             android:layout_centerVertical="true"
             android:layout_marginLeft="@dimen/alert_dialog_marginLeft"
             android:layout_marginStart="@dimen/alert_dialog_marginLeft"
-            android:layout_marginRight="5dp"
-            android:layout_marginEnd="5dp"
             android:layout_toEndOf="@id/imageEdit"
             android:layout_toRightOf="@id/imageEdit"
             android:text="@string/edit"
@@ -125,12 +121,11 @@
 
     <RelativeLayout
         android:id="@+id/relLayoutDelete"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/relLayoutEdit"
         android:paddingStart="@dimen/alert_dialog_marginLeft"
         android:paddingLeft="@dimen/alert_dialog_marginLeft"
-        android:paddingTop="@dimen/alert_dialog_relative_marginTop"
         android:paddingEnd="@dimen/alert_dialog_relative_marginEnd"
         android:paddingRight="@dimen/alert_dialog_relative_marginEnd"
         android:paddingBottom="16dp"
@@ -144,6 +139,7 @@
             android:layout_margin="@dimen/alert_dialog_image_margin"
             android:tint="@color/white"
             app:srcCompat="@drawable/ic_trash"
+            android:layout_centerVertical="true"
             android:contentDescription="@string/delete" />
 
         <TextView
@@ -154,8 +150,6 @@
             android:layout_centerVertical="true"
             android:layout_marginLeft="@dimen/alert_dialog_marginLeft"
             android:layout_marginStart="@dimen/alert_dialog_marginLeft"
-            android:layout_marginRight="5dp"
-            android:layout_marginEnd="5dp"
             android:layout_toEndOf="@id/imageDelete"
             android:layout_toRightOf="@id/imageDelete"
             android:text="@string/delete"

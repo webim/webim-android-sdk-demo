@@ -6,12 +6,14 @@ import android.support.annotation.Nullable;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 import com.webimapp.android.sdk.Message;
 import com.webimapp.android.sdk.Operator;
 import com.webimapp.android.sdk.Webim;
 import com.webimapp.android.sdk.WebimPushNotification;
 import com.webimapp.android.sdk.impl.backend.WebimClient;
 import com.webimapp.android.sdk.impl.backend.WebimInternalLog;
+import com.webimapp.android.sdk.impl.items.FileItem;
 import com.webimapp.android.sdk.impl.items.FileParametersItem;
 import com.webimapp.android.sdk.impl.items.KeyboardItem;
 import com.webimapp.android.sdk.impl.items.KeyboardRequestItem;
@@ -100,8 +102,8 @@ public final class InternalUtils {
         }
     }
 
-    public static String toJson(Object obj) {
-        return gson.toJson(obj);
+    public static String toJson(Object object) {
+        return gson.toJson(object);
     }
 
     public static <T> T fromJson(String json, Class<T> cls) throws JsonSyntaxException {
@@ -173,7 +175,13 @@ public final class InternalUtils {
                 || messageItem.getType() == MessageItem.WMMessageKind.FILE_FROM_OPERATOR) {
             if (client.getAuthData() != null) {
                 try {
-                    return getAttachment(serverUrl, messageItem.getMessage(), client);
+                    Object json = messageItem.getData();
+                    String string = new Gson().toJson(json);
+                    Type mapType = new TypeToken<FileItem>(){}.getType();
+                    FileItem fileItem = gson.fromJson(string, mapType);
+                    return (fileItem != null)
+                            ? getAttachment(serverUrl, fileItem.getFile(), client)
+                            : getAttachment(serverUrl, messageItem.getMessage(), client);
                 } catch (Exception e) {
                     WebimInternalLog.getInstance().log(
                             "Failed to parse file params for message: "
@@ -193,16 +201,65 @@ public final class InternalUtils {
                 );
             }
         }
-
         return null;
     }
 
+    @Nullable
+    private static Message.Attachment getAttachment(@NonNull String serverUrl,
+                                                    @Nullable FileItem.File file,
+                                                    @NonNull WebimClient client) {
+        return file != null
+                ? new MessageImpl.AttachmentImpl(
+                    file.getDownloadProgress(),
+                    file.getErrorType(),
+                    file.getErrorMessage(),
+                    getFileInfo(serverUrl, file, client),
+                    getFileState(file.getState()))
+                : null;
+    }
+
     @NonNull
-    public static Message.Attachment getAttachment(@NonNull String serverUrl,
-                                                   @NonNull String text,
-                                                   @NonNull WebimClient client) {
+    private static Message.Attachment getAttachment(@NonNull String serverUrl,
+                                                    @NonNull String message,
+                                                    @NonNull WebimClient client) {
+        return new MessageImpl.AttachmentImpl(
+                100,
+                "",
+                "",
+                getFileInfo(serverUrl, message, client),
+                Message.Attachment.AttachmentState.READY);
+    }
+
+    @NonNull
+    private static Message.FileInfo getFileInfo(@NonNull String serverUrl,
+                                                @NonNull FileItem.File file,
+                                                @NonNull WebimClient client) {
+        FileParametersItem fileParams = file.getProperties();
+        if (file.getState() == FileItem.File.FileState.READY) {
+            return getAttachmentImpl(serverUrl, fileParams, client);
+        } else {
+            return new MessageImpl.FileInfoImpl(
+                    "",
+                    (fileParams != null) ? fileParams.getFilename() : "",
+                    null,
+                    0,
+                    "");
+        }
+    }
+
+    @NonNull
+    private static Message.FileInfo getFileInfo(@NonNull String serverUrl,
+                                                @NonNull String json,
+                                                @NonNull WebimClient client) {
+        FileParametersItem fileParams = fromJson(json, FileParametersItem.class);
+        return getAttachmentImpl(serverUrl, fileParams, client);
+    }
+
+    @NonNull
+    private static MessageImpl.FileInfoImpl getAttachmentImpl(@NonNull String serverUrl,
+                                                              @NonNull FileParametersItem fileParams,
+                                                              @NonNull WebimClient client) {
         try {
-            FileParametersItem fileParams = InternalUtils.fromJson(text, FileParametersItem.class);
             String fileUrl = HttpUrl.parse(serverUrl).toString().replaceFirst("/*$", "/")
                     + "l/v/m/download/"
                     + fileParams.getGuid() + "/"
@@ -215,13 +272,27 @@ public final class InternalUtils {
                 String hash = sha256(data, key);
                 fileUrl += "page-id=" + pageId + "&expires=" + expires + "&hash=" + hash;
             }
-            return new MessageImpl.AttachmentImpl(fileUrl,
-                    fileParams.getSize(),
-                    fileParams.getFilename(),
+            return new MessageImpl.FileInfoImpl(
                     fileParams.getContentType(),
-                    extractImageData(fileParams, fileUrl));
+                    fileParams.getFilename(),
+                    extractImageData(fileParams, fileUrl),
+                    fileParams.getSize(),
+                    fileUrl);
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    @NonNull
+    private static Message.Attachment.AttachmentState getFileState (@NonNull FileItem.File.FileState fileState) {
+        switch (fileState) {
+            case READY:
+                return Message.Attachment.AttachmentState.READY;
+            case UPLOAD:
+                return Message.Attachment.AttachmentState.UPLOAD;
+            case ERROR:
+            default:
+                return Message.Attachment.AttachmentState.ERROR;
         }
     }
 
@@ -335,7 +406,7 @@ public final class InternalUtils {
                                          @Nullable MessageItem.Quote quote,
                                          @NonNull WebimClient client) {
         if (quote != null) {
-            Message.Attachment attachment = null;
+            Message.FileInfo fileInfo = null;
             String quoteText = null;
             String quoteSenderName =  null;
             String quoteId = null;
@@ -345,7 +416,7 @@ public final class InternalUtils {
             if ((quote.getState() == MessageItem.Quote.State.FILLED)) {
                 if ((quote.getType() == MessageItem.WMMessageKind.FILE_FROM_VISITOR)
                         || (quote.getType() == MessageItem.WMMessageKind.FILE_FROM_OPERATOR)) {
-                    attachment = extractAttachment(serverUrl, quote, client);
+                    fileInfo = extractFileInfo(serverUrl, quote, client);
                 }
                 quoteText = quote.getText();
                 quoteAuthorId = quote.getAuthorId();
@@ -355,7 +426,7 @@ public final class InternalUtils {
                 quoteTimeSeconds = quote.getTimeSeconds();
             }
             return new MessageImpl.QuoteImpl(
-                    attachment,
+                    fileInfo,
                     quoteAuthorId,
                     quoteId,
                     quoteState,
@@ -379,15 +450,25 @@ public final class InternalUtils {
         }
     }
 
-    private static Message.Attachment extractAttachment(
-            @NonNull String serverUrl,
-            @NonNull MessageItem.Quote quotedMessage,
-            @NonNull WebimClient client) {
+    private static Message.FileInfo extractFileInfo(@NonNull String serverUrl,
+                                                    @NonNull MessageItem.Quote quotedMessage,
+                                                    @NonNull WebimClient client) {
         MessageItem messageItem = new MessageItem();
         messageItem.setMessage(percentDecode(quotedMessage.getText()));
         messageItem.setType(quotedMessage.getType());
         messageItem.setId(quotedMessage.getId());
-        return getAttachment(serverUrl, messageItem, client);
+        Message.Attachment attachment = getAttachment(serverUrl, messageItem, client);
+        if (attachment != null) {
+            Message.FileInfo fileInfo = attachment.getFileInfo();
+            return new MessageImpl.FileInfoImpl(
+                    fileInfo.getContentType(),
+                    fileInfo.getFileName(),
+                    fileInfo.getImageInfo(),
+                    fileInfo.getSize(),
+                    fileInfo.getUrl());
+        } else {
+            return null;
+        }
     }
 
     private static String percentDecode(String text) {

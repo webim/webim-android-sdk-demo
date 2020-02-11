@@ -21,7 +21,6 @@ public final class MessageItem implements Comparable<MessageItem> {
     */
     @SerializedName("data")
     private Object data;
-
     @SerializedName("canBeEdited")
     private boolean canBeEdited;
     @SerializedName("chatId")

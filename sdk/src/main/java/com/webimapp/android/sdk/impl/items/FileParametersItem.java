@@ -8,11 +8,11 @@ public class FileParametersItem {
     @SerializedName("guid")
     private String guid;
     @SerializedName("content_type")
-    private String contentType;
+    private String content_type;
     @SerializedName("filename")
     private String filename;
     @SerializedName("image")
-    private WMImageParams imageParams;
+    private WMImageParams image;
 
     public long getSize() {
         return size;
@@ -23,7 +23,7 @@ public class FileParametersItem {
     }
 
     public String getContentType() {
-        return contentType;
+        return content_type;
     }
 
     public String getFilename() {
@@ -31,7 +31,7 @@ public class FileParametersItem {
     }
 
     public WMImageParams getImageParams() {
-        return imageParams;
+        return image;
     }
 
     public static class WMImageParams {

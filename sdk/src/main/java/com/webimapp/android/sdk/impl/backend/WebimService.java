@@ -12,6 +12,7 @@ import retrofit2.Call;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
+import retrofit2.http.Header;
 import retrofit2.http.Multipart;
 import retrofit2.http.POST;
 import retrofit2.http.Part;
@@ -49,6 +50,7 @@ public interface WebimService {
     String PARAMETER_PUSH_TOKEN = "push-token";
     String PARAMETER_RESPOND_IMMEDIATELY = "respond-immediately";
     String PARAMETER_REQUEST_MESSAGE_ID = "request-message-id";
+    String PARAMETER_SDK_VERSION = "x-webim-sdk-version";
     String PARAMETER_SINCE = "since";
     String PARAMETER_TIMESTAMP = "ts";
     String PARAMETER_TIMESTAMP_BEFORE = "before-ts";
@@ -56,6 +58,7 @@ public interface WebimService {
     String PARAMETER_VISIT_SESSION_ID = "visit-session-id";
     String PARAMETER_VISITOR_EXT = "visitor-ext";
     String PARAMETER_VISITOR_FIELDS = "visitor";
+    String PARAMETER_VISITOR_NOTE = "visitor_note";
     String PARAMETER_VISITOR_TYPING = "typing";
     String URL_SUFFIX_ACTION = "/l/v/m/action";
     String URL_SUFFIX_DELTA = "/l/v/m/delta";
@@ -82,6 +85,7 @@ public interface WebimService {
 
     @GET(URL_SUFFIX_DELTA)
     Call<DeltaResponse> getLogin(
+            @Header(PARAMETER_SDK_VERSION) String sdkVersion,
             @Query(PARAMETER_EVENT) String event,
             @Query(PARAMETER_PUSH_SERVICE) String pushService,
             @Query(PARAMETER_PUSH_TOKEN) String pushToken,
@@ -189,6 +193,7 @@ public interface WebimService {
     Call<DefaultResponse> rateOperator(
             @Field(PARAMETER_ACTION) String action,
             @Field(PARAMETER_OPERATOR_ID) String operatorId,
+            @Field(PARAMETER_VISITOR_NOTE) String note,
             @Field(PARAMETER_OPERATOR_RATING) int rating,
             @Field(PARAMETER_PAGE_ID) String pageId,
             @Field(PARAMETER_AUTHORIZATION_TOKEN) String authorizationToken

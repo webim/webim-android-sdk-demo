@@ -331,6 +331,7 @@ public class WebimActionsImpl implements WebimActions {
     @Override
     public void rateOperator
             (@Nullable final String operatorId,
+             @Nullable final String note,
              final int rate,
              @Nullable final MessageStream.RateOperatorCallback rateOperatorCallback) {
         enqueue(new ActionRequestLoop.WebimRequest<DefaultResponse>(
@@ -341,6 +342,7 @@ public class WebimActionsImpl implements WebimActions {
                 return webim.rateOperator(
                         ACTION_OPERATOR_RATE,
                         operatorId,
+                        percentEncode(note),
                         rate,
                         authData.getPageId(),
                         authData.getAuthToken());
@@ -355,20 +357,26 @@ public class WebimActionsImpl implements WebimActions {
 
             @Override
             public boolean isHandleError(@NonNull String error) {
-                return (error.equals(WebimInternalError.OPERATOR_NOT_IN_CHAT)
-                        || error.equals(WebimInternalError.NO_CHAT));
+                return error.equals(WebimInternalError.OPERATOR_NOT_IN_CHAT)
+                        || error.equals(WebimInternalError.NO_CHAT)
+                        || error.equals(WebimInternalError.NOTE_IS_TOO_LONG);
             }
 
             @Override
             public void handleError(@NonNull String error) {
                 if (rateOperatorCallback != null) {
-                    rateOperatorCallback.onFailure((new WebimErrorImpl<>
-                            (error.equals(WebimInternalError.NO_CHAT)
-                                    ? MessageStream.RateOperatorCallback.RateOperatorError
-                                    .NO_CHAT
-                                    : MessageStream.RateOperatorCallback.RateOperatorError
-                                    .OPERATOR_NOT_IN_CHAT,
-                                    error)));
+                    MessageStream.RateOperatorCallback.RateOperatorError rateOperatorError;
+                    switch (error) {
+                        case WebimInternalError.NO_CHAT:
+                            rateOperatorError = MessageStream.RateOperatorCallback.RateOperatorError.NO_CHAT;
+                            break;
+                        case WebimInternalError.NOTE_IS_TOO_LONG:
+                            rateOperatorError = MessageStream.RateOperatorCallback.RateOperatorError.NOTE_IS_TOO_LONG;
+                            break;
+                        default:
+                            rateOperatorError = MessageStream.RateOperatorCallback.RateOperatorError.OPERATOR_NOT_IN_CHAT;
+                    }
+                    rateOperatorCallback.onFailure((new WebimErrorImpl<>(rateOperatorError, error)));
                 }
             }
         });

@@ -276,12 +276,12 @@ public class MessageStreamImpl implements MessageStream {
         return true;
     }
 
-    public void sendKeyboardRequest(@NonNull String requestMessageId,
+    public void sendKeyboardRequest(@NonNull String requestMessageCurrentChatId,
                                     @NonNull String buttonId,
                                     @Nullable final SendKeyboardCallback sendKeyboardCallback) {
         final Message.Id messageId = StringId.generateForMessage();
         actions.sendKeyboard(
-                requestMessageId,
+                requestMessageCurrentChatId,
                 buttonId,
                 new SendKeyboardErrorListener() {
                     @Override
@@ -379,8 +379,12 @@ public class MessageStreamImpl implements MessageStream {
                 return ChatState.CLOSED_BY_OPERATOR;
             case CLOSED_BY_VISITOR:
                 return ChatState.CLOSED_BY_VISITOR;
+            case DELETED:
+                return ChatState.DELETED;
             case INVITATION:
                 return ChatState.INVITATION;
+            case ROUTING:
+                return ChatState.ROUTING;
             case QUEUE:
                 return ChatState.QUEUE;
             default:
@@ -413,6 +417,23 @@ public class MessageStreamImpl implements MessageStream {
 
         actions.rateOperator(
                 ((StringId) operatorId).getInternal(),
+                null,
+                rateToInternal(rating),
+                rateOperatorCallback);
+    }
+
+    @Override
+    public void rateOperator(@NonNull Operator.Id operatorId,
+                             @Nullable String note,
+                             int rating,
+                             @Nullable RateOperatorCallback rateOperatorCallback) {
+        operatorId.getClass(); //NPE
+
+        accessChecker.checkAccess();
+
+        actions.rateOperator(
+                ((StringId) operatorId).getInternal(),
+                note,
                 rateToInternal(rating),
                 rateOperatorCallback);
     }
@@ -435,11 +456,18 @@ public class MessageStreamImpl implements MessageStream {
         mimeType.getClass(); // NPE
 
         accessChecker.checkAccess();
+        final Message.Id id = StringId.generateForMessage();
+        if (chat == null || chat.getState().cantSendImageMessage()) {
+            if (callback != null) {
+                callback.onFailure(id, (new WebimErrorImpl<>(
+                        SendFileCallback.SendFileError.CHAT_NOT_STARTED, null)));
+            }
+            return id;
+        }
 
         startChatWithDepartmentKeyFirstQuestion(null, null);
 
-        final Message.Id id = StringId.generateForMessage();
-        messageHolder.onSendingMessage(sendingMessageFactory.createFile(id));
+        messageHolder.onSendingMessage(sendingMessageFactory.createFile(id, name));
         for (char c: name.toCharArray()) {
             if ((c <= '\u001f' && c != '\t') || c >= '\u007f') {
                 messageHolder.onMessageSendingCancelled(id);
@@ -768,6 +796,7 @@ public class MessageStreamImpl implements MessageStream {
         startChatWithDepartmentKeyFirstQuestion(null, null);
 
         final Message.Id messageId = StringId.generateForMessage();
+
         actions.sendMessage(
                 message,
                 messageId.toString(),

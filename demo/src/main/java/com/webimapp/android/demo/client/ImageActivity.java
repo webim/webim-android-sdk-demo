@@ -100,7 +100,7 @@ public class ImageActivity extends AppCompatActivity {
                     1);
         } else {
             String imgName = getString(R.string.def_image_name, System.currentTimeMillis());
-            showMessage(getString(R.string.saving_image, imgName));
+            showMessage(getString(R.string.saving_file, imgName));
 
             DownloadManager manager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
             if (manager != null) {

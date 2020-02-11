@@ -29,7 +29,8 @@ class MessageHolderImplTest extends Specification {
     List<MessageImpl> genHistory(int count) {
         def history = []
         for (int i in msgIndCounter ..< msgIndCounter+count) {
-            history << new MessageImpl("",
+            history << new MessageImpl(
+                    "",
                     StringId.forMessage(i as String),
                     null,
                     StringId.forOperator("op"),
@@ -38,7 +39,6 @@ class MessageHolderImplTest extends Specification {
                     Message.Type.OPERATOR,
                     "text",
                     i,
-                    null,
                     i as String,
                     null,
                     true,
@@ -66,7 +66,6 @@ class MessageHolderImplTest extends Specification {
                     Message.Type.OPERATOR,
                     "text",
                     i,
-                    null,
                     i as String,
                     null,
                     false,
@@ -93,7 +92,6 @@ class MessageHolderImplTest extends Specification {
                     it.getType(),
                     it.getText(),
                     it.timeMicros,
-                    null,
                     it.timeMicros as String,
                     null,
                     true,
@@ -118,7 +116,6 @@ class MessageHolderImplTest extends Specification {
                 Message.Type.OPERATOR,
                 "text",
                 i,
-                null,
                 i as String,
                 null,
                 false,
@@ -141,7 +138,6 @@ class MessageHolderImplTest extends Specification {
                 orig.getType(),
                 orig.getText() + "1",
                 orig.getTimeMicros(),
-                null,
                 orig.getIdInCurrentChat(),
                 null,
                 false,
@@ -164,7 +160,6 @@ class MessageHolderImplTest extends Specification {
                 orig.getType(),
                 orig.getText() + "1",
                 orig.getTimeMicros(),
-                null,
                 orig.getHistoryId().getDbId(),
                 null,
                 true,

@@ -58,14 +58,6 @@ public interface Message {
     @NonNull String getText();
 
     /**
-	 * Messages of the types {@link Type#FILE_FROM_OPERATOR} and {@link Type#FILE_FROM_VISITOR} can contain attachments.
-     * Notice that this method may return null even in the case of previously listed types of messages. For instance,
-     * if a file is being sent.
-     * @return the attachment of the message
-     */
-    @Nullable Attachment getAttachment();
-
-    /**
      * @return {@link SendStatus#SENT} if a message had been sent to the server, was received by the server and was 
 	 * delivered to all the clients;
      * {@link SendStatus#SENDING} if not
@@ -78,6 +70,15 @@ public interface Message {
      * This data is to be unparsed by a client.
      */
     @Nullable String getData();
+
+    /**
+     * Messages of the types {@link Type#FILE_FROM_OPERATOR} and {@link Type#FILE_FROM_VISITOR} can contain attachments.
+     * Notice that this method may return null even in the case of previously listed types of messages. For instance,
+     * if a file is being sent.
+     * @return information about the file that is attached to the message
+     */
+    @Nullable
+    Attachment getAttachment();
 
     /**
      * @return true if this visitor message is read by operator or this message is not by visitor.
@@ -110,26 +111,26 @@ public interface Message {
         /**
          * A message from operator which requests some actions from a visitor.
          * E.g. choose an operator group by clicking on a button in this message.
-         * @see Message#getData()
+         * @see Message#getAttachment()
          */
         ACTION_REQUEST,
         /**
          * A message from operator which requests some information about a visitor.
-         * @see Message#getData()
+         * @see Message#getAttachment()
          */
         CONTACT_REQUEST,
         /**
          * A message sent by an operator which contains an attachment.
-         * Notice that the method {@link Message#getAttachment()} may  return null even for messages of this type. For instance,
+         * Notice that the method {@link Attachment#getAttachment()} may return null even for messages of this type. For instance,
          * if a file is being sent.
-         * @see Message#getAttachment()
+         * @see Attachment#getAttachment()
          */
         FILE_FROM_OPERATOR,
         /**
          * A message sent by a visitor which contains an attachment.
-         * Notice that the method {@link Message#getAttachment()} may return null even for messages of this type. For instance,
+         * Notice that the method {@link Attachment#getAttachment()} may return null even for messages of this type. For instance,
          * if a file is being sent.
-         * @see Message#getAttachment()
+         * @see Attachment#getAttachment()
          */
         FILE_FROM_VISITOR,
         /**
@@ -176,16 +177,70 @@ public interface Message {
     }
 
     /**
-     * Contains information about an attachment file.
+     * Contains a file attached to the message.
      * @see Message#getAttachment()
      */
     interface Attachment {
+
+        /**
+         * @return the fileInfo of the attachment
+         */
+        @NonNull FileInfo getFileInfo();
+
+        /**
+         * @return type of error in case of problems during attachment upload
+         */
+        @Nullable String getErrorType();
+
+        /**
+         * @return a message with the reason for the error during loading
+         */
+        @Nullable String getErrorMessage();
+
+        /**
+         * @return attachment upload progress as a percentage
+         */
+        int getDownloadProgress();
+
+        /**
+         * @return attachment state
+         */
+        @NonNull
+        AttachmentState getState();
+
+        /**
+         * Shows the state of the attachment.
+         * @see Attachment#getState()
+         */
+        enum AttachmentState {
+            /**
+             * Some error occurred during loading
+             */
+            ERROR,
+
+            /**
+             * Sile is available for download
+             */
+            READY,
+
+            /**
+             * The file is uploaded to the server
+             */
+            UPLOAD
+        }
+    }
+
+    /**
+     * Contains information about attachment properties.
+     * @see Attachment#getFileInfo()
+     */
+    interface FileInfo {
         /**
          * A URL of a file. 
 		 * Notice that this URL is short-lived and is tied to a session.
          * @return url of the file
          */
-        @NonNull String getUrl();
+        @Nullable String getUrl();
 
         /**
          * @return file size in bytes
@@ -200,7 +255,7 @@ public interface Message {
         /**
          * @return MIME-type of a file
          */
-        @NonNull String getContentType();
+        @Nullable String getContentType();
 
         /**
          * @return if a file is an image, returns information about an image, in other cases returns null
@@ -210,7 +265,7 @@ public interface Message {
 
     /**
      * Contains information about an image.
-     * @see Attachment#getImageInfo()
+     * @see FileInfo#getImageInfo()
      */
     interface ImageInfo {
         /**
@@ -260,7 +315,7 @@ public interface Message {
          * if a file is being sent.
          * @return the attachment of the message
          */
-        @Nullable Attachment getMessageAttachment();
+        @Nullable FileInfo getMessageAttachment();
 
         /**
          * @return the id of the message that was quoted.

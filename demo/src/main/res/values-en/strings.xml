@@ -18,10 +18,10 @@
     <string name="yes">Yes</string>
     <string name="alert_close_chat">Close chat?</string>
     <string name="choose_department">Choose department</string>
-    <string name="empty_chat_text">Enter the message to start chatting with the operator</string>
+    <string name="empty_chat_text">Enter the message to start chatting with the agent</string>
     <string name="content_desc_send_message">Send message</string>
-    <string name="rate_operator_button">Rate</string>
-    <string name="rate_operator_title">Rate operator?</string>
+    <string name="rate_operator_button">Send</string>
+    <string name="rate_operator_title">Rate agent</string>
     <string name="file_chooser_title">Select file to upload</string>
     <string name="file_chooser_not_found">To download the file, please install the file manager</string>
     <string name="file_selection_failed">Could not select file</string>
@@ -30,8 +30,8 @@
     <string name="file_upload_failed_unknown">Unable to load file: unknown error</string>
     <string name="file_upload_message_text">Sending file…</string>
     <string name="file_send">Sent a file:\n</string>
-    <string name="error_user_banned_header">You are banned by the operator</string>
-    <string name="error_user_banned_desc">You can not use chat, because they were banned by the operator</string>
+    <string name="error_user_banned_header">You are banned by the agent</string>
+    <string name="error_user_banned_desc">You can not use chat, because they were banned by the agent</string>
     <string name="error_account_blocked_header">Webim account blocked</string>
     <string name="error_account_blocked_desc">
         You cannot use chat because the webim account of the organization you are trying to contact is blocked. Please try again later.
@@ -41,11 +41,11 @@
         You cannot use chat because an unknown error occurred.
         Our developers are already notified about this problem and will fix it soon. Details %s
     </string>
-    <string name="push_contact_information">The operator has requested contact details.</string>
-    <string name="push_operator_accepted">The operator %1$s has joined the dialogue.</string>
+    <string name="push_contact_information">The agent has requested contact details.</string>
+    <string name="push_operator_accepted">The agent %1$s has joined the dialogue.</string>
     <string name="push_operator_file">%1$s sent a file %2$s</string>
     <string name="push_operator_message">%1$s: %2$s</string>
-    <string name="prefs_notifications_summary">Enable FCM push notifications for new messages from the operator</string>
+    <string name="prefs_notifications_summary">Enable FCM push notifications for new messages from the agent</string>
     <string name="prefs_notifications_title">Notifications</string>
     <string name="prefs_account_title">Account</string>
     <string name="prefs_account_summary">Webim account name or full server address (for example, \'demo\' или \'https://demo.webim.ru\')</string>
@@ -57,16 +57,16 @@
 
     <string name="options">Options</string>
     <string name="save_image">Save image?</string>
-    <string name="saving_image">Save file %1$s…</string>
-    <string name="uploading_file">Load file…</string>
+    <string name="saving_file">Save file %1$s</string>
+    <string name="sending_file">"Sending file: "</string>
     <string name="def_image_name">image_%1$d.jpg</string>
     <string name="saved_file">File %1$s saved</string>
     <string name="saving_failed">Failed to upload file</string>
 
-    <string name="rate_operator">Rate operator</string>
+    <string name="rate_operator">Rate agent</string>
     <string name="close_chat">Close chat</string>
 
-    <string name="no_operator">agents not available</string>
+    <string name="no_operator">without agents</string>
     <string name="operator_typing">typing</string>
     <string name="operator_name">%1$s</string>
 
@@ -86,6 +86,9 @@
     <string name="edit">Edit</string>
     <string name="reply">Reply</string>
     <string name="default_date">November 12</string>
-    <string name="upload_file">Load file</string>
+    <string name="upload_file">Upload file</string>
     <string name="file_upload_failed_name">Failed to upload file: error in file name</string>
+    <string name="visitor_sender_name">You</string>
+    <string name="file_transfer_by_operator">"Transferring the file "</string>
+    <string name="file_upload_failed_no_chat">To start a chat, send a text message</string>
 </resources>

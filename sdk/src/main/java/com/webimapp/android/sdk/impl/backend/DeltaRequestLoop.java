@@ -3,6 +3,7 @@ package com.webimapp.android.sdk.impl.backend;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import com.webimapp.android.sdk.BuildConfig;
 import com.webimapp.android.sdk.ProvidedAuthorizationTokenStateListener;
 import com.webimapp.android.sdk.Webim;
 import com.webimapp.android.sdk.impl.InternalUtils;
@@ -249,6 +250,7 @@ public class DeltaRequestLoop extends AbstractRequestLoop {
 
     private Call<DeltaResponse> makeInitRequest() {
         return webim.getLogin(
+                BuildConfig.VERSION_NAME,
                 "init",
                 (pushSystem == Webim.PushSystem.FCM) ? "fcm" : "gcm",
                 pushToken,

@@ -33,41 +33,43 @@ public final class MessageFactories {
             return null;
         }
 
-        Message.Attachment attachment = null;
         String text;
-        String rawText;
+        Message.Attachment attachment = null;
 
         if ((kind == MessageItem.WMMessageKind.FILE_FROM_VISITOR)
                 || (kind == MessageItem.WMMessageKind.FILE_FROM_OPERATOR)) {
             attachment = InternalUtils.getAttachment(serverUrl, message, client);
-            if (attachment == null) {
-                return null;
+            if (attachment != null ) {
+                text = attachment.getFileInfo().getFileName();
+            } else {
+                text = "";
             }
-            text = attachment.getFileName();
-            rawText = message.getMessage();
         } else {
             text = (message.getMessage() == null) ? "" : message.getMessage();
-            rawText = null;
         }
 
         Message.Quote quote = InternalUtils.getQuote(serverUrl, message.getQuote(), client);
 
-        Object json = message.getData();
-        String data = json == null
+        Object json = (kind == MessageItem.WMMessageKind.FILE_FROM_VISITOR
+                || kind == MessageItem.WMMessageKind.FILE_FROM_OPERATOR)
+                ? message
+                : message.getData();
+
+        String rawText = (json == null)
                 ? null
                 : new Gson().toJson(json);
 
         Message.Keyboard keyboardButton = null;
         if (kind == MessageItem.WMMessageKind.KEYBOARD) {
             Type mapType = new TypeToken<KeyboardItem>(){}.getType();
-            KeyboardItem keyboard = InternalUtils.getKeyboard(data, isHistoryMessage, mapType);
+            KeyboardItem keyboard = InternalUtils.getKeyboard(rawText, isHistoryMessage, mapType);
             keyboardButton = InternalUtils.getKeyboardButton(keyboard);
         }
 
         Message.KeyboardRequest keyboardRequest = null;
         if (kind == MessageItem.WMMessageKind.KEYBOARD_RESPONCE) {
             Type mapType = new TypeToken<KeyboardRequestItem>(){}.getType();
-            KeyboardRequestItem keyboard = InternalUtils.getKeyboard(data, isHistoryMessage, mapType);
+            KeyboardRequestItem keyboard = InternalUtils.getKeyboard(rawText, isHistoryMessage, mapType);
             keyboardRequest = InternalUtils.getKeyboardRequest(keyboard);
         }
 
@@ -81,11 +83,10 @@ public final class MessageFactories {
                 InternalUtils.toPublicMessageType(kind),
                 text,
                 message.getTimeMicros(),
-                attachment,
                 message.getId(),
                 rawText,
                 isHistoryMessage,
-                data,
+                attachment,
                 message.isRead(),
                 message.canBeEdited(),
                 message.canBeReplied(),
@@ -182,12 +183,11 @@ public final class MessageFactories {
                     null);
         }
 
-        public MessageSending createTextWithQuote(
-                Message.Id id,
-                String text,
-                Message.Type quoteType,
-                String quoteAuthor,
-                String quoteText) {
+        public MessageSending createTextWithQuote(Message.Id id,
+                                                  String text,
+                                                  Message.Type quoteType,
+                                                  String quoteAuthor,
+                                                  String quoteText) {
             MessageImpl.QuoteImpl quote = new MessageImpl.QuoteImpl(
                     null,
                     null,
@@ -207,13 +207,13 @@ public final class MessageFactories {
                     quote);
         }
 
-        public MessageSending createFile(Message.Id id) {
+        public MessageSending createFile(Message.Id id, String fileName) {
             return new MessageSending(
                     serverUrl,
                     id,
                     "",
                     Message.Type.FILE_FROM_VISITOR,
-                    "",
+                    fileName,
                     System.currentTimeMillis() * 1000,
                     null);
         }

@@ -8,6 +8,8 @@
     <color name="colorBackgroundActivityMain">#272A51</color>
     <color name="colorBackgroundDialog">#333333</color>
     <color name="colorBackgroundChatMenu">#99000000</color>
+    <color name="colorBackgroundChatStart">#EEF0F4</color>
+    <color name="colorBackgroundChatEnd">#EAECF2</color>
 
     <color name="colorText">#272A51</color>
     <color name="colorTextActivityMain">#FFFFFF</color>
@@ -22,6 +24,7 @@
 
     <color name="sendingMsgBubble">#15ACD2</color>
     <color name="sendingMsgText">#FFFFFF</color>
+    <color name="sendingMsgFileProperty">#99FFFFFF</color>
     <color name="sendingMsgTimeText">#805C5F8A</color>
     <color name="sendingMsgSelect">#008AAD</color>
 
@@ -40,4 +43,7 @@
     <color name="grey">#808080</color>
     <color name="purple">#26274C</color>
     <color name="blue">#15ACD2</color>
+    <color name="red">#D24215</color>
+
+    <color name="transparent">#00000000 </color>
 </resources>
