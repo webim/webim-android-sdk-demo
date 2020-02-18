@@ -1,5 +1,5 @@
 # Webim SDK demo
-[ ![Download](https://api.bintray.com/packages/webim/maven/WebimSdkAndroid/images/download.svg) ](https://bintray.com/webim/maven/WebimSdkAndroid/_latestVersion)
+[ ![Download](https://api.bintray.com/packages/webim/maven/WebimSdkAndroid3/images/download.svg) ](https://bintray.com/webim/maven/WebimSdkAndroid3/_latestVersion)
 Application demonstrates capabilities of *Webim Android SDK*. This application is published on [Google Play](https://play.google.com/store/apps/details?id=ru.webim.demo.client).
 
 [Webim online consultant](https://webim.ru) is a multifunctional service for consulting vistors of your site using pop-up chat — it can be freely downloaded and installed as a universal script or CMS module on required web pages and can also be integrated into a mobile trading application. *Webim Android SDK* library provides developers of Google Android mobile applications with tools for integration a chat between users and operators of a developer company into those applications based on technologies used in Webim online consultant.
@@ -10,7 +10,7 @@ On the one hand this application was created to demonstrate capabilities of our 
 Supported Android 4.+ (Android API 15+) versions
 To start using *Webim Android SDK* add a dependency to build.gradle of your application.
 ```
-compile 'com.webimapp.sdk:webimclientsdkandroid:3.33.0'
+compile 'com.webimapp.sdk:webimclientsdkandroid:3.33.1'
 ```
 Also add to AndroidManifest.xml the following permissions:
 ```

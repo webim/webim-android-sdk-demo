@@ -203,7 +203,7 @@ faq.resume();
 
 Выбрасывает **RuntimeException**, если метод был вызван из потока, отличного от того, в котором был создан объект класса.
 
-## `void getItem(String id, GetCallback<FAQItem> callback)`
+## `void getItem(String id, FAQItemSource openFrom, GetCallback<FAQItem> callback)`
 
 Метод, который используется для получения объекта класса **FAQItem** через **GetCallback**. Если запрос завершился с ошибкой, то полученная страница будет равна **null**.
 
@@ -213,13 +213,15 @@ faq.resume();
 
 `id` – **ID** страницы блока часто задаваемых вопросов. Тип – **String**.
 
+`openFrom` – запрос статьи из определённого источника. Тип – **FAQItemSource**.
+
 `callback` – объект, реализующий интерфейс **GetCallback\<FAQItem\>**.
 
 ### Исключения
 
 Выбрасывает **RuntimeException**, если метод был вызван из потока, отличного от того, в котором был создан объект класса.
 
-## `void getCachedItem(String id, GetCallback<FAQItem> callback)`
+## `void getCachedItem(String id, FAQItemSource openFrom, GetCallback<FAQItem> callback)`
 
 Метод, который используется для получения объекта класса **FAQItem** через **GetCallback** из кэша. Если запрос завершился с ошибкой, то полученная страница будет равна **null**.
 
@@ -228,6 +230,8 @@ faq.resume();
 ### Параметры
 
 `id` – **ID** страницы блока часто задаваемых вопросов. Тип – **String**.
+
+`openFrom` – запрос статьи из определённого источника. Тип – **FAQItemSource**.
 
 `callback` – объект, реализующий интерфейс **GetCallback\<FAQItem\>**.
 
