@@ -59,4 +59,7 @@ public class WebimInternalError {
 	public static final String BUTTON_ID_NO_SET = "button-id-not-set";
 	public static final String REQUEST_MESSAGE_ID_NOT_SET = "request-message-id-not-set";
 	public static final String CAN_NOT_CREATE_RESPONSE = "can-not-create-response";
+
+	//Errors for sending chat on email
+	public  static final String SENT_TOO_MANY_TIMES = "chat-history-sent-too-many-times";
 }

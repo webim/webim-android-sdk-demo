@@ -62,4 +62,7 @@ public interface WebimActions {
                              @NonNull DefaultCallback<HistorySinceResponse> callback);
 
     void updateWidgetStatus(@NonNull String data);
+
+    void sendChatToEmailAddress(@NonNull String email,
+                                @NonNull MessageStream.SendDialogToEmailAddressCallback sendChatToEmailCallback);
 }

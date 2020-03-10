@@ -95,6 +95,22 @@ public interface MessageStream {
      * {@link MessageStream#getCurrentOperator()}
      * @see RateOperatorCallback
      * @param operatorId id of the operator to be rated
+     * @param rate a number in range [1, 5]
+     * @param rateOperatorCallback callback handler object
+     * @throws IllegalArgumentException if 'rate' is not in range [1, 5]
+     * @throws IllegalStateException if the WebimSession was destroyed
+     * @throws RuntimeException if the method was called not from the thread the WebimSession was
+     * created in
+     */
+    void rateOperator(@NonNull String operatorId,
+                      int rate,
+                      @Nullable RateOperatorCallback rateOperatorCallback);
+
+    /**
+     * Rates an operator. To get an id of the current operator use
+     * {@link MessageStream#getCurrentOperator()}
+     * @see RateOperatorCallback
+     * @param operatorId id of the operator to be rated
      * @param note a comment for rating
      * @param rate a number in range [1, 5]
      * @param rateOperatorCallback callback handler object
@@ -483,6 +499,18 @@ public interface MessageStream {
     void setUnreadByVisitorMessageCountChangeListener(
             @Nullable UnreadByVisitorMessageCountChangeListener listener
     );
+
+    /**
+     * Sending chat history on email
+     * @see SendDialogToEmailAddressCallback
+     * @param email this is the mail to which chat history will be sent
+     * @param sendDialogToEmailAddressCallback shows if a call is completed or failed
+     * @throws IllegalStateException if the WebimSession was destroyed
+     * @throws RuntimeException if the method was called not from the thread the WebimSession was
+     * created in
+     */
+    void sendDialogToEmailAddress(@NonNull String email,
+                                  @NonNull SendDialogToEmailAddressCallback sendDialogToEmailAddressCallback);
 
     /**
      * @see MessageStream#sendMessage(String, String, DataMessageCallback)
@@ -1110,4 +1138,42 @@ public interface MessageStream {
 
     }
 
+    /**
+     * @see MessageStream#sendDialogToEmailAddress(String, SendDialogToEmailAddressCallback)
+     */
+    interface SendDialogToEmailAddressCallback {
+
+        /**
+         * Invoked if sending succeed.
+         */
+        void onSuccess();
+
+        /**
+         * Invoked if sending failure.
+         * @param error Error
+         * @see SendDialogToEmailAddressError
+         */
+        void onFailure(@NonNull WebimError<SendDialogToEmailAddressError> error);
+
+        /**
+         * @see SendDialogToEmailAddressCallback#onFailure
+         */
+        enum SendDialogToEmailAddressError {
+
+            /**
+             * There is no chat to send it to the mail
+             */
+            NO_CHAT,
+
+            /**
+             * Exceeded sending attempts
+             */
+            SENT_TOO_MANY_TIMES,
+
+            /**
+             * An unexpected error occurred while sending
+             */
+            UNKNOWN
+        }
+    }
 }

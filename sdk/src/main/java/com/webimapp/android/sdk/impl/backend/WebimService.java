@@ -32,6 +32,7 @@ public interface WebimService {
     String PARAMETER_CUSTOM_FIELDS = "custom_fields";
     String PARAMETER_DATA = "data";
     String PARAMETER_DEVICE_ID = "device-id";
+    String PARAMETER_EMAIL = "email";
     String PARAMETER_EVENT = "event";
     String PARAMETER_FILE_UPLOAD = "webim_upload_file";
     String PARAMETER_LOCATION = "location";
@@ -242,6 +243,15 @@ public interface WebimService {
     Call<DefaultResponse> updateWidgetStatus(
             @Field(PARAMETER_ACTION) String action,
             @Field(PARAMETER_DATA) String dataJsonString,
+            @Field(PARAMETER_PAGE_ID) String pageId,
+            @Field(PARAMETER_AUTHORIZATION_TOKEN) String authorizationToken
+    );
+
+    @FormUrlEncoded
+    @POST(URL_SUFFIX_ACTION)
+    Call<DefaultResponse> sendChatHistory(
+            @Field(PARAMETER_ACTION) String action,
+            @Field(PARAMETER_EMAIL) String email,
             @Field(PARAMETER_PAGE_ID) String pageId,
             @Field(PARAMETER_AUTHORIZATION_TOKEN) String authorizationToken
     );

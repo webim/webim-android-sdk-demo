@@ -203,9 +203,7 @@ public class MessageStreamImpl implements MessageStream {
     public void closeChat() {
         accessChecker.checkAccess();
 
-        if (lastChatState != ChatItem.ItemChatState.CLOSED_BY_VISITOR
-                && lastChatState != ChatItem.ItemChatState.CLOSED
-                && lastChatState != ChatItem.ItemChatState.UNKNOWN) {
+        if (!lastChatState.isClosed()) {
             actions.closeChat();
         }
     }
@@ -411,14 +409,21 @@ public class MessageStreamImpl implements MessageStream {
     public void rateOperator(@NonNull Operator.Id operatorId,
                              int rating,
                              @Nullable RateOperatorCallback rateOperatorCallback) {
-        operatorId.getClass(); //NPE
-
-        accessChecker.checkAccess();
-
-        actions.rateOperator(
+        rateOperatorInternally(
                 ((StringId) operatorId).getInternal(),
                 null,
-                rateToInternal(rating),
+                rating,
+                rateOperatorCallback);
+    }
+
+    @Override
+    public void rateOperator(@NonNull String operatorId,
+                             int rating,
+                             @Nullable RateOperatorCallback rateOperatorCallback) {
+        rateOperatorInternally(
+                operatorId,
+                null,
+                rating,
                 rateOperatorCallback);
     }
 
@@ -427,14 +432,10 @@ public class MessageStreamImpl implements MessageStream {
                              @Nullable String note,
                              int rating,
                              @Nullable RateOperatorCallback rateOperatorCallback) {
-        operatorId.getClass(); //NPE
-
-        accessChecker.checkAccess();
-
-        actions.rateOperator(
+        rateOperatorInternally(
                 ((StringId) operatorId).getInternal(),
                 note,
-                rateToInternal(rating),
+                rating,
                 rateOperatorCallback);
     }
 
@@ -581,6 +582,21 @@ public class MessageStreamImpl implements MessageStream {
     public void setUnreadByVisitorMessageCountChangeListener(
             @Nullable UnreadByVisitorMessageCountChangeListener listener) {
         this.unreadByVisitorMessageCountChangeListener = listener;
+    }
+
+    @Override
+    public void sendDialogToEmailAddress(@NonNull String email,
+                                         @NonNull final SendDialogToEmailAddressCallback sendDialogToEmailAddressCallback) {
+
+        accessChecker.checkAccess();
+
+        if (!lastChatState.isClosed()) {
+            actions.sendChatToEmailAddress(email, sendDialogToEmailAddressCallback);
+        } else {
+            sendDialogToEmailAddressCallback.onFailure(new WebimErrorImpl<>(
+                    SendDialogToEmailAddressCallback.SendDialogToEmailAddressError.NO_CHAT,
+                    null));
+        }
     }
 
     void setUnreadByOperatorTimestamp(long unreadByOperatorTimestamp) {
@@ -906,6 +922,17 @@ public class MessageStreamImpl implements MessageStream {
             return true;
         }
         return false;
+    }
+
+    private void rateOperatorInternally(@NonNull String operatorId,
+                                        @Nullable String note,
+                                        int rating,
+                                        @Nullable RateOperatorCallback rateOperatorCallback) {
+        operatorId.getClass(); //NPE
+
+        accessChecker.checkAccess();
+
+        actions.rateOperator(operatorId, note, rateToInternal(rating), rateOperatorCallback);
     }
 
     private DataMessageCallback.DataMessageError toPublicDataMessageError(String dataMessageError) {

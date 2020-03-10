@@ -28,6 +28,7 @@ public class WebimActionsImpl implements WebimActions {
     private static final String ACTION_PUSH_TOKEN_SET = "set_push_token";
     private static final String ACTION_REQUEST_CALL_SENTRY
             = "chat.action_request.call_sentry_action_request";
+    private static final String ACTION_SEND_CHAT_HISTORY = "chat.send_chat_history";
     private static final String ACTION_SET_PRECHAT_FIELDS = "chat.set_prechat_fields";
     private static final String ACTION_VISITOR_TYPING = "chat.visitor_typing";
     private static final String ACTION_WIDGET_UPDATE = "widget.update";
@@ -342,7 +343,7 @@ public class WebimActionsImpl implements WebimActions {
                 return webim.rateOperator(
                         ACTION_OPERATOR_RATE,
                         operatorId,
-                        percentEncode(note),
+                        note,
                         rate,
                         authData.getPageId(),
                         authData.getAuthToken());
@@ -444,6 +445,41 @@ public class WebimActionsImpl implements WebimActions {
                         authData.getPageId(),
                         authData.getAuthToken()
                 );
+            }
+        });
+    }
+
+    @Override
+    public void sendChatToEmailAddress(@NonNull final String email,
+                                       @NonNull final MessageStream.SendDialogToEmailAddressCallback sendChatToEmailCallback) {
+        enqueue(new ActionRequestLoop.WebimRequest<DefaultResponse>(true) {
+            @Override
+            public Call<DefaultResponse> makeRequest(AuthData authData) {
+                return webim.sendChatHistory(
+                        ACTION_SEND_CHAT_HISTORY,
+                        email,
+                        authData.getPageId(),
+                        authData.getAuthToken()
+                );
+            }
+
+            @Override
+            public void runCallback(DefaultResponse response) {
+                sendChatToEmailCallback.onSuccess();
+            }
+
+            @Override
+            public boolean isHandleError(@NonNull String error) {
+                return error.equals(WebimInternalError.SENT_TOO_MANY_TIMES);
+            }
+
+            @Override
+            public void handleError(@NonNull String error) {
+                MessageStream.SendDialogToEmailAddressCallback.SendDialogToEmailAddressError sendDialogToEmailAddressError;
+                sendDialogToEmailAddressError = WebimInternalError.SENT_TOO_MANY_TIMES.equals(error)
+                        ? MessageStream.SendDialogToEmailAddressCallback.SendDialogToEmailAddressError.SENT_TOO_MANY_TIMES
+                        : MessageStream.SendDialogToEmailAddressCallback.SendDialogToEmailAddressError.UNKNOWN;
+                sendChatToEmailCallback.onFailure(new WebimErrorImpl<>(sendDialogToEmailAddressError, error));
             }
         });
     }
