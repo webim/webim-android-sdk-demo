@@ -1,7 +1,7 @@
 package com.webimapp.android.sdk.impl;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.webimapp.android.sdk.Message;
 import com.webimapp.android.sdk.MessageListener;
@@ -19,6 +19,8 @@ public interface MessageHolder {
                               Runnable callback);
 
     void setReachedEndOfRemoteHistory(boolean reachedEndOfHistory);
+
+    void onFirstFullUpdateReceived();
 
     void onChatReceive(@Nullable ChatItem oldChat,
                        @Nullable ChatItem newChat,

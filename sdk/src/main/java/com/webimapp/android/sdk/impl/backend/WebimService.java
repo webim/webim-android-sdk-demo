@@ -4,6 +4,7 @@ import com.webimapp.android.sdk.impl.items.responses.DefaultResponse;
 import com.webimapp.android.sdk.impl.items.responses.DeltaResponse;
 import com.webimapp.android.sdk.impl.items.responses.HistoryBeforeResponse;
 import com.webimapp.android.sdk.impl.items.responses.HistorySinceResponse;
+import com.webimapp.android.sdk.impl.items.responses.SearchResponse;
 import com.webimapp.android.sdk.impl.items.responses.UploadResponse;
 
 import okhttp3.MultipartBody;
@@ -44,6 +45,7 @@ public interface WebimService {
     String PARAMETER_OPERATOR_RATING = "rate";
     String PARAMETER_PAGE_ID = "page-id";
     String PARAMETER_PLATFORM = "platform";
+    String PARAMETER_QUERY = "query";
     String PARAMETER_QUOTE = "quote";
     String PARAMETER_PRECHAT_KEY_INDEPENDENT_FIELDS = "prechat-key-independent-fields";
     String PARAMETER_PROVIDED_AUTHORIZATION_TOKEN = "provided_auth_token";
@@ -53,6 +55,7 @@ public interface WebimService {
     String PARAMETER_REQUEST_MESSAGE_ID = "request-message-id";
     String PARAMETER_SDK_VERSION = "x-webim-sdk-version";
     String PARAMETER_SINCE = "since";
+    String PARAMETER_STICKER = "sticker-id";
     String PARAMETER_TIMESTAMP = "ts";
     String PARAMETER_TIMESTAMP_BEFORE = "before-ts";
     String PARAMETER_TITLE = "title";
@@ -65,6 +68,7 @@ public interface WebimService {
     String URL_SUFFIX_DELTA = "/l/v/m/delta";
     String URL_SUFFIX_FILE_UPLOAD = "/l/v/m/upload";
     String URL_SUFFIX_HISTORY = "/l/v/m/history";
+    String URL_SUFFIX_SEARCH_MESSAGES = "/l/v/m/search-messages";
 
     @Multipart
     @POST(URL_SUFFIX_FILE_UPLOAD)
@@ -116,6 +120,13 @@ public interface WebimService {
             @Query(PARAMETER_PAGE_ID) String pageId,
             @Query(PARAMETER_AUTHORIZATION_TOKEN) String authorizationToken,
             @Query(PARAMETER_SINCE) String since
+    );
+
+    @GET(URL_SUFFIX_SEARCH_MESSAGES)
+    Call<SearchResponse> searchMessages(
+            @Query(PARAMETER_QUERY) String query,
+            @Query(PARAMETER_PAGE_ID) String pageId,
+            @Query(PARAMETER_AUTHORIZATION_TOKEN) String authorizationToken
     );
 
     @FormUrlEncoded
@@ -252,6 +263,16 @@ public interface WebimService {
     Call<DefaultResponse> sendChatHistory(
             @Field(PARAMETER_ACTION) String action,
             @Field(PARAMETER_EMAIL) String email,
+            @Field(PARAMETER_PAGE_ID) String pageId,
+            @Field(PARAMETER_AUTHORIZATION_TOKEN) String authorizationToken
+    );
+
+    @FormUrlEncoded
+    @POST(URL_SUFFIX_ACTION)
+    Call<DefaultResponse> sendSticker(
+            @Field(PARAMETER_ACTION) String action,
+            @Field(PARAMETER_STICKER) int stickerId,
+            @Field(PARAMETER_CLIENT_SIDE_ID) String clientSideId,
             @Field(PARAMETER_PAGE_ID) String pageId,
             @Field(PARAMETER_AUTHORIZATION_TOKEN) String authorizationToken
     );

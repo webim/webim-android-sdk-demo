@@ -10,13 +10,13 @@
     android:paddingBottom="@dimen/activity_vertical_margin"
     tools:context="com.webimapp.android.demo.client.WebimChatActivity">
 
-    <android.support.design.widget.AppBarLayout
+    <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:theme="@style/AppTheme.AppBarOverlay">
 
-        <android.support.v7.widget.Toolbar
+        <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
@@ -77,19 +77,19 @@
                 </RelativeLayout>
             </LinearLayout>
 
-        </android.support.v7.widget.Toolbar>
-    </android.support.design.widget.AppBarLayout>
+        </androidx.appcompat.widget.Toolbar>
+    </com.google.android.material.appbar.AppBarLayout>
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_alignWithParentIfMissing="false"
-        android:layout_above="@+id/linLayReplyMessage"
+        android:layout_above="@+id/bottom_container"
         android:layout_below="@id/appBar"
         android:layout_alignParentTop="false"
         android:layout_centerHorizontal="true">
 
-        <android.support.design.widget.FloatingActionButton
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/downButton"
             style="?android:attr/borderlessButtonStyle"
             android:layout_width="wrap_content"
@@ -122,15 +122,14 @@
             android:padding="3dp"
             android:visibility="gone" />
 
-        <android.support.v7.widget.RecyclerView
+        <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/chat_recycler_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@drawable/background_chat"
             android:clipToPadding="false"
             android:paddingTop="8dp"
-            android:scrollbars="vertical">
-        </android.support.v7.widget.RecyclerView>
+            android:scrollbars="vertical" />
 
     </FrameLayout>
 
@@ -138,7 +137,7 @@
         android:id="@+id/chat_menu"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/linLayEnterMessage"
+        android:layout_above="@+id/bottom_container"
         android:elevation="1dp"
         android:outlineProvider="none"
         android:visibility="gone"
@@ -229,199 +228,340 @@
     </RelativeLayout>
 
     <LinearLayout
-        android:id="@+id/linLayReplyMessage"
+        android:id="@+id/bottom_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/linLayEnterMessage"
-        android:background="@color/white"
+        android:layout_alignParentBottom="true"
         android:orientation="vertical">
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/constLaySyncMessage"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal"
+            android:layout_height="wrap_content"
+            android:background="@color/white"
+            android:orientation="vertical"
+            android:visibility="visible">
+
+            <TextView
+                android:id="@+id/textViewSyncTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginLeft="10dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_marginBottom="5dp"
+                android:text="@string/wait_sync_toast"
+                android:textColor="@color/colorPrimary"
+                app:layout_constraintBottom_toTopOf="@+id/syncDivider"
+                app:layout_constraintEnd_toStartOf="@+id/syncProgressBar"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <ProgressBar
+                android:id="@+id/syncProgressBar"
+                style="?android:attr/progressBarStyle"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginRight="10dp"
+                app:layout_constraintBottom_toBottomOf="@+id/textViewSyncTitle"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/textViewSyncTitle" />
+
+            <View
+                android:id="@+id/syncDivider"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/message_border"
+                app:layout_constraintBottom_toBottomOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <LinearLayout
+            android:id="@+id/linLayEditMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/white"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:padding="10dp"
+                android:paddingBottom="5dp">
+
+                <ImageButton
+                    android:id="@+id/imageButtonEditMessage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="0.05"
+                    android:background="@null"
+                    android:contentDescription="@string/edit"
+                    android:gravity="bottom"
+                    android:padding="5dp"
+                    android:scaleType="center"
+                    android:tint="@color/items_border"
+                    android:visibility="visible"
+                    app:srcCompat="@drawable/ic_edit_message" />
+
+                <LinearLayout
+                    android:id="@+id/linLayEditBody"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="10dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/background_quoted_message"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLength="2000"
+                        android:maxLines="1"
+                        android:paddingStart="12dp"
+                        android:paddingLeft="12dp"
+                        android:paddingTop="4dp"
+                        android:singleLine="true"
+                        android:text="@string/editing_title"
+                        android:textColor="@color/colorPrimary"
+                        android:textStyle="bold"
+                        tools:ignore="RtlSymmetry" />
+
+                    <TextView
+                        android:id="@+id/textViewEditText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:paddingStart="12dp"
+                        android:paddingLeft="12dp"
+                        android:paddingEnd="4dp"
+                        android:paddingRight="4dp"
+                        android:paddingBottom="4dp"
+                        android:singleLine="true"
+                        android:text="@string/default_text"
+                        android:textColor="@color/receivedMsgText"
+                        android:textSize="@dimen/text_size_small" />
+
+                </LinearLayout>
+
+                <ImageButton
+                    android:id="@+id/imageButtonEditDelete"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="0.05"
+                    android:background="@null"
+                    android:contentDescription="@string/delete"
+                    android:gravity="bottom"
+                    android:paddingLeft="7dp"
+                    android:paddingTop="11dp"
+                    android:paddingRight="7dp"
+                    android:paddingBottom="11dp"
+                    android:rotation="45"
+                    android:scaleType="center"
+                    android:src="@drawable/ic_plus"
+                    android:tint="@color/items_border"
+                    android:visibility="visible" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/message_border" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/linLayReplyMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/white"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:padding="10dp"
+                android:paddingBottom="5dp">
+
+                <TextView
+                    android:id="@+id/quote_Id"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0"
+                    android:visibility="gone" />
+
+                <ImageButton
+                    android:id="@+id/imageButtonReplyMessage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="0.05"
+                    android:background="@null"
+                    android:contentDescription="@string/reply"
+                    android:gravity="bottom"
+                    android:padding="5dp"
+                    android:scaleType="center"
+                    android:src="@drawable/arrow_reply_message"
+                    android:tint="@color/items_border"
+                    android:visibility="visible" />
+
+                <LinearLayout
+                    android:id="@+id/linLayReplyBody"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="10dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/background_quoted_message"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/textViewSenderName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLength="2000"
+                        android:maxLines="1"
+                        android:paddingStart="12dp"
+                        android:paddingLeft="12dp"
+                        android:paddingTop="4dp"
+                        android:singleLine="true"
+                        android:text="@string/default_text"
+                        android:textColor="@color/colorPrimary"
+                        android:textStyle="bold"
+                        tools:ignore="RtlSymmetry" />
+
+                    <TextView
+                        android:id="@+id/textViewReplyText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:paddingStart="12dp"
+                        android:paddingLeft="12dp"
+                        android:paddingEnd="4dp"
+                        android:paddingRight="4dp"
+                        android:paddingBottom="4dp"
+                        android:singleLine="true"
+                        android:text="@string/default_text"
+                        android:textColor="@color/receivedMsgText"
+                        android:textSize="@dimen/text_size_small" />
+
+                </LinearLayout>
+
+                <ImageButton
+                    android:id="@+id/imageButtonReplyDelete"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="0.05"
+                    android:background="@null"
+                    android:contentDescription="@string/delete"
+                    android:gravity="bottom"
+                    android:paddingLeft="7dp"
+                    android:paddingTop="11dp"
+                    android:paddingRight="7dp"
+                    android:paddingBottom="11dp"
+                    android:rotation="45"
+                    android:scaleType="center"
+                    android:src="@drawable/ic_plus"
+                    android:tint="@color/items_border"
+                    android:visibility="visible" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/message_border" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/linLayEnterMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/white"
             android:padding="10dp"
             android:paddingBottom="5dp">
 
-            <TextView
-                android:id="@+id/quote_Id"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="0"
-                android:visibility="gone" />
-
             <ImageButton
-                android:id="@+id/imageButtonReplyMessage"
+                android:id="@+id/imageButtonChatMenu"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:layout_weight="0.05"
                 android:background="@null"
-                android:contentDescription="@string/reply"
                 android:gravity="bottom"
-                android:padding="5dp"
+                android:padding="7dp"
                 android:scaleType="center"
-                android:src="@drawable/arrow_reply_message"
+                android:src="@drawable/ic_plus"
                 android:tint="@color/items_border"
-                android:visibility="visible" />
+                android:visibility="visible"
+                tools:ignore="ContentDescription" />
 
+            <!-- Dummy item to prevent AutoCompleteTextView from receiving focus -->
             <LinearLayout
-                android:id="@+id/linLayReplyBody"
+                android:layout_width="0px"
+                android:layout_height="0px"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                tools:ignore="UselessLeaf" />
+
+            <EditText
+                android:id="@+id/editTextChatMessage"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_marginLeft="10dp"
                 android:layout_marginRight="10dp"
                 android:layout_weight="1"
-                android:background="@drawable/background_quoted_message"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/textViewSenderName"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:maxLength="2000"
-                    android:maxLines="1"
-                    android:paddingStart="12dp"
-                    android:paddingLeft="12dp"
-                    android:paddingTop="4dp"
-                    android:singleLine="true"
-                    android:text="@string/default_text"
-                    android:textColor="@color/colorPrimary"
-                    android:textStyle="bold"
-                    tools:ignore="RtlSymmetry" />
-
-                <TextView
-                    android:id="@+id/textViewReplyText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:paddingStart="12dp"
-                    android:paddingLeft="12dp"
-                    android:paddingEnd="4dp"
-                    android:paddingRight="4dp"
-                    android:paddingBottom="4dp"
-                    android:singleLine="true"
-                    android:text="@string/default_text"
-                    android:textColor="@color/receivedMsgText"
-                    android:textSize="@dimen/text_size_small" />
-
-            </LinearLayout>
+                android:background="@android:color/transparent"
+                android:ems="10"
+                android:hint="@string/message"
+                android:inputType="textMultiLine"
+                android:maxLength="2000"
+                android:maxLines="4"
+                android:minLines="1"
+                android:nextFocusLeft="@id/editTextChatMessage"
+                android:nextFocusUp="@id/editTextChatMessage"
+                android:scrollHorizontally="false"
+                android:singleLine="false"
+                android:textColor="@color/colorText"
+                android:textColorHint="@color/receivedMsgTimeText"
+                tools:ignore="Autofill" />
 
             <ImageButton
-                android:id="@+id/imageButtonReplyDelete"
+                android:id="@+id/imageButtonSendMessage"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:layout_weight="0.05"
                 android:background="@null"
-                android:contentDescription="@string/delete"
+                android:contentDescription="@string/content_desc_send_message"
                 android:gravity="bottom"
-                android:paddingLeft="7dp"
-                android:paddingTop="11dp"
-                android:paddingRight="7dp"
-                android:paddingBottom="11dp"
-                android:rotation="45"
+                android:padding="7dp"
                 android:scaleType="center"
-                android:src="@drawable/ic_plus"
+                android:src="@drawable/ic_send_message"
+                android:tint="@color/items_border" />
+
+            <ImageButton
+                android:id="@+id/imageButtonAcceptChanges"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="0.05"
+                android:background="@null"
+                android:contentDescription="@string/content_desc_send_message"
+                android:gravity="bottom"
+                android:paddingLeft="2dp"
+                android:paddingRight="2dp"
+                android:scaleType="center"
+                android:src="@drawable/ic_circle_accept"
                 android:tint="@color/items_border"
-                android:visibility="visible" />
+                android:visibility="gone" />
         </LinearLayout>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@color/message_border" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@id/linLayEnterMessage"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignWithParentIfMissing="true"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:background="@color/white"
-        android:padding="10dp"
-        android:paddingBottom="5dp">
-
-        <ImageButton
-            android:id="@+id/imageButtonChatMenu"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_weight="0.05"
-            android:background="@null"
-            android:gravity="bottom"
-            android:padding="7dp"
-            android:scaleType="center"
-            android:src="@drawable/ic_plus"
-            android:tint="@color/items_border"
-            android:visibility="visible"
-            tools:ignore="ContentDescription" />
-
-        <!-- Dummy item to prevent AutoCompleteTextView from receiving focus -->
-        <LinearLayout
-            android:layout_width="0px"
-            android:layout_height="0px"
-            android:focusable="true"
-            android:focusableInTouchMode="true"
-            tools:ignore="UselessLeaf" />
-
-        <EditText
-            android:id="@+id/editTextChatMessage"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:layout_weight="1"
-            android:background="@android:color/transparent"
-            android:ems="10"
-            android:hint="@string/message"
-            android:inputType="textMultiLine"
-            android:maxLength="2000"
-            android:maxLines="4"
-            android:minLines="1"
-            android:nextFocusLeft="@id/editTextChatMessage"
-            android:nextFocusUp="@id/editTextChatMessage"
-            android:scrollHorizontally="false"
-            android:singleLine="false"
-            android:textColor="@color/colorText"
-            android:textColorHint="@color/receivedMsgTimeText"
-            tools:ignore="Autofill" />
-
-        <ImageButton
-            android:id="@+id/imageButtonSendMessage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_weight="0.05"
-            android:background="@null"
-            android:contentDescription="@string/content_desc_send_message"
-            android:gravity="bottom"
-            android:padding="7dp"
-            android:scaleType="center"
-            android:src="@drawable/ic_send_message"
-            android:tint="@color/items_border" />
-
-        <ImageButton
-            android:id="@+id/imageButtonAcceptChanges"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_weight="0.05"
-            android:background="@null"
-            android:contentDescription="@string/content_desc_send_message"
-            android:gravity="bottom"
-            android:paddingLeft="2dp"
-            android:paddingRight="2dp"
-            android:scaleType="center"
-            android:src="@drawable/ic_circle_accept"
-            android:tint="@color/items_border"
-            android:visibility="gone" />
     </LinearLayout>
 </RelativeLayout>

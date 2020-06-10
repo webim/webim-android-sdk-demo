@@ -1,6 +1,7 @@
 package com.webimapp.android.sdk;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.List;
 
@@ -59,6 +60,19 @@ public interface MessageTracker {
     void getAllMessages(GetMessagesCallback callback);
 
     /**
+     * Method sets listener that is called when messages syncs with server
+     * @param messagesSyncedListener listener that will be called {@link MessagesSyncedListener}
+     */
+    void setMessagesSyncedListener(@Nullable MessagesSyncedListener messagesSyncedListener);
+
+    /**
+     * This method loads all history since certain message.
+     * @param sinceMessage message the history will be received from
+     * @param messagesCallback callback that will be called
+     * */
+    void loadAllHistorySince(@NonNull Message sinceMessage, @NonNull GetMessagesCallback messagesCallback);
+
+    /**
      * MessageTracker retains some range of messages. By using this method one can move the upper limit of this range
      * to another message.
      * Notice that this method can not be used unless the previous call was finished (was invoked callback) {@link MessageTracker#getNextMessages}
@@ -81,5 +95,12 @@ public interface MessageTracker {
      */
     interface GetMessagesCallback {
         void receive(@NonNull List<? extends Message> messages);
+    }
+
+    /**
+     * Listener that is called when messages syncs with server
+     */
+    interface MessagesSyncedListener {
+        void messagesSynced();
     }
 }

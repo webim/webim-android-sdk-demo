@@ -3,9 +3,9 @@ package com.webimapp.android.demo.client;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
@@ -20,6 +20,7 @@ public class SettingsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_settings);
         initActionBar();
         initTextPrivacy();
+        initTextVersion();
         getFragmentManager().beginTransaction()
                 .replace(R.id.container, new SettingsFragment())
                 .commit();
@@ -44,6 +45,13 @@ public class SettingsActivity extends AppCompatActivity {
                 startActivity(browserIntent);
             }
         });
+    }
+
+    private void initTextVersion() {
+        TextView textVersion = findViewById(R.id.textVersion);
+        String appVersion = BuildConfig.VERSION_NAME;
+        String sdkVersion = com.webimapp.android.sdk.BuildConfig.VERSION_NAME;
+        textVersion.setText(getString(R.string.prefs_version, appVersion, sdkVersion));
     }
 
     @Override

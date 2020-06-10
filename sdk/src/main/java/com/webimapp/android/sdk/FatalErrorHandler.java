@@ -1,6 +1,6 @@
 package com.webimapp.android.sdk;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 /**
  * @see com.webimapp.android.sdk.Webim.SessionBuilder#setErrorHandler(FatalErrorHandler)

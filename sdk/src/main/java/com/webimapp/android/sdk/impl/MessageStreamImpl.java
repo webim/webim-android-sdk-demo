@@ -1,7 +1,7 @@
 package com.webimapp.android.sdk.impl;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.webimapp.android.sdk.Department;
 import com.webimapp.android.sdk.Message;
@@ -9,6 +9,7 @@ import com.webimapp.android.sdk.MessageListener;
 import com.webimapp.android.sdk.MessageStream;
 import com.webimapp.android.sdk.MessageTracker;
 import com.webimapp.android.sdk.Operator;
+import com.webimapp.android.sdk.impl.backend.DefaultCallback;
 import com.webimapp.android.sdk.impl.backend.LocationSettingsImpl;
 import com.webimapp.android.sdk.impl.backend.SendKeyboardErrorListener;
 import com.webimapp.android.sdk.impl.backend.SendOrDeleteMessageInternalCallback;
@@ -21,6 +22,7 @@ import com.webimapp.android.sdk.impl.items.OnlineStatusItem;
 import com.webimapp.android.sdk.impl.items.RatingItem;
 import com.webimapp.android.sdk.impl.items.VisitSessionStateItem;
 import com.webimapp.android.sdk.impl.items.delta.DeltaFullUpdate;
+import com.webimapp.android.sdk.impl.items.responses.SearchResponse;
 
 import java.io.File;
 import java.net.URL;
@@ -28,6 +30,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
@@ -446,14 +450,32 @@ public class MessageStreamImpl implements MessageStream {
         actions.respondSentryCall(id);
     }
 
+    @Override
+    public void searchMessages(@NonNull String query, @Nullable final SearchMessagesCallback searchCallback) {
+        accessChecker.checkAccess();
+        actions.searchMessages(query, new DefaultCallback<SearchResponse>() {
+            @Override
+            public void onSuccess(SearchResponse response) {
+                SearchResponse.SearchResponseData data = response.getData();
+                if (data != null && searchCallback != null) {
+                    if (data.getCount() > 0) {
+                        searchCallback.onResult(currentChatMessageMapper.mapAll(data.getMessages()));
+                    } else {
+                        searchCallback.onResult(Collections.<Message>emptyList());
+                    }
+                }
+            }
+        });
+    }
+
     @NonNull
     @Override
     public Message.Id sendFile(@NonNull File file,
-                               @NonNull String name,
+                               @NonNull String fileName,
                                @NonNull String mimeType,
                                @Nullable final SendFileCallback callback) {
         file.getClass(); // NPE
-        name.getClass(); // NPE
+        fileName.getClass(); // NPE
         mimeType.getClass(); // NPE
 
         accessChecker.checkAccess();
@@ -468,21 +490,20 @@ public class MessageStreamImpl implements MessageStream {
 
         startChatWithDepartmentKeyFirstQuestion(null, null);
 
-        messageHolder.onSendingMessage(sendingMessageFactory.createFile(id, name));
-        for (char c: name.toCharArray()) {
-            if ((c <= '\u001f' && c != '\t') || c >= '\u007f') {
-                messageHolder.onMessageSendingCancelled(id);
-                if (callback != null) {
-                    callback.onFailure(id, (new WebimErrorImpl<>(
-                            SendFileCallback.SendFileError.FILE_NAME_INCORRECT,
-                            WebimInternalError.FILE_NAME_INCORRECT)));
-                }
-                return id;
+        messageHolder.onSendingMessage(sendingMessageFactory.createFile(id, fileName));
+        Matcher matcher = Pattern.compile("^[()_.а-яА-ЯёЁa-zA-Z0-9\\s\\-]+$").matcher(fileName);
+        if (!matcher.matches()) {
+            messageHolder.onMessageSendingCancelled(id);
+            if (callback != null) {
+                callback.onFailure(id, (new WebimErrorImpl<>(
+                        SendFileCallback.SendFileError.FILE_NAME_INCORRECT,
+                        WebimInternalError.FILE_NAME_INCORRECT)));
             }
+            return id;
         }
         actions.sendFile(
                 RequestBody.create(MediaType.parse(mimeType), file),
-                name,
+                fileName,
                 id.toString(),
                 new SendOrDeleteMessageInternalCallback() {
                     @Override
@@ -521,6 +542,15 @@ public class MessageStreamImpl implements MessageStream {
                 });
 
         return id;
+    }
+
+    @Override
+    public void sendSticker(int stickerId, @Nullable SendStickerCallback sendStickerCallback) {
+        accessChecker.checkAccess();
+
+        final Message.Id messageId = StringId.generateForMessage();
+        messageHolder.onSendingMessage(sendingMessageFactory.createSticker(messageId, stickerId));
+        actions.sendSticker(stickerId, messageId.toString(), sendStickerCallback);
     }
 
     @NonNull

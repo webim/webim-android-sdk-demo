@@ -1,6 +1,6 @@
 package com.webimapp.android.sdk.impl.backend;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import java.util.List;
 

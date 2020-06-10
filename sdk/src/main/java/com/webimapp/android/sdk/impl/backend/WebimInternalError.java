@@ -11,6 +11,7 @@ public class WebimInternalError {
 	public static final String FILE_TYPE_NOT_ALLOWED = "not_allowed_file_type";
 	public static final String NOT_ALLOWED_MIME_TYPE = "not_allowed_mime_type";
 	public static final String NO_PREVIOUS_CHATS = "no_previous_chats";
+	public static final String NO_STICKER_ID = "no-sticker-id";
 	public static final String NOT_MATCHING_MAGIC_NUMBERS = "not_matching_magic_numbers";
 	public static final String PROVIDED_VISITOR_EXPIRED = "provided-visitor-expired";
 	public static final String REINIT_REQUIRED = "reinit-required";

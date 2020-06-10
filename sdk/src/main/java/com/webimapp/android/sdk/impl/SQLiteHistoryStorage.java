@@ -8,7 +8,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
 import android.os.Handler;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.google.gson.reflect.TypeToken;
 import com.webimapp.android.sdk.Message;
@@ -19,6 +19,7 @@ import com.webimapp.android.sdk.impl.backend.WebimInternalLog;
 import com.webimapp.android.sdk.impl.items.KeyboardItem;
 import com.webimapp.android.sdk.impl.items.KeyboardRequestItem;
 import com.webimapp.android.sdk.impl.items.MessageItem;
+import com.webimapp.android.sdk.impl.items.StickerItem;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -60,7 +61,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
             "WHERE msg_id=?";
     private static final String DELETE_HISTORY_STATEMENT = "DELETE FROM history " +
             "WHERE msg_id=?";
-    private static final int VERSION = 6;
+    private static final int VERSION = 7;
 
     private final MyDBHelper dbHelper;
     private final Handler handler;
@@ -242,18 +243,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
         // Binding to quote
         Message.Quote quote = message.getQuote();
         if (quote != null) {
-            statement.bindString(
-                    (index + 8),
-                    MessageItem.Quote.getRawQuote(
-                            quote.getState().toString().toLowerCase(),
-                            quote.getSenderName(),
-                            quote.getMessageText(),
-                            quote.getMessageType() == null
-                                    ? null
-                                    : quote.getMessageType().toString(),
-                            quote.getMessageTimestamp(),
-                            quote.getAuthorId(),
-                            quote.getMessageId()));
+            statement.bindString((index + 8), data);
         }
     }
 
@@ -296,15 +286,22 @@ public class SQLiteHistoryStorage implements HistoryStorage {
         Message.Keyboard keyboardButton = null;
         if (type == Message.Type.KEYBOARD) {
             Type mapType = new TypeToken<KeyboardItem>() {}.getType();
-            KeyboardItem keyboard = InternalUtils.getKeyboard(rawText, true, mapType);
+            KeyboardItem keyboard = InternalUtils.getItem(rawText, true, mapType);
             keyboardButton = InternalUtils.getKeyboardButton(keyboard);
         }
 
         Message.KeyboardRequest keyboardRequest = null;
         if (type == Message.Type.KEYBOARD_RESPONSE) {
             Type mapType = new TypeToken<KeyboardRequestItem>() {}.getType();
-            KeyboardRequestItem keyboard = InternalUtils.getKeyboard(rawText, true, mapType);
+            KeyboardRequestItem keyboard = InternalUtils.getItem(rawText, true, mapType);
             keyboardRequest = InternalUtils.getKeyboardRequest(keyboard);
+        }
+
+        Message.Sticker sticker = null;
+        if (type == Message.Type.STICKER_VISITOR) {
+            Type mapType = new TypeToken<StickerItem>(){}.getType();
+            StickerItem stickerItem = InternalUtils.getItem(rawText, true, mapType);
+            sticker = InternalUtils.getSticker(stickerItem);
         }
 
         boolean isRead = ts <= readBeforeTimestamp || readBeforeTimestamp == -1;
@@ -330,9 +327,11 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                 isRead,
                 false,
                 false,
+                false,
                 quote,
                 keyboardButton,
-                keyboardRequest);
+                keyboardRequest,
+                sticker);
     }
 
     private void runMessageAdded(final UpdateHistoryCallback callback, final HistoryId before, final MessageImpl msg) {

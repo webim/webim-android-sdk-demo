@@ -1,13 +1,14 @@
 package com.webimapp.android.sdk.impl.backend;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.webimapp.android.sdk.MessageStream;
 import com.webimapp.android.sdk.impl.WebimErrorImpl;
 import com.webimapp.android.sdk.impl.items.responses.DefaultResponse;
 import com.webimapp.android.sdk.impl.items.responses.HistoryBeforeResponse;
 import com.webimapp.android.sdk.impl.items.responses.HistorySinceResponse;
+import com.webimapp.android.sdk.impl.items.responses.SearchResponse;
 import com.webimapp.android.sdk.impl.items.responses.UploadResponse;
 
 import okhttp3.MediaType;
@@ -29,6 +30,7 @@ public class WebimActionsImpl implements WebimActions {
     private static final String ACTION_REQUEST_CALL_SENTRY
             = "chat.action_request.call_sentry_action_request";
     private static final String ACTION_SEND_CHAT_HISTORY = "chat.send_chat_history";
+    private static final String ACTION_SEND_STICKER = "sticker";
     private static final String ACTION_SET_PRECHAT_FIELDS = "chat.set_prechat_fields";
     private static final String ACTION_VISITOR_TYPING = "chat.visitor_typing";
     private static final String ACTION_WIDGET_UPDATE = "widget.update";
@@ -270,6 +272,28 @@ public class WebimActionsImpl implements WebimActions {
     }
 
     @Override
+    public void searchMessages(@NonNull final String query,
+                               @NonNull final DefaultCallback<SearchResponse> callback) {
+
+        enqueue(new ActionRequestLoop.WebimRequest<SearchResponse>(true) {
+            @Override
+            public Call<SearchResponse> makeRequest(AuthData authData) {
+                return webim.searchMessages(query, authData.getPageId(), authData.getAuthToken());
+            }
+
+            @Override
+            public void runCallback(SearchResponse response) {
+                callback.onSuccess(response);
+            }
+
+            @Override
+            public boolean isHandleError(@NonNull String error) {
+                return false;
+            }
+        });
+    }
+
+    @Override
     public void setChatRead() {
         enqueue(new ActionRequestLoop.WebimRequest<DefaultResponse>(false) {
             @Override
@@ -480,6 +504,53 @@ public class WebimActionsImpl implements WebimActions {
                         ? MessageStream.SendDialogToEmailAddressCallback.SendDialogToEmailAddressError.SENT_TOO_MANY_TIMES
                         : MessageStream.SendDialogToEmailAddressCallback.SendDialogToEmailAddressError.UNKNOWN;
                 sendChatToEmailCallback.onFailure(new WebimErrorImpl<>(sendDialogToEmailAddressError, error));
+            }
+        });
+    }
+
+    @Override
+    public void sendSticker(final int stickerId,
+                            @NonNull final String clientSideId,
+                            @Nullable final MessageStream.SendStickerCallback sendStickerCallback) {
+
+        enqueue(new ActionRequestLoop.WebimRequest<DefaultResponse>((sendStickerCallback != null)) {
+            @Override
+            public Call<DefaultResponse> makeRequest(AuthData authData) {
+                return webim.sendSticker(
+                        ACTION_SEND_STICKER,
+                        stickerId,
+                        clientSideId,
+                        authData.getPageId(),
+                        authData.getAuthToken());
+            }
+
+            @Override
+            public void runCallback(DefaultResponse response) {
+                if (sendStickerCallback != null) {
+                    sendStickerCallback.onSuccess();
+                }
+            }
+
+            @Override
+            public boolean isHandleError(@NonNull String error) {
+                return error.equals(WebimInternalError.NO_CHAT)
+                        || error.equals(WebimInternalError.NO_STICKER_ID);
+            }
+
+            @Override
+            public void handleError(@NonNull String error) {
+                if (sendStickerCallback != null) {
+                    MessageStream.SendStickerCallback.SendStickerError sendStickerError;
+                    switch (error) {
+                        case WebimInternalError.NO_CHAT:
+                            sendStickerError = MessageStream.SendStickerCallback.SendStickerError.NO_CHAT;
+                            break;
+                        case WebimInternalError.NO_STICKER_ID:
+                        default:
+                            sendStickerError = MessageStream.SendStickerCallback.SendStickerError.NO_STICKER_ID;
+                    }
+                    sendStickerCallback.onFailure((new WebimErrorImpl<>(sendStickerError, error)));
+                }
             }
         });
     }

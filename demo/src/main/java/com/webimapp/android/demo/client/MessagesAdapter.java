@@ -16,12 +16,12 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
-import android.support.annotation.NonNull;
-import android.support.constraint.ConstraintLayout;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.graphics.drawable.DrawableCompat;
-import android.support.v7.content.res.AppCompatResources;
-import android.support.v7.widget.RecyclerView;
+import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.app.ActivityCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
+import androidx.appcompat.content.res.AppCompatResources;
+import androidx.recyclerview.widget.RecyclerView;
 import android.text.format.DateFormat;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
@@ -53,7 +53,10 @@ import static com.webimapp.android.sdk.Message.FileInfo;
 import static com.webimapp.android.sdk.Message.ImageInfo;
 import static com.webimapp.android.sdk.Message.Quote;
 import static com.webimapp.android.sdk.Message.SendStatus;
-import static com.webimapp.android.sdk.Message.Type.*;
+import static com.webimapp.android.sdk.Message.Type.FILE_FROM_OPERATOR;
+import static com.webimapp.android.sdk.Message.Type.FILE_FROM_VISITOR;
+import static com.webimapp.android.sdk.Message.Type.OPERATOR;
+import static com.webimapp.android.sdk.Message.Type.VISITOR;
 
 public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.MessageHolder> {
     private static final long MILLIS_IN_DAY = 1000 * 60 * 60 * 24;
@@ -170,12 +173,28 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
         return messageList.add(message);
     }
 
-    public void add(int i, Message message) {
-        messageList.add(i, message);
+    public void add(int position, Message message) {
+        int prevItemsCount = messageList.size();
+        messageList.add(position, message);
+        if (position == 0 && prevItemsCount != 0) {
+            int itemsAdded = 1;
+            invalidateLastItemDate(itemsAdded);
+        }
     }
 
-    public boolean addAll(int i, Collection<? extends Message> collection) {
-        return messageList.addAll(i, collection);
+    public boolean addAll(int position, Collection<? extends Message> collection) {
+        int prevItemsCount = messageList.size();
+        boolean messagesAdded = messageList.addAll(position, collection);
+        if (messagesAdded && position == 0 && prevItemsCount != 0) {
+            int itemsAdded = collection.size();
+            invalidateLastItemDate(itemsAdded);
+        }
+        return messagesAdded;
+    }
+
+    private void invalidateLastItemDate(int newItemsCount) {
+        int lastItemIndex = messageList.size() - 1;
+        notifyItemChanged(lastItemIndex - newItemsCount);
     }
 
     public Message set(int i, Message message) {
@@ -198,8 +217,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
         return messageList.lastIndexOf(message);
     }
 
-    private void showMessage(String message, View view) {
-        Toast.makeText(view.getContext().getApplicationContext(),
+    private void showMessage(String message, Context context) {
+        Toast.makeText(context.getApplicationContext(),
                 message, Toast.LENGTH_SHORT).show();
     }
 
@@ -311,13 +330,29 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
         }
     }
 
-    class FileMessageHolder extends MessageHolder {
+    abstract class FileMessageHolder extends MessageHolder {
 
-        ImageView thumbView, quoteView, fileImage;
-        ConstraintLayout layoutQuotedView, layoutFileImage;
-        TextView senderNameForImage, fileName, fileSize, fileError;
+        ImageView thumbView;
+        ImageView quoteView;
+        ImageView fileImage;
+        ConstraintLayout layoutQuotedView;
+        ConstraintLayout layoutFileImage;
+        TextView senderNameForImage;
+        TextView fileName;
+        TextView fileSize;
+        TextView fileError;
+        TextView textEdited;
         RelativeLayout layoutAttachedFile;
         ProgressBar progressFileUpload;
+
+        Dialog dialog;
+        RelativeLayout menuReplyLayout;
+        RelativeLayout menuCopyLayout;
+        RelativeLayout menuEditLayout;
+        RelativeLayout menuDeleteLayout;
+        int bubbleColor;
+        int selectedColor;
+        int messageBackground;
 
         FileMessageHolder(View itemView) {
             super(itemView);
@@ -332,6 +367,36 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             fileSize = itemView.findViewById(R.id.file_size);
             fileError = itemView.findViewById(R.id.error_text);
             progressFileUpload = itemView.findViewById(R.id.progress_file_upload);
+            textEdited = itemView.findViewById(R.id.text_edited);
+
+            createContextMenuDialog(itemView.getContext());
+        }
+
+        void createContextMenuDialog(Context context) {
+            dialog = new Dialog(context);
+            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+            dialog.setContentView(R.layout.dialog_message_menu);
+            if (dialog.getWindow() != null) {
+                WindowManager.LayoutParams layoutParams = dialog.getWindow().getAttributes();
+                layoutParams.dimAmount = 0.6f; // level shading
+                dialog.getWindow().setAttributes(layoutParams);
+            }
+            menuReplyLayout = dialog.findViewById(R.id.relLayoutReply);
+            menuCopyLayout = dialog.findViewById(R.id.relLayoutCopy);
+            menuEditLayout = dialog.findViewById(R.id.relLayoutEdit);
+            menuDeleteLayout = dialog.findViewById(R.id.relLayoutDelete);
+
+            dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                @Override
+                public void onDismiss(DialogInterface dialogInterface) {
+                    changeBackgroundDrawable(
+                            (message.getType() == FILE_FROM_VISITOR)
+                                    ? layoutAttachedFile
+                                    : messageBody,
+                            messageBackground,
+                            bubbleColor);
+                }
+            });
         }
 
         @Override
@@ -371,6 +436,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                 addImageInView(fileInfo, quoteView, quoteText);
                 layoutQuotedView.setVisibility(View.VISIBLE);
             }
+
+            textEdited.setVisibility(message.isEdited() ? View.VISIBLE : View.GONE);
         }
 
         private boolean mustShowAttachmentView(ImageInfo imageInfo) {
@@ -433,6 +500,14 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                     fileImage.setVisibility(View.VISIBLE);
                     break;
             }
+
+            layoutAttachedFile.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View view) {
+                    openContextDialog(view);
+                    return true;
+                }
+            });
         }
 
         private void downloadFile(FileInfo file) {
@@ -448,7 +523,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                         1);
             } else {
                 String fileName = file.getFileName();
-                showMessage(context.getString(R.string.saving_file, fileName), itemView);
+                showMessage(context.getString(R.string.saving_file, fileName), itemView.getContext());
 
                 DownloadManager manager =
                         (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
@@ -465,7 +540,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
 
                     manager.enqueue(downloadRequest);
                 } else {
-                    showMessage(context.getString(R.string.saving_failed), itemView);
+                    showMessage(context.getString(R.string.saving_failed), itemView.getContext());
                 }
             }
         }
@@ -494,6 +569,13 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                 @Override
                 public void onClick(View view) {
                     openImageActivity(view, fileUrl);
+                }
+            });
+            imageView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View view) {
+                    openContextDialog(view);
+                    return true;
                 }
             });
             textView.setText(
@@ -626,118 +708,49 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                 return longSide;
             }
         }
+
+        void openContextDialog(View view) {
+            if (enableContextDialog()) {
+                changeBackgroundDrawable(
+                        (message.getType() == FILE_FROM_VISITOR)
+                                ? layoutAttachedFile
+                                : messageBody,
+                        messageBackground,
+                        selectedColor);
+                dialog.show();
+            }
+        }
+
+        boolean enableContextDialog() {
+            return menuReplyLayout.getVisibility() == View.VISIBLE ||
+                    menuCopyLayout.getVisibility() == View.VISIBLE;
+        }
+
+        protected void disableContextMenuItem(ViewGroup menuItem) {
+            menuItem.setVisibility(View.GONE);
+        }
+
+        protected void enableContextMenuItem(ViewGroup menuItem) {
+            menuItem.setVisibility(View.VISIBLE);
+        }
     }
 
     private class SentMessageHolder extends FileMessageHolder {
         ProgressBar sendingProgress;
 
-        private float LEVEL_SHADING = 0.6f;
-
         SentMessageHolder(final View itemView) {
             super(itemView);
+
+            messageBackground = R.drawable.background_send_message;
+            bubbleColor = R.color.sendingMsgBubble;
+            selectedColor = R.color.sendingMsgSelect;
 
             sendingProgress = itemView.findViewById(R.id.sending_msg);
 
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(final View view) {
-                    final Dialog dialog = new Dialog(view.getContext());
-                    dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-                    dialog.setContentView(R.layout.dialog_message_menu);
-                    if (dialog.getWindow() != null) {
-                        WindowManager.LayoutParams layoutParams = dialog.getWindow().getAttributes();
-                        layoutParams.dimAmount = LEVEL_SHADING;
-                        dialog.getWindow().setAttributes(layoutParams);
-                    }
-                    RelativeLayout replyLayout = dialog.findViewById(R.id.relLayoutReply);
-                    RelativeLayout copyLayout = dialog.findViewById(R.id.relLayoutCopy);
-                    RelativeLayout editLayout = dialog.findViewById(R.id.relLayoutEdit);
-                    RelativeLayout deleteLayout = dialog.findViewById(R.id.relLayoutDelete);
-
-                    replyLayout.setVisibility(View.GONE);
-                    copyLayout.setVisibility(View.GONE);
-                    editLayout.setVisibility(View.GONE);
-                    deleteLayout.setVisibility(View.GONE);
-
-                    if (message.canBeReplied()) {
-                        replyLayout.setVisibility(View.VISIBLE);
-                        replyLayout.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View view) {
-                                webimChatFragment.onReplyMessageAction(message, getAdapterPosition());
-                                dialog.dismiss();
-                            }
-                        });
-                    }
-
-                    if (message.getType() != FILE_FROM_VISITOR) {
-                        copyLayout.setVisibility(View.VISIBLE);
-                        copyLayout.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View view) {
-                                ClipData clip =
-                                        ClipData.newPlainText("message", message.getText());
-                                ClipboardManager clipboard =
-                                        (ClipboardManager) view.getContext()
-                                                .getSystemService(Context.CLIPBOARD_SERVICE);
-                                if (clipboard != null) {
-                                    clipboard.setPrimaryClip(clip);
-                                    showMessage(view.getResources()
-                                            .getString(R.string.copied_message), view);
-                                } else {
-                                    showMessage(view.getResources()
-                                            .getString(R.string.copy_failed), view);
-                                }
-                                dialog.dismiss();
-                            }
-                        });
-                        if (message.canBeEdited()) {
-                            editLayout.setVisibility(View.VISIBLE);
-                            editLayout.setOnClickListener(new View.OnClickListener() {
-                                @Override
-                                public void onClick(View view) {
-                                    webimChatFragment.onEditAction(message);
-                                    dialog.dismiss();
-                                }
-                            });
-                        }
-                    }
-
-                    if (message.canBeEdited()) {
-                        deleteLayout.setVisibility(View.VISIBLE);
-                        deleteLayout.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View view) {
-                                webimChatFragment.onDeleteMessageAction(message);
-                                dialog.dismiss();
-                            }
-                        });
-                    }
-
-                    dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                        @Override
-                        public void onDismiss(DialogInterface dialogInterface) {
-                            changeBackgroundDrawable(
-                                    (message.getType() == FILE_FROM_VISITOR)
-                                            ? layoutAttachedFile
-                                            : messageBody,
-                                    R.drawable.background_send_message,
-                                    R.color.sendingMsgBubble);
-                        }
-                    });
-
-                    if (replyLayout.getVisibility() == View.VISIBLE
-                            || copyLayout.getVisibility() == View.VISIBLE
-                            || deleteLayout.getVisibility() == View.VISIBLE) {
-                        changeBackgroundDrawable(
-                                (message.getType() == FILE_FROM_VISITOR)
-                                        ? layoutAttachedFile
-                                        : messageBody,
-                                R.drawable.background_send_message,
-                                R.color.sendingMsgSelect);
-                        dialog.show();
-                    }
-
+                    openContextDialog(view);
                 }
             });
         }
@@ -746,6 +759,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
         public void bind(Message message, boolean showDate) {
             super.bind(message, showDate);
 
+            updateDialog();
             boolean sending = message.getSendStatus() == SendStatus.SENDING;
             if (messageTime != null) {
                 messageTime.setVisibility(sending ? View.GONE : View.VISIBLE);
@@ -754,17 +768,86 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                 sendingProgress.setVisibility(sending ? View.VISIBLE : View.GONE);
             }
         }
+
+        void updateDialog() {
+            disableContextMenuItem(menuReplyLayout);
+            disableContextMenuItem(menuCopyLayout);
+            disableContextMenuItem(menuEditLayout);
+            disableContextMenuItem(menuDeleteLayout);
+
+            if (message.canBeReplied()) {
+                enableContextMenuItem(menuReplyLayout);
+                menuReplyLayout.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        webimChatFragment.onReplyMessageAction(message, getAdapterPosition());
+                        dialog.dismiss();
+                    }
+                });
+            }
+
+            if (message.getType() != FILE_FROM_VISITOR) {
+                enableContextMenuItem(menuCopyLayout);
+                menuCopyLayout.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        ClipData clip =
+                                ClipData.newPlainText("message", message.getText());
+                        ClipboardManager clipboard =
+                                (ClipboardManager) view.getContext()
+                                        .getSystemService(Context.CLIPBOARD_SERVICE);
+                        if (clipboard != null) {
+                            clipboard.setPrimaryClip(clip);
+                            showMessage(view.getResources()
+                                    .getString(R.string.copied_message), view.getContext());
+                        } else {
+                            showMessage(view.getResources()
+                                    .getString(R.string.copy_failed), view.getContext());
+                        }
+                        dialog.dismiss();
+                    }
+                });
+
+                if (message.canBeEdited()) {
+                    enableContextMenuItem(menuEditLayout);
+                    menuEditLayout.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            webimChatFragment.onEditMessageAction(message, getAdapterPosition());
+                            dialog.dismiss();
+                        }
+                    });
+                }
+            }
+
+            if (message.canBeEdited()) {
+                enableContextMenuItem(menuDeleteLayout);
+                menuDeleteLayout.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        webimChatFragment.onDeleteMessageAction(message);
+                        dialog.dismiss();
+                    }
+                });
+            }
+        }
     }
 
     private class ReceivedMessageHolder extends FileMessageHolder {
         boolean showSenderInfo = true;
-        TextView timeText, nameText, nameTextForImage, nameTextForFile;
+        TextView timeText;
+        TextView nameText;
+        TextView nameTextForImage;
+        TextView nameTextForFile;
         ImageView profileImage;
-
-        private float LEVEL_SHADING = 0.6f;
 
         ReceivedMessageHolder(final View itemView) {
             super(itemView);
+
+            messageBackground = R.drawable.background_received_message;
+            bubbleColor = R.color.receivedMsgBubble;
+            selectedColor = R.color.receivedMsgSelect;
+
             timeText = itemView.findViewById(R.id.text_message_time);
             nameText = itemView.findViewById(R.id.sender_name);
             nameTextForImage = itemView.findViewById(R.id.sender_name_for_image);
@@ -774,79 +857,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(final View view) {
-                    final Dialog dialog = new Dialog(view.getContext());
-                    dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-                    dialog.setContentView(R.layout.dialog_message_menu);
-                    if (dialog.getWindow() != null) {
-                        WindowManager.LayoutParams layoutParams = dialog.getWindow().getAttributes();
-                        layoutParams.dimAmount = LEVEL_SHADING;
-                        dialog.getWindow().setAttributes(layoutParams);
-                    }
-                    RelativeLayout replyLayout = dialog.findViewById(R.id.relLayoutReply);
-                    RelativeLayout copyLayout = dialog.findViewById(R.id.relLayoutCopy);
-                    RelativeLayout editLayout = dialog.findViewById(R.id.relLayoutEdit);
-                    RelativeLayout deleteLayout = dialog.findViewById(R.id.relLayoutDelete);
-
-                    replyLayout.setVisibility(View.GONE);
-                    copyLayout.setVisibility(View.GONE);
-                    editLayout.setVisibility(View.GONE);
-                    deleteLayout.setVisibility(View.GONE);
-
-                    if (message.canBeReplied()) {
-                        replyLayout.setVisibility(View.VISIBLE);
-                        replyLayout.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View view) {
-                                webimChatFragment.onReplyMessageAction(message, getAdapterPosition());
-                                dialog.dismiss();
-                            }
-                        });
-                    }
-                    if (message.getType() != FILE_FROM_OPERATOR) {
-                        copyLayout.setVisibility(View.VISIBLE);
-                        copyLayout.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View view) {
-                                ClipData clip =
-                                        ClipData.newPlainText("message", message.getText());
-                                ClipboardManager clipboard =
-                                        (ClipboardManager) view.getContext()
-                                                .getSystemService(Context.CLIPBOARD_SERVICE);
-                                if (clipboard != null) {
-                                    clipboard.setPrimaryClip(clip);
-                                    showMessage(view.getResources()
-                                            .getString(R.string.copied_message), view);
-                                } else {
-                                    showMessage(view.getResources()
-                                            .getString(R.string.copy_failed), view);
-                                }
-                                dialog.dismiss();
-                            }
-                        });
-                    }
-
-                    dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                        @Override
-                        public void onDismiss(DialogInterface dialogInterface) {
-                            changeBackgroundDrawable(
-                                    (message.getType() == FILE_FROM_OPERATOR)
-                                            ? layoutAttachedFile
-                                            : messageBody,
-                                    R.drawable.background_received_message,
-                                    R.color.receivedMsgBubble);
-                        }
-                    });
-
-                    if (replyLayout.getVisibility() == View.VISIBLE
-                            || copyLayout.getVisibility() == View.VISIBLE) {
-                        changeBackgroundDrawable(
-                                (message.getType() == FILE_FROM_OPERATOR)
-                                        ? layoutAttachedFile
-                                        : messageBody,
-                                R.drawable.background_received_message,
-                                R.color.receivedMsgSelect);
-                        dialog.show();
-                    }
+                    openContextDialog(view);
                 }
             });
         }
@@ -854,6 +865,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
         @Override
         public void bind(Message message, boolean showDate) {
             super.bind(message, showDate);
+
+            updateDialog();
             timeText.setText(DateFormat.getTimeFormat(webimChatFragment.getContext())
                     .format(message.getTime()));
             if (showSenderInfo) {
@@ -889,6 +902,47 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                 nameTextForImage.setVisibility(View.GONE);
                 profileImage.setVisibility(View.GONE);
                 showSenderInfo = true;
+            }
+        }
+
+        void updateDialog() {
+            disableContextMenuItem(menuReplyLayout);
+            disableContextMenuItem(menuCopyLayout);
+            disableContextMenuItem(menuEditLayout);
+            disableContextMenuItem(menuDeleteLayout);
+
+            if (message.canBeReplied()) {
+                enableContextMenuItem(menuReplyLayout);
+                menuReplyLayout.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        webimChatFragment.onReplyMessageAction(message, getAdapterPosition());
+                        dialog.dismiss();
+                    }
+                });
+            }
+
+            if (message.getType() != FILE_FROM_OPERATOR) {
+                enableContextMenuItem(menuCopyLayout);
+                menuCopyLayout.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        ClipData clip =
+                                ClipData.newPlainText("message", message.getText());
+                        ClipboardManager clipboard =
+                                (ClipboardManager) view.getContext()
+                                        .getSystemService(Context.CLIPBOARD_SERVICE);
+                        if (clipboard != null) {
+                            clipboard.setPrimaryClip(clip);
+                            showMessage(view.getResources()
+                                    .getString(R.string.copied_message), view.getContext());
+                        } else {
+                            showMessage(view.getResources()
+                                    .getString(R.string.copy_failed), view.getContext());
+                        }
+                        dialog.dismiss();
+                    }
+                });
             }
         }
     }

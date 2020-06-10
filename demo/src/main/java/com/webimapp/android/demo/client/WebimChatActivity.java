@@ -4,12 +4,12 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
 
-import com.crashlytics.android.Crashlytics;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.webimapp.android.sdk.FatalErrorHandler;
 import com.webimapp.android.sdk.Webim;
@@ -18,6 +18,7 @@ import com.webimapp.android.sdk.WebimLog;
 
 public class WebimChatActivity extends AppCompatActivity implements FatalErrorHandler {
     private static boolean active;
+    private WebimChatFragment fragment;
     public static final String DEFAULT_ACCOUNT_NAME = "demo";
     public static final String DEFAULT_LOCATION = "mobile";
 
@@ -27,7 +28,7 @@ public class WebimChatActivity extends AppCompatActivity implements FatalErrorHa
         setContentView(R.layout.activity_webim_chat);
 
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        WebimChatFragment fragment = new WebimChatFragment();
+        fragment = new WebimChatFragment();
         fragment.setWebimSession(Webim.newSessionBuilder()
                 .setContext(this)
                 .setErrorHandler(this)
@@ -66,8 +67,8 @@ public class WebimChatActivity extends AppCompatActivity implements FatalErrorHa
         switch (error.getErrorType()) {
             default:
                 if (!BuildConfig.DEBUG) {
-                    Crashlytics.logException(new Throwable("Handled unknown webim error: "
-                            + error.getErrorString()));
+                    FirebaseCrashlytics.getInstance().recordException(
+                            new Throwable("Handled unknown webim error: " + error.getErrorString()));
                 }
                 showError(R.string.error_unknown_header,
                         R.string.error_unknown_desc, error.getErrorString());
@@ -108,6 +109,10 @@ public class WebimChatActivity extends AppCompatActivity implements FatalErrorHa
 
     @Override
     public void onBackPressed() {
+        if (fragment.isChatMenuVisible()) {
+            fragment.hideChatMenu();
+            return;
+        }
         super.onBackPressed();
         overridePendingTransition(R.anim.pull_in_left, R.anim.push_out_right);
     }

@@ -1,7 +1,7 @@
 package com.webimapp.android.sdk.impl;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 public class MessageSending extends MessageImpl {
     public MessageSending(@NonNull String serverUrl,
@@ -10,7 +10,8 @@ public class MessageSending extends MessageImpl {
                           @NonNull Type type,
                           @NonNull String text,
                           long timeMicros,
-                          @Nullable Quote quote) {
+                          @Nullable Quote quote,
+                          @Nullable Sticker sticker) {
         super(serverUrl,
                 id,
                 null,
@@ -27,9 +28,11 @@ public class MessageSending extends MessageImpl {
                 false,
                 false,
                 false,
+                false,
                 quote,
                 null,
-                null);
+                null,
+                sticker);
     }
 
     @NonNull

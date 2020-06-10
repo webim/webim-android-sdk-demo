@@ -22,6 +22,8 @@
     <string name="content_desc_send_message">Send message</string>
     <string name="rate_operator_button">Send</string>
     <string name="rate_operator_title">Rate agent</string>
+    <string name="rate_operator_rating_sent">Rating has been sent</string>
+    <string name="rate_operator_rating_empty">No rating was given</string>
     <string name="file_chooser_title">Select file to upload</string>
     <string name="file_chooser_not_found">To download the file, please install the file manager</string>
     <string name="file_selection_failed">Could not select file</string>
@@ -48,10 +50,11 @@
     <string name="prefs_notifications_summary">Enable FCM push notifications for new messages from the agent</string>
     <string name="prefs_notifications_title">Notifications</string>
     <string name="prefs_account_title">Account</string>
-    <string name="prefs_account_summary">Webim account name or full server address (for example, \'demo\' или \'https://demo.webim.ru\')</string>
-    <string name="prefs_location_summary">location</string>
-    <string name="prefs_location_title">Dislocation</string>
+    <string name="prefs_account_summary">Webim account name or full server address (for example, \"demo\" или \"https://demo.webim.ru\")</string>
+    <string name="prefs_location_summary">The location that will receive the appeal (for example, \"mobile\")</string>
+    <string name="prefs_location_title">Location</string>
     <string name="prefs_privacy">Privacy</string>
+    <string name="prefs_version">App version: %1$s\nSDK version: %2$s</string>
 
     <string name="typing">typing…</string>
 
@@ -74,6 +77,7 @@
     <string name="copy_failed">Could not copy message</string>
     <string name="quote_is_pending">Quote is loading</string>
     <string name="quote_is_not_found">Quote unavailable</string>
+    <string name="message_edited">edited</string>
 
     <string name="empty_reply_text">" "</string>
     <string name="reply_message_with_image">"Image "</string>
@@ -85,10 +89,15 @@
     <string name="delete">Delete</string>
     <string name="edit">Edit</string>
     <string name="reply">Reply</string>
+    <string name="failed_send_empty_message">Unable to send empty message</string>
+    <string name="wait_sync_toast">Waiting for synchronization with server</string>
+    <string name="operation_denied_toast">Operation denied</string>
+
     <string name="default_date">November 12</string>
     <string name="upload_file">Upload file</string>
     <string name="file_upload_failed_name">Failed to upload file: error in file name</string>
     <string name="visitor_sender_name">You</string>
     <string name="file_transfer_by_operator">"Transferring the file "</string>
     <string name="file_upload_failed_no_chat">To start a chat, send a text message</string>
+    <string name="editing_title">Editing</string>
 </resources>

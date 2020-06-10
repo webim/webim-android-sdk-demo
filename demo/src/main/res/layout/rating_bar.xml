@@ -16,14 +16,16 @@
         android:stepSize="1" />
 
     <Button
+        android:id="@+id/ratingBarButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/ratingBarButton"
         android:layout_gravity="center_horizontal"
-        android:text="@string/rate_operator_button"
+        android:background="@drawable/background_send_rating"
         android:elevation="6dp"
+        android:padding="5dp"
         android:stateListAnimator="@null"
+        android:text="@string/rate_operator_button"
+        android:textColor="@color/white"
         android:translationZ="4dp"
-        style="@style/Widget.AppCompat.Button.Colored"
         tools:targetApi="lollipop" />
 </LinearLayout>

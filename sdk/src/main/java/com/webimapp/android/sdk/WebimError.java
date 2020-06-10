@@ -1,6 +1,6 @@
 package com.webimapp.android.sdk;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 /**
  * A generic webim error type

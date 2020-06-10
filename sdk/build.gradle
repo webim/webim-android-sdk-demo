@@ -7,13 +7,13 @@ version = project.property('versionName')
 group = project.property('sdk_group')
 
 android {
-    compileSdkVersion 28
-    buildToolsVersion '26.0.3'
+    compileSdkVersion 29
+    buildToolsVersion '29.0.0'
     resourcePrefix 'webimsdk__'
 
     defaultConfig {
-        minSdkVersion 15
-        targetSdkVersion 28
+        minSdkVersion 16
+        targetSdkVersion 29
         versionName version
     }
     buildTypes {
@@ -24,14 +24,14 @@ android {
 }
 
 dependencies {
-    testCompile 'junit:junit:4.12'
-    compile 'com.android.support:support-annotations:28.0.0'
-    compile 'com.squareup.retrofit2:retrofit:2.2.0'
-    compile 'com.squareup.retrofit2:converter-gson:2.2.0'
-    compile 'com.squareup.okhttp3:logging-interceptor:3.6.0'
-    testCompile 'org.codehaus.groovy:groovy-all:2.4.12'
-    testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
-    testCompile 'cglib:cglib-nodep:2.2.2'
+    testImplementation 'junit:junit:4.12'
+    api 'androidx.annotation:annotation:1.1.0'
+    api 'com.squareup.retrofit2:retrofit:2.2.0'
+    api 'com.squareup.retrofit2:converter-gson:2.2.0'
+    api 'com.squareup.okhttp3:logging-interceptor:3.11.0'
+    testImplementation 'org.codehaus.groovy:groovy-all:2.4.12'
+    testImplementation 'org.spockframework:spock-core:1.0-groovy-2.4'
+    testImplementation 'cglib:cglib-nodep:2.2.2'
 }
 
 def siteUrl = project.property('websiteUrl')     // Homepage URL of the library

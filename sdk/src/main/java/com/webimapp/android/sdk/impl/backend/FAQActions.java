@@ -1,6 +1,6 @@
 package com.webimapp.android.sdk.impl.backend;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.webimapp.android.sdk.FAQ;
 import com.webimapp.android.sdk.impl.items.FAQCategoryItem;

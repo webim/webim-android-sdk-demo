@@ -4,7 +4,7 @@ package com.webimapp.android.sdk;
  * Created by Nikita Lazarev-Zubov on 06.12.17.
  */
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 /**
  * When client provides custom visitor authorization mechanism, it can be realised by providing

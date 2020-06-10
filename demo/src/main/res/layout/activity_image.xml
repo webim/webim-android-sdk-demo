@@ -6,14 +6,14 @@
 	android:layout_height="match_parent"
 	android:background="@color/black">
 
-	<android.support.design.widget.AppBarLayout
+	<com.google.android.material.appbar.AppBarLayout
 		android:id="@+id/appBar"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:background="@color/black"
 		android:theme="@style/AppTheme.AppBarOverlay">
 
-		<android.support.v7.widget.Toolbar
+		<androidx.appcompat.widget.Toolbar
 			android:id="@+id/toolbar"
 			android:layout_width="match_parent"
 			android:layout_height="?attr/actionBarSize"
@@ -37,8 +37,8 @@
 					android:paddingBottom="14dp" />
 			</LinearLayout>
 
-		</android.support.v7.widget.Toolbar>
-	</android.support.design.widget.AppBarLayout>
+		</androidx.appcompat.widget.Toolbar>
+	</com.google.android.material.appbar.AppBarLayout>
 
 	<com.ortiz.touchview.TouchImageView
 		android:id="@+id/imageView"

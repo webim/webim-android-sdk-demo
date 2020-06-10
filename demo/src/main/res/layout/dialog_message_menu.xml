@@ -2,7 +2,6 @@
 <android.widget.RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="200dp"
     android:layout_height="wrap_content"
     android:background="@color/colorBackgroundDialog">
@@ -16,8 +15,7 @@
         android:paddingTop="@dimen/alert_dialog_marginLeft"
         android:paddingEnd="@dimen/alert_dialog_relative_marginEnd"
         android:paddingRight="@dimen/alert_dialog_relative_marginEnd"
-        android:orientation="horizontal"
-        tools:visibility="gone">
+        android:orientation="horizontal">
 
         <ImageView
             android:id="@+id/imageReply"
@@ -53,8 +51,7 @@
         android:paddingTop="@dimen/alert_dialog_marginLeft"
         android:paddingEnd="@dimen/alert_dialog_relative_marginEnd"
         android:paddingRight="@dimen/alert_dialog_relative_marginEnd"
-        android:orientation="horizontal"
-        tools:visibility="gone">
+        android:orientation="horizontal">
 
         <ImageView
             android:id="@+id/imageCopy"
@@ -77,8 +74,7 @@
             android:layout_toEndOf="@id/imageCopy"
             android:layout_toRightOf="@id/imageCopy"
             android:text="@string/copy"
-            android:textColor="@color/white"
-            tools:visibility="visible" />
+            android:textColor="@color/white"/>
     </RelativeLayout>
 
     <RelativeLayout
@@ -91,8 +87,7 @@
         android:paddingTop="@dimen/alert_dialog_marginLeft"
         android:paddingEnd="@dimen/alert_dialog_relative_marginEnd"
         android:paddingRight="@dimen/alert_dialog_relative_marginEnd"
-        android:orientation="horizontal"
-        tools:visibility="gone">
+        android:orientation="horizontal">
 
         <ImageView
             android:id="@+id/imageEdit"
@@ -115,8 +110,7 @@
             android:layout_toEndOf="@id/imageEdit"
             android:layout_toRightOf="@id/imageEdit"
             android:text="@string/edit"
-            android:textColor="@color/white"
-            tools:visibility="visible" />
+            android:textColor="@color/white" />
     </RelativeLayout>
 
     <RelativeLayout
@@ -129,8 +123,7 @@
         android:paddingEnd="@dimen/alert_dialog_relative_marginEnd"
         android:paddingRight="@dimen/alert_dialog_relative_marginEnd"
         android:paddingBottom="16dp"
-        android:orientation="horizontal"
-        tools:visibility="gone">
+        android:orientation="horizontal">
 
         <ImageView
             android:id="@+id/imageDelete"
@@ -153,7 +146,6 @@
             android:layout_toEndOf="@id/imageDelete"
             android:layout_toRightOf="@id/imageDelete"
             android:text="@string/delete"
-            android:textColor="@color/white"
-            tools:visibility="visible" />
+            android:textColor="@color/white"/>
     </RelativeLayout>
 </android.widget.RelativeLayout>

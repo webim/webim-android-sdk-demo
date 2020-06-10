@@ -5,9 +5,17 @@ import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
+import android.util.Patterns;
+
+import java.util.regex.Pattern;
 
 public class SettingsFragment extends PreferenceFragment
         implements SharedPreferences.OnSharedPreferenceChangeListener {
+    private static final String KEY_ACCOUNT = "account";
+    private static final String KEY_LOCATION = "location";
+    private static final String DEFAULT_ACCOUNT = "demo";
+    private static final String DEFAULT_LOCATION = "mobile";
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -19,8 +27,8 @@ public class SettingsFragment extends PreferenceFragment
         super.onResume();
         getPreferenceScreen().getSharedPreferences()
                 .registerOnSharedPreferenceChangeListener(this);
-        updatePreference("account");
-        updatePreference("location");
+        updatePreference(KEY_ACCOUNT);
+        updatePreference(KEY_LOCATION);
     }
 
     @Override
@@ -29,6 +37,18 @@ public class SettingsFragment extends PreferenceFragment
         // Unregister the listener whenever a key changes
         getPreferenceScreen().getSharedPreferences()
                 .unregisterOnSharedPreferenceChangeListener(this);
+        checkFieldsValidity();
+    }
+
+    private void checkFieldsValidity() {
+        EditTextPreference accountPreference = (EditTextPreference) findPreference(KEY_ACCOUNT);
+        if (!isFieldValid(KEY_ACCOUNT, accountPreference.getText().trim())) {
+            accountPreference.setText(DEFAULT_ACCOUNT);
+        }
+        EditTextPreference locationPreference = (EditTextPreference) findPreference(KEY_LOCATION);
+        if (!isFieldValid(KEY_LOCATION, locationPreference.getText().trim())) {
+            locationPreference.setText(DEFAULT_LOCATION);
+        }
     }
 
     @Override
@@ -39,21 +59,34 @@ public class SettingsFragment extends PreferenceFragment
     private void updatePreference(String key) {
         Preference preference = findPreference(key);
         if (preference instanceof EditTextPreference) {
-            String defText = "";
-            switch (key) {
-                case "account":
-                    defText = getString(R.string.prefs_account_summary);
-                    break;
-                case "location":
-                    defText = getString(R.string.prefs_location_summary);
-                    break;
-            }
             EditTextPreference textPreference = (EditTextPreference) preference;
-            if (textPreference.getText().trim().length() > 0) {
-                textPreference.setSummary(textPreference.getText());
+            String text = textPreference.getText().trim();
+
+            if (text.isEmpty()) {
+                switch (key) {
+                    case KEY_ACCOUNT:
+                        textPreference.setSummary(R.string.prefs_account_summary);
+                        break;
+                    case KEY_LOCATION:
+                        textPreference.setSummary(R.string.prefs_location_summary);
+                        break;
+                }
             } else {
-                textPreference.setSummary(defText);
+                if (key.equals(KEY_ACCOUNT) && !isFieldValid(KEY_ACCOUNT, text)) {
+                    textPreference.setText(DEFAULT_ACCOUNT);
+                } else if (key.equals(KEY_LOCATION) && !isFieldValid(KEY_LOCATION, text)) {
+                    textPreference.setText(DEFAULT_LOCATION);
+                } else {
+                    textPreference.setSummary(text);
+                }
             }
         }
+    }
+
+    private boolean isFieldValid(String key, String url) {
+        if (key.equals(KEY_ACCOUNT) && url.contains("://")) {
+            return Patterns.WEB_URL.matcher(url).matches();
+        }
+        return Pattern.compile("^\\w+$").matcher(url).matches();
     }
 }

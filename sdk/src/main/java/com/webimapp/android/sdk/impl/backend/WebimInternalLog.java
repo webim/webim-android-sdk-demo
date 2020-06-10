@@ -1,6 +1,6 @@
 package com.webimapp.android.sdk.impl.backend;
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import com.webimapp.android.sdk.Webim.SessionBuilder.WebimLogVerbosityLevel;
 import com.webimapp.android.sdk.WebimLog;

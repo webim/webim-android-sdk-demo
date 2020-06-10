@@ -2,7 +2,7 @@ package com.webimapp.android.sdk.impl;
 
 
 import android.content.SharedPreferences;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.webimapp.android.sdk.impl.backend.LocationSettingsImpl;
 

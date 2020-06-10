@@ -1,7 +1,7 @@
 package com.webimapp.android.sdk;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.List;
 
@@ -81,6 +81,11 @@ public interface Message {
     Attachment getAttachment();
 
     /**
+     * @return true if this message is history.
+     */
+    boolean isHistoryMessage();
+
+    /**
      * @return true if this visitor message is read by operator or this message is not by visitor.
      */
     boolean isReadByOperator();
@@ -94,6 +99,11 @@ public interface Message {
      * @return true if this message can be replied.
      */
     boolean canBeReplied();
+
+    /**
+     * @return true if this message was edited.
+     * */
+    boolean isEdited();
 
     /**
      * @return information about quoted message.
@@ -154,6 +164,10 @@ public interface Message {
          * A system information message which indicates that an operator is busy and can not reply at the moment.
          */
         OPERATOR_BUSY,
+        /**
+         * A sticker message sent by a visitor.
+         */
+        STICKER_VISITOR,
         /**
          * A text message sent by a visitor.
          */
@@ -395,13 +409,35 @@ public interface Message {
         /**
          * @return state from keyboard item
          */
-        @Nullable String getState();
+        @Nullable Keyboard.State getState();
 
         /**
          * @return the button that was pressed in keyboard item
          */
         @Nullable
         KeyboardResponse getKeyboardResponse();
+
+        /**
+         * Shows the state of the keyboard.
+         * @see Keyboard#getState()
+         */
+        enum State {
+
+            /**
+             * Means that all keyboard buttons are active and can be pressed.
+             */
+            PENDING,
+
+            /**
+             * Means that all keyboard buttons are inactive and can't be pressed.
+             */
+            CANCELLED,
+
+            /**
+             * Means that selected button is displayed pressed others are inactive.
+             */
+            COMPLETED,
+        }
     }
 
     /**
@@ -451,5 +487,23 @@ public interface Message {
          * @return the message id that was pressed in keyboard item
          */
         @NonNull String getMessageId();
+    }
+
+    /**
+     * @return the sticker item that was sent to the server.
+     */
+    @Nullable
+    Sticker getSticker();
+
+    /**
+     * Contains information about sticker.
+     * @see Message#getSticker()
+     */
+    interface Sticker {
+
+        /**
+         * @return sticker id
+         */
+        int getStickerId();
     }
 }

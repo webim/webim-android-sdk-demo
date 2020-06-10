@@ -1,7 +1,7 @@
 package com.webimapp.android.sdk.impl;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -18,6 +18,7 @@ import com.webimapp.android.sdk.impl.items.FileParametersItem;
 import com.webimapp.android.sdk.impl.items.KeyboardItem;
 import com.webimapp.android.sdk.impl.items.KeyboardRequestItem;
 import com.webimapp.android.sdk.impl.items.MessageItem;
+import com.webimapp.android.sdk.impl.items.StickerItem;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
@@ -141,6 +142,8 @@ public final class InternalUtils {
                 return Message.Type.KEYBOARD;
             case KEYBOARD_RESPONCE:
                 return Message.Type.KEYBOARD_RESPONSE;
+            case STICKER_VISITOR:
+                return Message.Type.STICKER_VISITOR;
             default:
                 throw new IllegalStateException(kind.toString());
         }
@@ -331,7 +334,7 @@ public final class InternalUtils {
         return new MessageImpl.ImageInfoImpl(url, size.getWidth(), size.getHeight());
     }
 
-    public static <T> T getKeyboard(String data, boolean isHistoryMessage, Type mapType) {
+    public static <T> T getItem(String data, boolean isHistoryMessage, Type mapType) {
         if (!isHistoryMessage) {
             return gson.fromJson(data, mapType);
         } else {
@@ -343,10 +346,21 @@ public final class InternalUtils {
     public static Message.Keyboard getKeyboardButton(@Nullable KeyboardItem keyboardItem) {
         return keyboardItem != null
                 ? new MessageImpl.KeyboardImpl(
-                        keyboardItem.getState(),
+                        getKeyboardState(keyboardItem.getState()),
                         extractButtons(keyboardItem),
                         extractResponse(keyboardItem.getResponse()))
                 : null;
+    }
+
+    private static Message.Keyboard.State getKeyboardState(KeyboardItem.State keyboardState) {
+        switch (keyboardState) {
+            case PENDING:
+                return Message.Keyboard.State.PENDING;
+            case COMPLETED:
+                return Message.Keyboard.State.COMPLETED;
+            default:
+                return Message.Keyboard.State.CANCELLED;
+        }
     }
 
     @Nullable
@@ -395,6 +409,10 @@ public final class InternalUtils {
                 : null;
     }
 
+    public static Message.Sticker getSticker(StickerItem stickerItem) {
+        return new MessageImpl.StickerImpl(stickerItem.getStickerId());
+    }
+
     private static Message.KeyboardButtons extractButton(KeyboardRequestItem.Button keyboardRequest) {
         return new MessageImpl.KeyboardButtonsImpl(
                 keyboardRequest.getId(),
@@ -414,16 +432,17 @@ public final class InternalUtils {
             long quoteTimeSeconds = 0;
             Message.Type quoteState = null;
             if ((quote.getState() == MessageItem.Quote.State.FILLED)) {
-                if ((quote.getType() == MessageItem.WMMessageKind.FILE_FROM_VISITOR)
-                        || (quote.getType() == MessageItem.WMMessageKind.FILE_FROM_OPERATOR)) {
-                    fileInfo = extractFileInfo(serverUrl, quote, client);
+                MessageItem.Quote.QuotedMessage quotedMessage = quote.getMessage();
+                if ((quotedMessage.getKind() == MessageItem.WMMessageKind.FILE_FROM_VISITOR)
+                        || (quotedMessage.getKind() == MessageItem.WMMessageKind.FILE_FROM_OPERATOR)) {
+                    fileInfo = extractFileInfo(serverUrl, quotedMessage, client);
                 }
-                quoteText = quote.getText();
-                quoteAuthorId = quote.getAuthorId();
-                quoteId = quote.getId();
-                quoteState = toPublicMessageType(quote.getType());
-                quoteSenderName = quote.getName();
-                quoteTimeSeconds = quote.getTimeSeconds();
+                quoteText = quotedMessage.getText();
+                quoteAuthorId = quotedMessage.getAuthorId();
+                quoteId = quotedMessage.getId();
+                quoteState = toPublicMessageType(quotedMessage.getKind());
+                quoteSenderName = quotedMessage.getName();
+                quoteTimeSeconds = quotedMessage.getTsSeconds();
             }
             return new MessageImpl.QuoteImpl(
                     fileInfo,
@@ -451,11 +470,11 @@ public final class InternalUtils {
     }
 
     private static Message.FileInfo extractFileInfo(@NonNull String serverUrl,
-                                                    @NonNull MessageItem.Quote quotedMessage,
+                                                    @NonNull MessageItem.Quote.QuotedMessage quotedMessage,
                                                     @NonNull WebimClient client) {
         MessageItem messageItem = new MessageItem();
         messageItem.setMessage(percentDecode(quotedMessage.getText()));
-        messageItem.setType(quotedMessage.getType());
+        messageItem.setType(quotedMessage.getKind());
         messageItem.setId(quotedMessage.getId());
         Message.Attachment attachment = getAttachment(serverUrl, messageItem, client);
         if (attachment != null) {

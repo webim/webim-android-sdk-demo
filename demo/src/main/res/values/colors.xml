@@ -20,12 +20,14 @@
     <color name="receivedMsgBubble">#FFFFFF</color>
     <color name="receivedMsgText">#272A51</color>
     <color name="receivedMsgTimeText">#805C5F8A</color>
+    <color name="receivedMsgEditedText">#805C5F8A</color>
     <color name="receivedMsgSelect">#E4F9FF</color>
 
     <color name="sendingMsgBubble">#15ACD2</color>
     <color name="sendingMsgText">#FFFFFF</color>
     <color name="sendingMsgFileProperty">#99FFFFFF</color>
     <color name="sendingMsgTimeText">#805C5F8A</color>
+    <color name="sendingMsgEditedText">#805C5F8A</color>
     <color name="sendingMsgSelect">#008AAD</color>
 
     <color name="message_border">#E0E2EA</color>

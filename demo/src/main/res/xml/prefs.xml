@@ -5,10 +5,10 @@
         android:defaultValue="demo"
         android:inputType="textUri"
         android:key="account"
-        android:summary="@string/prefs_account_summary"
         android:textColor="@color/colorText"
         android:textColorHighlight="#5C5F8A"
         android:textColorHint="@color/colorHintText"
+        android:summary="@string/prefs_account_summary"
         android:title="@string/prefs_account_title"/>
     <EditTextPreference
         android:key="location"

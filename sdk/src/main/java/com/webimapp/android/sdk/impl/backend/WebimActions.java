@@ -1,11 +1,12 @@
 package com.webimapp.android.sdk.impl.backend;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.webimapp.android.sdk.MessageStream;
 import com.webimapp.android.sdk.impl.items.responses.HistoryBeforeResponse;
 import com.webimapp.android.sdk.impl.items.responses.HistorySinceResponse;
+import com.webimapp.android.sdk.impl.items.responses.SearchResponse;
 
 import okhttp3.RequestBody;
 
@@ -48,6 +49,9 @@ public interface WebimActions {
                           @Nullable String draftMessage,
                           boolean deleteDraft);
 
+    void searchMessages(@NonNull String query,
+                        @NonNull DefaultCallback<SearchResponse> callback);
+
     void rateOperator(@Nullable String operatorId,
                       @Nullable String note,
                       int rate,
@@ -65,4 +69,8 @@ public interface WebimActions {
 
     void sendChatToEmailAddress(@NonNull String email,
                                 @NonNull MessageStream.SendDialogToEmailAddressCallback sendChatToEmailCallback);
+
+    void sendSticker(int stickerId,
+                     @NonNull String clientSideId,
+                     @Nullable MessageStream.SendStickerCallback callback);
 }

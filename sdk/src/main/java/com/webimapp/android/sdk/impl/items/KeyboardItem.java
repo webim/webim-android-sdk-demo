@@ -8,11 +8,11 @@ public final class KeyboardItem {
     @SerializedName("buttons")
     private List<List<Buttons>> buttons;
     @SerializedName("state")
-    private String state;
+    private State state;
     @SerializedName("response")
     private Response response;
 
-    public String getState() {
+    public State getState() {
         return state;
     }
 
@@ -52,5 +52,14 @@ public final class KeyboardItem {
         public String getMessageId() {
             return messageId;
         }
+    }
+
+    public enum State {
+        @SerializedName("pending")
+        PENDING,
+        @SerializedName("cancelled")
+        CANCELLED,
+        @SerializedName("completed")
+        COMPLETED,
     }
 }

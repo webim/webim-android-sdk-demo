@@ -1,7 +1,7 @@
 package com.webimapp.android.sdk.impl;
 
 import android.os.Handler;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import com.webimapp.android.sdk.impl.backend.WebimActions;
 

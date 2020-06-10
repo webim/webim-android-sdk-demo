@@ -1,7 +1,7 @@
 package com.webimapp.android.sdk.impl;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -12,6 +12,7 @@ import com.webimapp.android.sdk.impl.items.KeyboardItem;
 import com.webimapp.android.sdk.impl.items.KeyboardRequestItem;
 import com.webimapp.android.sdk.impl.items.MessageItem;
 import com.webimapp.android.sdk.impl.items.OperatorItem;
+import com.webimapp.android.sdk.impl.items.StickerItem;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -50,10 +51,16 @@ public final class MessageFactories {
 
         Message.Quote quote = InternalUtils.getQuote(serverUrl, message.getQuote(), client);
 
-        Object json = (kind == MessageItem.WMMessageKind.FILE_FROM_VISITOR
-                || kind == MessageItem.WMMessageKind.FILE_FROM_OPERATOR)
-                ? message
-                : message.getData();
+        Object json;
+        if (kind == MessageItem.WMMessageKind.FILE_FROM_VISITOR || kind == MessageItem.WMMessageKind.FILE_FROM_OPERATOR) {
+            json = message;
+        } else {
+            if (quote != null) {
+                json = message.getQuote();
+            } else {
+                json = message.getData();
+            }
+        }
 
         String rawText = (json == null)
                 ? null
@@ -62,15 +69,22 @@ public final class MessageFactories {
         Message.Keyboard keyboardButton = null;
         if (kind == MessageItem.WMMessageKind.KEYBOARD) {
             Type mapType = new TypeToken<KeyboardItem>(){}.getType();
-            KeyboardItem keyboard = InternalUtils.getKeyboard(rawText, isHistoryMessage, mapType);
+            KeyboardItem keyboard = InternalUtils.getItem(rawText, isHistoryMessage, mapType);
             keyboardButton = InternalUtils.getKeyboardButton(keyboard);
         }
 
         Message.KeyboardRequest keyboardRequest = null;
         if (kind == MessageItem.WMMessageKind.KEYBOARD_RESPONCE) {
             Type mapType = new TypeToken<KeyboardRequestItem>(){}.getType();
-            KeyboardRequestItem keyboard = InternalUtils.getKeyboard(rawText, isHistoryMessage, mapType);
+            KeyboardRequestItem keyboard = InternalUtils.getItem(rawText, isHistoryMessage, mapType);
             keyboardRequest = InternalUtils.getKeyboardRequest(keyboard);
+        }
+
+        Message.Sticker sticker = null;
+        if (kind == MessageItem.WMMessageKind.STICKER_VISITOR) {
+            Type mapType = new TypeToken<StickerItem>(){}.getType();
+            StickerItem stickerItem = InternalUtils.getItem(rawText, isHistoryMessage, mapType);
+            sticker = InternalUtils.getSticker(stickerItem);
         }
 
         return new MessageImpl(
@@ -90,9 +104,11 @@ public final class MessageFactories {
                 message.isRead(),
                 message.canBeEdited(),
                 message.canBeReplied(),
+                message.isEdited(),
                 quote,
                 keyboardButton,
-                keyboardRequest);
+                keyboardRequest,
+                sticker);
     }
 
     public interface Mapper<T extends MessageImpl> {
@@ -180,6 +196,7 @@ public final class MessageFactories {
                     Message.Type.VISITOR,
                     text,
                     System.currentTimeMillis() * 1000,
+                    null,
                     null);
         }
 
@@ -204,7 +221,8 @@ public final class MessageFactories {
                     Message.Type.VISITOR,
                     text,
                     System.currentTimeMillis() * 1000,
-                    quote);
+                    quote,
+                    null);
         }
 
         public MessageSending createFile(Message.Id id, String fileName) {
@@ -215,7 +233,21 @@ public final class MessageFactories {
                     Message.Type.FILE_FROM_VISITOR,
                     fileName,
                     System.currentTimeMillis() * 1000,
+                    null,
                     null);
+        }
+
+        public MessageSending createSticker(Message.Id id, int stickerId) {
+            MessageImpl.Sticker sticker = new MessageImpl.StickerImpl(stickerId);
+            return new MessageSending(
+                    serverUrl,
+                    id,
+                    "",
+                    Message.Type.STICKER_VISITOR,
+                    "",
+                    System.currentTimeMillis() * 1000,
+                    null,
+                    sticker);
         }
     }
 

@@ -22,6 +22,8 @@
     <string name="content_desc_send_message">send message</string>
     <string name="rate_operator_button">Отправить</string>
     <string name="rate_operator_title">Оценить оператора</string>
+    <string name="rate_operator_rating_sent">Оценка была отправлена</string>
+    <string name="rate_operator_rating_empty">Оценка не выставлена</string>
     <string name="file_chooser_title">Выберите файл для загрузки</string>
     <string name="file_chooser_not_found">Для загрузки файла, пожалуйста, установите файловый менеджер</string>
     <string name="file_selection_failed">Не удалось выбрать файл</string>
@@ -50,10 +52,11 @@
     <string name="prefs_notifications_summary">Включить FCM пуш-уведомления для новых сообщений от оператора</string>
     <string name="prefs_notifications_title">Уведомления</string>
     <string name="prefs_account_title">Аккаунт</string>
-    <string name="prefs_account_summary">Имя Webim аккаунта или полный адрес сервера (например, \'demo\' или \'https://demo.webim.ru\')</string>
-    <string name="prefs_location_summary">location</string>
+    <string name="prefs_account_summary">Имя Webim аккаунта или полный адрес сервера (например, \"demo\" или \"https://demo.webim.ru\")</string>
+    <string name="prefs_location_summary">Размещение, в которое поступит обращение (например, \"mobile\")</string>
     <string name="prefs_location_title">Размещение</string>
     <string name="prefs_privacy">Политика конфиденциальности</string>
+    <string name="prefs_version">Версия приложения: %1$s\nВерсия SDK: %2$s</string>
 
     <string name="typing">пишет…</string>
 
@@ -77,11 +80,15 @@
     <string name="copy">Копировать</string>
     <string name="edit">Изменить</string>
     <string name="delete">Удалить</string>
+    <string name="failed_send_empty_message">Нельзя отправить пустое сообщение</string>
+    <string name="wait_sync_toast">Ожидание синхронизации с сервером</string>
+    <string name="operation_denied_toast">Операция запрещена</string>
 
     <string name="copied_message">Текст сообщения скопирован</string>
     <string name="copy_failed">Не удалось скопировать сообщение</string>
     <string name="quote_is_pending">Цитата загружается</string>
     <string name="quote_is_not_found">Цитата недоступна</string>
+    <string name="message_edited">изменено</string>
 
     <string name="empty_reply_text"> </string>
     <string name="reply_message_with_image">"Изображение "</string>
@@ -91,4 +98,5 @@
     <string name="channel_id">com.webimapp.android.demo.client.fcm</string>
     <string name="channel_name">Webim notification</string>
     <string name="visitor_sender_name">Вы</string>
+    <string name="editing_title">Редактирование</string>
 </resources>

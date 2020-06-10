@@ -1,7 +1,7 @@
 package com.webimapp.android.sdk.impl;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.webimapp.android.sdk.Message;
 import com.webimapp.android.sdk.Operator;
@@ -33,7 +33,9 @@ public class MessageImpl implements Message, TimeMicrosHolder {
     private boolean readByOperator;
     private boolean canBeEdited;
     private boolean canBeReplied;
+    private boolean edited;
     private @Nullable Quote quote;
+    private @Nullable Sticker sticker;
 
     public MessageImpl(
             @NonNull String serverUrl,
@@ -52,9 +54,11 @@ public class MessageImpl implements Message, TimeMicrosHolder {
             boolean readByOperator,
             boolean canBeEdited,
             boolean canBeReplied,
+            boolean edited,
             @Nullable Quote quote,
             @Nullable Keyboard keyboard,
-            @Nullable KeyboardRequest keyboardRequest
+            @Nullable KeyboardRequest keyboardRequest,
+            @Nullable Sticker sticker
     ) {
         serverUrl.getClass(); // NPE
         id.getClass(); // NPE
@@ -82,9 +86,11 @@ public class MessageImpl implements Message, TimeMicrosHolder {
         this.readByOperator = readByOperator;
         this.canBeEdited = canBeEdited;
         this.canBeReplied = canBeReplied;
+        this.edited = edited;
         this.quote = quote;
         this.keyboard = keyboard;
         this.keyboardRequest = keyboardRequest;
+        this.sticker = sticker;
     }
 
     @Override
@@ -99,6 +105,11 @@ public class MessageImpl implements Message, TimeMicrosHolder {
 
     public boolean canBeReplied() {
         return canBeReplied;
+    }
+
+    @Override
+    public boolean isEdited() {
+        return edited;
     }
 
     @Nullable
@@ -117,6 +128,12 @@ public class MessageImpl implements Message, TimeMicrosHolder {
         return keyboardRequest;
     }
 
+    @Nullable
+    @Override
+    public Sticker getSticker() {
+        return sticker;
+    }
+
     public void setReadByOperator(boolean read) {
         this.readByOperator = read;
     }
@@ -129,6 +146,11 @@ public class MessageImpl implements Message, TimeMicrosHolder {
     @Nullable
     public Attachment getAttachment() {
         return attachment;
+    }
+
+    @Override
+    public boolean isHistoryMessage() {
+        return isHistoryMessage;
     }
 
     @Nullable
@@ -305,6 +327,7 @@ public class MessageImpl implements Message, TimeMicrosHolder {
                         && m1.timeMicros == m2.timeMicros
                         && InternalUtils.equals(m1.rawText, m2.rawText)
                         && m1.isReadByOperator() == m2.isReadByOperator()
+                        && m1.canBeReplied == m2.canBeReplied
                         && m1.canBeEdited == m2.canBeEdited;
     }
 
@@ -567,12 +590,12 @@ public class MessageImpl implements Message, TimeMicrosHolder {
     }
 
     public static class KeyboardImpl implements Keyboard {
-        private final @NonNull String state;
+        private final @NonNull Keyboard.State state;
         private final @Nullable List<List<KeyboardButtons>> keyboardButton;
         private final @Nullable KeyboardResponse keyboardResponse;
 
         public KeyboardImpl(
-                @NonNull String state,
+                @NonNull Keyboard.State state,
                 @Nullable List<List<KeyboardButtons>> keyboardButton,
                 @Nullable KeyboardResponse keyboardResponse) {
             this.state = state;
@@ -588,7 +611,7 @@ public class MessageImpl implements Message, TimeMicrosHolder {
 
         @NonNull
         @Override
-        public String getState() {
+        public Keyboard.State getState() {
             return state;
         }
 
@@ -666,6 +689,19 @@ public class MessageImpl implements Message, TimeMicrosHolder {
         @Override
         public String getMessageId() {
             return messageId;
+        }
+    }
+
+    public static class StickerImpl implements Message.Sticker {
+        private int stickerId;
+
+        public StickerImpl(int stickerId) {
+            this.stickerId = stickerId;
+        }
+
+        @Override
+        public int getStickerId() {
+            return stickerId;
         }
     }
 }

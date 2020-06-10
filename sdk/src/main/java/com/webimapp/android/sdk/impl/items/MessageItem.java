@@ -1,6 +1,6 @@
 package com.webimapp.android.sdk.impl.items;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -155,6 +155,10 @@ public final class MessageItem implements Comparable<MessageItem> {
         return canBeReplied;
     }
 
+    public boolean isEdited() {
+        return edited;
+    }
+
     @Override
     public int compareTo(@NonNull MessageItem another) {
         return (int) (this.getTimeMillis() - another.getTimeMillis());
@@ -214,6 +218,8 @@ public final class MessageItem implements Comparable<MessageItem> {
         OPERATOR,
         @SerializedName("operator_busy")
         OPERATOR_BUSY,
+        @SerializedName("sticker_visitor")
+        STICKER_VISITOR,
         @SerializedName("visitor")
         VISITOR
     }
@@ -223,41 +229,17 @@ public final class MessageItem implements Comparable<MessageItem> {
     }
 
     public static final class Quote {
-        private String id;
-        private  WMMessageKind kind;
         @SerializedName("message")
         private QuotedMessage message;
-        private String name;
         @SerializedName("state")
         private State state;
-        private String text;
 
-        public String getAuthorId() {
-            return message.authorId;
-        }
-
-        public String getId() {
-            return id = message.getId();
-        }
-
-        public String getName() {
-            return name = message.getName();
+        public QuotedMessage getMessage() {
+            return message;
         }
 
         public State getState() {
             return state;
-        }
-
-        public WMMessageKind getType() {
-            return kind = message.getType();
-        }
-
-        public String getText() {
-            return text = message.getText();
-        }
-
-        public long getTimeSeconds() {
-            return message.getTimeSeconds();
         }
 
         public enum State {
@@ -282,6 +264,8 @@ public final class MessageItem implements Comparable<MessageItem> {
             private String text;
             @SerializedName("ts")
             private long tsSeconds;
+            @SerializedName("channelSideId")
+            private String channelSideId;
 
             public String getAuthorId() {
                 return authorId;
@@ -291,111 +275,25 @@ public final class MessageItem implements Comparable<MessageItem> {
                 return id;
             }
 
-            public String getName() {
-                return name;
+            public WMMessageKind getKind() {
+                return kind;
             }
 
-            public WMMessageKind getType() {
-                return kind;
+            public String getName() {
+                return name;
             }
 
             public String getText() {
                 return text;
             }
 
-            public long getTimeSeconds() {
+            public long getTsSeconds() {
                 return tsSeconds;
             }
-        }
 
-        public static String getRawQuote(
-                String state,
-                String senderName,
-                String text,
-                String type,
-                long tsSeconds,
-                String authorId,
-                String id) {
-            return "{\"state\":\"" + state.toLowerCase().replace("_","-") + "\"," +
-                    "\"message\":{" +
-                        "\"channelSideId\":null," +
-                        "\"name\":" + checkOnNull(senderName) + "," +
-                        "\"text\":" + checkOnAttachment(text, type) + "," +
-                        "\"kind\":" + convertingKind(type) + "," +
-                        "\"ts\":" + tsSeconds + "," +
-                        "\"authorId\":" + checkOnNull(authorId) +  "," +
-                        "\"id\":" + checkOnNull(id) +
-                        "}" +
-                    "}";
-        }
-        
-        private static String checkOnNull(String checkValue) {
-            return (checkValue != null) ? "\"" + checkValue + "\"" : null;
-        }
-
-        private static String checkOnAttachment(String checkValue, String messageType) {
-            if (messageType != null) {
-                return (messageType.equals(WMMessageKind.FILE_FROM_OPERATOR.toString())
-                        || messageType.equals(WMMessageKind.FILE_FROM_VISITOR.toString()))
-                        ? checkOnNull(percentEncode(checkValue))
-                        : checkOnNull(checkValue);
-            } else {
-                return null;
+            public String getChannelSideId() {
+                return channelSideId;
             }
         }
-
-        private static String convertingKind(String type) {
-            return (type != null)
-                    ? checkOnNull(WMMessageKindForSaveInDb.valueOf(type).toString())
-                    : null;
-        }
-
-        private static String percentEncode(String input) {
-            if ((input == null) || input.isEmpty()) {
-                return input;
-            }
-
-            String CHARACTERS_TO_ENCODE = "\n\"\\%";
-            StringBuilder result = new StringBuilder(input);
-            for (int i = (input.length() - 1); i >= 0; i--) {
-                if (CHARACTERS_TO_ENCODE.indexOf(input.charAt(i)) != -1) {
-                    result.replace(
-                            i,
-                            (i + 1),
-                            ("%" + Integer.toHexString(0x100 | input.charAt(i))
-                                    .substring(1).toUpperCase())
-                    );
-                }
-            }
-
-            return result.toString();
-        }
-
-        public enum WMMessageKindForSaveInDb {
-            ACTION_REQUEST ("action_request"),
-            CONTACT_REQUEST ("cont_req"),
-            CONTACTS ("contacts"),
-            FILE_FROM_OPERATOR ("file_operator"),
-            FOR_OPERATOR ("for_operator"),
-            FILE_FROM_VISITOR ("file_visitor"),
-            INFO ("info"),
-            KEYBOARD ("keyboard"),
-            KEYBOARD_RESPONCE ("keyboard_response"),
-            OPERATOR ("operator"),
-            OPERATOR_BUSY ("operator_busy"),
-            VISITOR ("visitor");
-
-            private final String kind;
-
-            WMMessageKindForSaveInDb(String jsonKind) {
-                kind = jsonKind;
-            }
-
-            @Override
-            public String toString() {
-                return kind;
-            }
-        }
-
     }
 }

@@ -1,7 +1,7 @@
 package com.webimapp.android.sdk.impl;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.webimapp.android.sdk.Message;
 import com.webimapp.android.sdk.MessageListener;
@@ -12,11 +12,14 @@ import com.webimapp.android.sdk.impl.items.ChatItem;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.Collections.unmodifiableList;
 
@@ -261,6 +264,12 @@ public class MessageHolderImpl implements MessageHolder {
         callback.receive(unmodifiableList(messages.subList(Math.max(0, offset - limit), offset)));
     }
 
+    public void onFirstFullUpdateReceived() {
+        if (messageTracker != null && messageTracker.messagesSyncedListener != null) {
+            messageTracker.messagesSyncedListener.messagesSynced();
+        }
+    }
+
     @Override
     public void onChatReceive(@Nullable ChatItem oldChat,
                               @Nullable ChatItem newChat,
@@ -442,9 +451,11 @@ public class MessageHolderImpl implements MessageHolder {
                     message.isReadByOperator(),
                     message.canBeEdited(),
                     message.canBeReplied(),
+                    message.isEdited(),
                     message.getQuote(),
                     message.getKeyboard(),
-                    message.getKeyboardRequest());
+                    message.getKeyboardRequest(),
+                    message.getSticker());
             newMsg.sendStatus = Message.SendStatus.SENDING;
             messageTracker.messageListener.messageChanged(message, newMsg);
             return message.text;
@@ -498,9 +509,11 @@ public class MessageHolderImpl implements MessageHolder {
                     message.isReadByOperator(),
                     message.canBeEdited(),
                     message.canBeReplied(),
+                    message.isEdited(),
                     message.getQuote(),
                     message.getKeyboard(),
-                    message.getKeyboardRequest());
+                    message.getKeyboardRequest(),
+                    message.getSticker());
             newMsg.sendStatus = Message.SendStatus.SENT;
             messageTracker.messageListener.messageChanged(message, newMsg);
         }
@@ -525,6 +538,7 @@ public class MessageHolderImpl implements MessageHolder {
         private boolean isAllMessageSourcesEnded;
         private boolean isDestroyed;
 
+        private MessagesSyncedListener messagesSyncedListener;
         private GetMessagesCallback cachedCallback;
         private int cachedLimit;
 
@@ -536,6 +550,7 @@ public class MessageHolderImpl implements MessageHolder {
         public void getNextMessages(final int limitOfMessages,
                                     @NonNull final GetMessagesCallback callback) {
             checkAccess();
+
             if (isDestroyed) {
                 throw new IllegalStateException("WebimMessageTracker is destroyed");
             }
@@ -579,6 +594,7 @@ public class MessageHolderImpl implements MessageHolder {
         @Override
         public void getLastMessages(final int limitOfMessages, GetMessagesCallback callback) {
             checkAccess();
+
             if (isDestroyed) {
                 throw new IllegalStateException("WebimMessageTracker is destroyed");
             }
@@ -624,6 +640,7 @@ public class MessageHolderImpl implements MessageHolder {
         @Override
         public void getAllMessages(final GetMessagesCallback callback) {
             checkAccess();
+
             if (isDestroyed) {
                 throw new IllegalStateException("WebimMessageTracker is destroyed");
             }
@@ -636,6 +653,11 @@ public class MessageHolderImpl implements MessageHolder {
                     }
                 }
             });
+        }
+
+        @Override
+        public void setMessagesSyncedListener(@Nullable MessagesSyncedListener messagesSyncedListener) {
+            this.messagesSyncedListener = messagesSyncedListener;
         }
 
         private void uncheckedGetNextMessages(int limit,
@@ -666,7 +688,7 @@ public class MessageHolderImpl implements MessageHolder {
             if (unwrappedMessage.getSource().isHistory()) {
                 for (Iterator<MessageImpl> iterator = idToHistoryMessageMap.values().iterator();
                      iterator.hasNext();
-                        ) {
+                ) {
                     MessageImpl iteratedMessage = iterator.next();
                     if (iteratedMessage.getTimeMicros() < unwrappedMessage.getTimeMicros()) {
                         iterator.remove();
@@ -692,6 +714,70 @@ public class MessageHolderImpl implements MessageHolder {
                     messageTracker = null;
                 }
             }
+        }
+
+        @Override
+        public void loadAllHistorySince(@NonNull final Message sinceMessage, @NonNull final GetMessagesCallback messagesCallback) {
+            final List<MessageImpl> searchedMessages = new LinkedList<>();
+            historyStorage.getFull(new GetMessagesCallback() {
+                @Override
+                public void receive(@NonNull List<? extends Message> localStorageMessages) {
+                    int sinceMessagePosition = -1;
+                    for (int i = 0; i < localStorageMessages.size(); i++) {
+                        Message currentLocalMessage = localStorageMessages.get(i);
+                        if (currentLocalMessage.getId().equals(sinceMessage.getId())) {
+                            sinceMessagePosition = i;
+                            break;
+                        }
+                    }
+                    if (sinceMessagePosition != -1) {
+                        for (int i = sinceMessagePosition; i < localStorageMessages.size(); i++) {
+                            searchedMessages.add((MessageImpl) localStorageMessages.get(i));
+                        }
+                        headMessage = searchedMessages.get(0);
+                        messagesCallback.receive(searchedMessages);
+                        return;
+                    }
+                    long beforeMillis = localStorageMessages.isEmpty()
+                            ? new Date().getTime()
+                            : localStorageMessages.get(0).getTime();
+                    loadHistoryBefore(TimeUnit.MILLISECONDS.toMicros(beforeMillis), new HistoryBeforeCallback() {
+
+                        @Override
+                        public void onSuccess(List<? extends MessageImpl> messages, boolean hasMore) {
+                            if (messages.isEmpty()) {
+                                headMessage = null;
+                                messagesCallback.receive(Collections.<Message>emptyList());
+                                return;
+                            }
+
+                            MessageImpl lastMessage = messages.get(0);
+                            if (((MessageImpl) sinceMessage).getTimeMicros() < lastMessage.getTimeMicros()) {
+                                searchedMessages.addAll(0, messages);
+                                loadHistoryBefore(lastMessage.getTimeMicros(), this);
+                            } else {
+                                for (int i = messages.size() - 1; i >= 0; i--) {
+                                    MessageImpl historyMessage = messages.get(i);
+                                    searchedMessages.add(0, historyMessage);
+                                    if (historyMessage.getId().equals(sinceMessage.getId())) {
+                                        headMessage = searchedMessages.get(0);
+                                        messagesCallback.receive(searchedMessages);
+                                        return;
+                                    }
+                                }
+
+                                // if messages were not found
+                                headMessage = null;
+                                messagesCallback.receive(Collections.<Message>emptyList());
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+        private void loadHistoryBefore(long beforeMicros, HistoryBeforeCallback historyBeforeCallback) {
+            historyProvider.requestHistoryBefore(beforeMicros, historyBeforeCallback);
         }
 
         void onNewMessage(final @CurrentChat MessageImpl message) {
@@ -853,8 +939,8 @@ public class MessageHolderImpl implements MessageHolder {
                     idToHistoryMessageMap.put(msg.getHistoryId().getDbId(), msg);
                     messageListener.messageAdded(
                             currentChatMessages.size() != 0
-                            ? currentChatMessages.get(0)
-                            : null,
+                                    ? currentChatMessages.get(0)
+                                    : null,
                             msg);
                 }
             }
@@ -891,22 +977,18 @@ public class MessageHolderImpl implements MessageHolder {
                         MessageImpl first = (MessageImpl) messages.get(0);
                         for (Message msg1 : messages) {
                             MessageImpl msg = (MessageImpl) msg1;
-                            boolean allow = true;
                             if (msg.getSource().isHistory()) {
                                 if (msg.getTime() >= currentChatMessages.get(0).getTime()
                                         && msg.getTime() <= currentChatMessages.get(currentChatMessages.size() - 1).getTime()) {
                                     for (MessageImpl cc : currentChatMessages) {
                                         if (cc.getId().equals(msg.getId())) {
-                                            allow = false;
                                             cc.setSecondaryHistory(msg);
                                             break;
                                         }
                                     }
                                 }
                             }
-                            if (allow) {
-                                filtered.add(msg);
-                            }
+                            filtered.add(msg);
                         }
                         if (filtered.isEmpty()) {
                             getMessages(first, limit, this);

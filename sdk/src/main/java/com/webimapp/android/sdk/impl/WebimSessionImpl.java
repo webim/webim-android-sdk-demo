@@ -5,8 +5,8 @@ import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.google.gson.JsonParser;
 import com.webimapp.android.sdk.FatalErrorHandler;
@@ -795,6 +795,7 @@ public class WebimSessionImpl implements WebimSession {
         private MessageStreamImpl messageStream;
         private MessageHolder messageHolder;
         private WebimSessionImpl session;
+        private boolean firstFullUpdateReceived;
 
         private DeltaCallbackImpl(
                 @NonNull MessageFactories.Mapper<MessageImpl> currentChatMessageMapper,
@@ -819,6 +820,10 @@ public class WebimSessionImpl implements WebimSession {
         public void onFullUpdate(@NonNull DeltaFullUpdate fullUpdate) {
             messageStream.setInvitationState(VisitSessionStateItem.getType(fullUpdate.getState()));
             currentChat = fullUpdate.getChat();
+            if (!firstFullUpdateReceived) {
+                firstFullUpdateReceived = true;
+                messageHolder.onFirstFullUpdateReceived();
+            }
             messageStream.onFullUpdate(currentChat);
             messageStream.saveLocationSettings(fullUpdate);
             String status = fullUpdate.getOnlineStatus();

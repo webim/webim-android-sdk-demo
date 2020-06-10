@@ -1,7 +1,7 @@
 package com.webimapp.android.sdk;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.io.File;
 import java.util.Date;
@@ -131,6 +131,13 @@ public interface MessageStream {
      * created in
      */
     void respondSentryCall(String id);
+
+    /**
+     * @param query query to be searched
+     * @param callback callback for handling result
+     * */
+    void searchMessages(@NonNull String query,
+                        @Nullable SearchMessagesCallback callback);
 
     /**
      * Changes {@link ChatState} to {@link ChatState#QUEUE}
@@ -404,6 +411,19 @@ public interface MessageStream {
                         @Nullable SendFileCallback callback);
 
     /**
+     * Send sticker to chat.
+     * When calling this method, if there is an active {@link MessageTracker} (see
+     * {@link MessageStream#newMessageTracker}),
+     * {@link MessageListener#messageAdded(Message, Message)} with a message
+     * @param stickerId contains the id of the sticker to send
+     * @param sendStickerCallback shows if the call to send the sticker is completed or not
+     * @throws IllegalStateException if the WebimSession was destroyed
+     * @throws RuntimeException if the method was called not from the thread the WebimSession was
+     * created in
+     */
+    void sendSticker(int stickerId, @Nullable SendStickerCallback sendStickerCallback);
+
+    /**
      * MessageTracker (via {@link MessageTracker#getNextMessages}) allows to request the messages which are above in the history.
      * Each next call {@link MessageTracker#getNextMessages} returns earlier messages in relation to the already requested ones.
      * Changes of user-visible messages (i.e. ever requested from MessageTracker) are transmitted to
@@ -511,6 +531,17 @@ public interface MessageStream {
      */
     void sendDialogToEmailAddress(@NonNull String email,
                                   @NonNull SendDialogToEmailAddressCallback sendDialogToEmailAddressCallback);
+
+    /**
+     * @see MessageStream#searchMessages(String, SearchMessagesCallback)
+     * */
+    interface SearchMessagesCallback {
+        /**
+         * @param messages list of messages that corresponds to search query.<br/>
+         * Empty list if corresponding messages were not found.
+         * */
+        void onResult(@NonNull List<? extends Message> messages);
+    }
 
     /**
      * @see MessageStream#sendMessage(String, String, DataMessageCallback)
@@ -1174,6 +1205,40 @@ public interface MessageStream {
              * An unexpected error occurred while sending
              */
             UNKNOWN
+        }
+    }
+
+    /**
+     * @see MessageStream#sendSticker(int, SendStickerCallback)
+     */
+    interface SendStickerCallback {
+
+        /**
+         * Invoked if sending succeed.
+         */
+        void onSuccess();
+
+        /**
+         * Invoked if sending failure.
+         * @param sendStickerErrorWebimError Error
+         * @see SendStickerError
+         */
+        void onFailure(@NonNull WebimError<SendStickerError> sendStickerErrorWebimError);
+
+        /**
+         * @see SendStickerCallback#onFailure
+         */
+        enum SendStickerError {
+
+            /**
+             * There is no chat to send it to the sticker
+             */
+            NO_CHAT,
+
+            /**
+             * Not set sticker id
+             */
+            NO_STICKER_ID
         }
     }
 }
