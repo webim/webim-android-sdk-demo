@@ -561,7 +561,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                                     TextView textView) {
             String imageUrl = attachment.getImageInfo().getThumbUrl();
             final Uri fileUrl = Uri.parse(attachment.getUrl());
-            Glide.with(webimChatFragment)
+            Glide.with(webimChatFragment.getContext())
                     .load(imageUrl)
                     .diskCacheStrategy(DiskCacheStrategy.SOURCE)
                     .into(imageView);
@@ -888,7 +888,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                 profileImage.setVisibility(View.VISIBLE);
                 if (avatarUrl != null) {
                     if (!avatarUrl.equals(profileImage.getTag(R.id.avatarUrl))) {
-                        Glide.with(webimChatFragment).load(avatarUrl).into(profileImage);
+                        Glide.with(webimChatFragment.getContext()).load(avatarUrl).into(profileImage);
                         profileImage.setTag(R.id.avatarUrl, avatarUrl);
                     }
                 } else {
