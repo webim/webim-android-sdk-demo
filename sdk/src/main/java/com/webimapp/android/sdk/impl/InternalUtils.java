@@ -9,6 +9,7 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.webimapp.android.sdk.Message;
 import com.webimapp.android.sdk.Operator;
+import com.webimapp.android.sdk.Survey;
 import com.webimapp.android.sdk.Webim;
 import com.webimapp.android.sdk.WebimPushNotification;
 import com.webimapp.android.sdk.impl.backend.WebimClient;
@@ -19,6 +20,7 @@ import com.webimapp.android.sdk.impl.items.KeyboardItem;
 import com.webimapp.android.sdk.impl.items.KeyboardRequestItem;
 import com.webimapp.android.sdk.impl.items.MessageItem;
 import com.webimapp.android.sdk.impl.items.StickerItem;
+import com.webimapp.android.sdk.impl.items.SurveyItem;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
@@ -504,5 +506,17 @@ public final class InternalUtils {
             text = text.replace(key, charactersForDecode.get(key));
         }
         return text;
+    }
+
+    public static Survey.Question.Type getQuestionType(SurveyItem.Question.Type type) {
+        switch (type) {
+            case STARS:
+                return SurveyImpl.Question.Type.STARS;
+            case RADIO:
+                return SurveyImpl.Question.Type.RADIO;
+            case COMMENT:
+            default:
+                return SurveyImpl.Question.Type.COMMENT;
+        }
     }
 }

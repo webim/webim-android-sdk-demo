@@ -42,11 +42,11 @@ public class SettingsFragment extends PreferenceFragment
 
     private void checkFieldsValidity() {
         EditTextPreference accountPreference = (EditTextPreference) findPreference(KEY_ACCOUNT);
-        if (!isFieldValid(KEY_ACCOUNT, accountPreference.getText().trim())) {
+        if (!isFieldValid(KEY_ACCOUNT, accountPreference.getText())) {
             accountPreference.setText(DEFAULT_ACCOUNT);
         }
         EditTextPreference locationPreference = (EditTextPreference) findPreference(KEY_LOCATION);
-        if (!isFieldValid(KEY_LOCATION, locationPreference.getText().trim())) {
+        if (!isFieldValid(KEY_LOCATION, locationPreference.getText())) {
             locationPreference.setText(DEFAULT_LOCATION);
         }
     }
@@ -60,7 +60,13 @@ public class SettingsFragment extends PreferenceFragment
         Preference preference = findPreference(key);
         if (preference instanceof EditTextPreference) {
             EditTextPreference textPreference = (EditTextPreference) preference;
-            String text = textPreference.getText().trim();
+            String text = textPreference.getText();
+
+            if (!text.isEmpty() && (Character.isWhitespace(text.charAt(0)) ||
+                    Character.isWhitespace(text.charAt(text.length() - 1)))) {
+                textPreference.setText(text.trim());
+                return;
+            }
 
             if (text.isEmpty()) {
                 switch (key) {

@@ -688,7 +688,7 @@ class MessageHolderImplTest extends Specification {
         then: "received 5th message"
         1 * listener.messageAdded(null, wrap(messages[4]))
         and: "all current chat messages was historified"
-        holder.lastChatIndex == 0
+        holder.lastChatMessageIndex == 0
 
         when: "reset to last message and request latest messages"
         tracker.resetTo(wrap(messages[4]))
@@ -756,7 +756,7 @@ class MessageHolderImplTest extends Specification {
         then: "received 5th message"
         1 * listener.messageAdded(null, wrap(messages[4]))
         and: "all current chat messages was historified"
-        holder.lastChatIndex == 0
+        holder.lastChatMessageIndex == 0
 
         when: "reset to last message and request latest messages"
         tracker.resetTo(wrap(messages[4]))

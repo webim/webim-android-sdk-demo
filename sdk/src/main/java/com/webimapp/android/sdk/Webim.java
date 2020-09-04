@@ -12,6 +12,7 @@ import com.webimapp.android.sdk.impl.InternalUtils;
 import com.webimapp.android.sdk.impl.MagicConstants;
 import com.webimapp.android.sdk.impl.ProvidedVisitorFields;
 import com.webimapp.android.sdk.impl.StringId;
+import com.webimapp.android.sdk.impl.WebimErrorImpl;
 import com.webimapp.android.sdk.impl.WebimSessionImpl;
 import com.webimapp.android.sdk.impl.backend.WebimInternalLog;
 
@@ -180,6 +181,8 @@ public final class Webim {
         @Nullable
         private X509TrustManager trustManager;
 
+        @Nullable
+        private WebimSession.SessionCallback sessionCallback;
 
         private SessionBuilder() {
         }
@@ -521,9 +524,34 @@ public final class Webim {
          * Notice that a session is created as a paused, i.e. to start using it
          * the first thing to do is to call {@link WebimSession#resume()}.
          *
+         * @param callback - callback that is called when session was successfully created on server.
+         * @return new {@link WebimSession} object or null if error was occurred while creating new
+         * session.
+         */
+        @Nullable
+        public WebimSession build(final @NonNull WebimSession.SessionCallback callback) {
+            this.sessionCallback = callback;
+            try {
+                return build();
+            } catch (Exception exception) {
+                callback.onFailure(new WebimErrorImpl<>(
+                        WebimSession.SessionCallback.SessionError.INVALID_PARAMETER_VALUE,
+                        null
+                ));
+                return null;
+            }
+        }
+
+        /**
+         * Builds new {@link WebimSession} object. This method must be called from the thread
+         * {@link android.os.Looper}
+         * (for instance, from the main thread of the application), and all the follow-up work with
+         * the session must be implemented from the same stream.
+         * Notice that a session is created as a paused, i.e. to start using it
+         * the first thing to do is to call {@link WebimSession#resume()}.
+         *
          * @return new {@link WebimSession} object
          */
-
         public WebimSession build() {
             if (context == null) {
                 throw new IllegalArgumentException("context can't be null! " +
@@ -578,7 +606,8 @@ public final class Webim {
                     clearVisitorData,
                     sslSocketFactory,
                     trustManager,
-                    multivisitorSection
+                    multivisitorSection,
+                    sessionCallback
             );
         }
 

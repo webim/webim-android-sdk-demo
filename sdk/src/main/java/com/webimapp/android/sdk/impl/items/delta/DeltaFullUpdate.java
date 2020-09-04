@@ -3,6 +3,8 @@ package com.webimapp.android.sdk.impl.items.delta;
 import com.google.gson.annotations.SerializedName;
 import com.webimapp.android.sdk.impl.items.ChatItem;
 import com.webimapp.android.sdk.impl.items.DepartmentItem;
+import com.webimapp.android.sdk.impl.items.SurveyItem;
+
 import java.util.List;
 
 public class DeltaFullUpdate {
@@ -25,6 +27,14 @@ public class DeltaFullUpdate {
     private String visitorJson; // Manual deserialization "visitor"
     @SerializedName("visitSessionId")
     private String visitSessionId;
+    @SerializedName("showHelloMessage")
+    private boolean showHelloMessage;
+    @SerializedName("chatStartAfterMessage")
+    private boolean chatStartAfterMessage;
+    @SerializedName("helloMessageDescr")
+    private String helloMessageDescr;
+    @SerializedName("survey")
+    private SurveyItem survey;
 
     public DeltaFullUpdate() {
         // Fix for gson;
@@ -74,9 +84,24 @@ public class DeltaFullUpdate {
         return visitSessionId;
     }
 
+    public boolean getShowHelloMessage() {
+        return showHelloMessage;
+    }
+
+    public boolean getChatStartAfterMessage() {
+        return chatStartAfterMessage;
+    }
+
+    public String getHelloMessageDescr() {
+        return helloMessageDescr;
+    }
+
+    public SurveyItem getSurvey() {
+        return survey;
+    }
+
     public boolean hasChat() {
         return chat != null;
     }
-
 
 }

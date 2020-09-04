@@ -66,7 +66,9 @@ public class DeltaItem<T> {
         @SerializedName("VISIT_SESSION_STATE")
         VISIT_SESSION_STATE,
         @SerializedName("MESSAGE_READ")
-        READ_MESSAGE
+        READ_MESSAGE,
+        @SerializedName("SURVEY")
+        SURVEY
     }
 
     public enum Event {

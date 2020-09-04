@@ -99,7 +99,7 @@
             android:layout_marginRight="@dimen/fab_margin"
             android:layout_marginBottom="@dimen/fab_margin"
             android:src="@drawable/arrow_drop_down"
-            android:tint="@color/items_border"
+            android:tint="@color/itemsBorder"
             android:visibility="gone"
             app:backgroundTint="@color/common_google_signin_btn_text_dark_default"
             app:fabSize="mini" />
@@ -180,8 +180,7 @@
                     android:layout_marginLeft="15dp"
                     android:layout_marginStart="15dp"
                     app:srcCompat="@drawable/ic_new_attachment"
-                    android:tint="@color/items_border"
-                    android:contentDescription="@string/upload_file" />
+                    android:contentDescription="@string/send_file" />
 
                 <TextView
                     android:id="@+id/text_new_attachment"
@@ -191,7 +190,7 @@
                     android:layout_margin="15dp"
                     android:layout_toEndOf="@id/image_new_attachment"
                     android:layout_toRightOf="@id/image_new_attachment"
-                    android:text="@string/upload_file"
+                    android:text="@string/send_file"
                     android:textColor="@color/colorText" />
             </RelativeLayout>
 
@@ -210,7 +209,6 @@
                     android:layout_marginStart="15dp"
                     android:layout_marginLeft="15dp"
                     android:contentDescription="@string/rate_operator"
-                    android:tint="@color/items_border"
                     app:srcCompat="@drawable/ic_star" />
 
                 <TextView
@@ -274,7 +272,7 @@
                 android:id="@+id/syncDivider"
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:background="@color/message_border"
+                android:background="@color/messageBorder"
                 app:layout_constraintBottom_toBottomOf="parent" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -303,7 +301,7 @@
                     android:gravity="bottom"
                     android:padding="5dp"
                     android:scaleType="center"
-                    android:tint="@color/items_border"
+                    android:tint="@color/itemsBorder"
                     android:visibility="visible"
                     app:srcCompat="@drawable/ic_edit_message" />
 
@@ -365,14 +363,14 @@
                     android:rotation="45"
                     android:scaleType="center"
                     android:src="@drawable/ic_plus"
-                    android:tint="@color/items_border"
+                    android:tint="@color/itemsBorder"
                     android:visibility="visible" />
             </LinearLayout>
 
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:background="@color/message_border" />
+                android:background="@color/messageBorder" />
         </LinearLayout>
 
         <LinearLayout
@@ -408,7 +406,7 @@
                     android:padding="5dp"
                     android:scaleType="center"
                     android:src="@drawable/arrow_reply_message"
-                    android:tint="@color/items_border"
+                    android:tint="@color/itemsBorder"
                     android:visibility="visible" />
 
                 <LinearLayout
@@ -470,14 +468,14 @@
                     android:rotation="45"
                     android:scaleType="center"
                     android:src="@drawable/ic_plus"
-                    android:tint="@color/items_border"
+                    android:tint="@color/itemsBorder"
                     android:visibility="visible" />
             </LinearLayout>
 
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:background="@color/message_border" />
+                android:background="@color/messageBorder" />
         </LinearLayout>
 
         <LinearLayout
@@ -492,14 +490,14 @@
                 android:id="@+id/imageButtonChatMenu"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
+                android:layout_gravity="bottom"
                 android:layout_weight="0.05"
                 android:background="@null"
-                android:gravity="bottom"
+                android:gravity="center"
                 android:padding="7dp"
                 android:scaleType="center"
                 android:src="@drawable/ic_plus"
-                android:tint="@color/items_border"
+                android:tint="@color/itemsBorder"
                 android:visibility="visible"
                 tools:ignore="ContentDescription" />
 
@@ -514,7 +512,8 @@
             <EditText
                 android:id="@+id/editTextChatMessage"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
                 android:layout_marginLeft="10dp"
                 android:layout_marginRight="10dp"
                 android:layout_weight="1"
@@ -537,30 +536,31 @@
                 android:id="@+id/imageButtonSendMessage"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
+                android:layout_gravity="bottom"
                 android:layout_weight="0.05"
                 android:background="@null"
                 android:contentDescription="@string/content_desc_send_message"
-                android:gravity="bottom"
+                android:gravity="center"
                 android:padding="7dp"
                 android:scaleType="center"
                 android:src="@drawable/ic_send_message"
-                android:tint="@color/items_border" />
+                android:tint="@color/itemsBorder" />
 
             <ImageButton
                 android:id="@+id/imageButtonAcceptChanges"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
+                android:layout_gravity="bottom"
                 android:layout_weight="0.05"
                 android:background="@null"
                 android:contentDescription="@string/content_desc_send_message"
-                android:gravity="bottom"
+                android:gravity="center"
                 android:paddingLeft="2dp"
                 android:paddingRight="2dp"
+                android:paddingBottom="2dp"
                 android:scaleType="center"
                 android:src="@drawable/ic_circle_accept"
-                android:tint="@color/items_border"
+                android:tint="@color/itemsBorder"
                 android:visibility="gone" />
         </LinearLayout>
     </LinearLayout>

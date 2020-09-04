@@ -5,6 +5,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
@@ -31,6 +32,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.EditText;
@@ -44,7 +46,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.webimapp.android.demo.client.util.DynamicContextDialog;
 import com.webimapp.android.demo.client.util.EndlessScrollListener;
+import com.webimapp.android.demo.client.util.MenuController;
 import com.webimapp.android.sdk.Department;
 import com.webimapp.android.sdk.Message;
 import com.webimapp.android.sdk.MessageListener;
@@ -96,6 +100,8 @@ public class WebimChatFragment extends Fragment {
     private RatingBar ratingBar;
     private Button ratingButton;
 
+    private MenuController menuController;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -125,6 +131,8 @@ public class WebimChatFragment extends Fragment {
         initDeleteReply(rootView);
         initReplyMessageButton(rootView);
         initOperatorRateDialog();
+
+        menuController = new MenuController(this);
 
         ViewCompat.setElevation(rootView.findViewById(R.id.linLayEnterMessage), 2);
         return rootView;
@@ -512,15 +520,12 @@ public class WebimChatFragment extends Fragment {
     }
 
     private void settingRateOperatorLayout(final View rootView, final boolean operatorIsAvailable) {
-        ImageView imageRateOperator = rootView.findViewById(R.id.image_rate_operator);
         TextView textRateOperator = rootView.findViewById(R.id.text_rate_operator);
         if (operatorIsAvailable) {
             rateOperatorLayout.setEnabled(true);
-            imageRateOperator.setColorFilter(rootView.getResources().getColor(R.color.colorText));
-            textRateOperator.setTextColor(rootView.getResources().getColor(R.color.items_border));
+            textRateOperator.setTextColor(rootView.getResources().getColor(R.color.colorText));
         } else {
             rateOperatorLayout.setEnabled(false);
-            imageRateOperator.setColorFilter(rootView.getResources().getColor(R.color.colorHintText));
             textRateOperator.setTextColor(rootView.getResources().getColor(R.color.colorHintText));
         }
         rateOperatorLayout.setOnClickListener(new View.OnClickListener() {
@@ -712,6 +717,10 @@ public class WebimChatFragment extends Fragment {
                                                     message = getContext().getString(
                                                             R.string.file_upload_failed_no_chat);
                                                     break;
+                                                case UNAUTHORIZED:
+                                                    message = getContext().getString(
+                                                            R.string.file_upload_failed_unauthorized);
+                                                    break;
                                                 case UPLOADED_FILE_NOT_FOUND:
                                                 default:
                                                     message = getContext().getString(
@@ -761,7 +770,7 @@ public class WebimChatFragment extends Fragment {
         }
     }
 
-    void onEditMessageAction(Message message, int position) {
+    public void onEditMessageAction(Message message, int position) {
         inEdit = message;
         quotedMessage = null;
 
@@ -777,12 +786,12 @@ public class WebimChatFragment extends Fragment {
         editTextMessage.setSelection(message.getText().length());
     }
 
-    void onDeleteMessageAction(Message message) {
+    public void onDeleteMessageAction(Message message) {
         session.getStream().deleteMessage(message, null);
         clearEditableMessage(message);
     }
 
-    void onReplyMessageAction(Message message, int position) {
+    public void onReplyMessageAction(Message message, int position) {
         quotedMessage = message;
         if (inEdit != null) {
             editTextMessage.getText().clear();
@@ -806,6 +815,10 @@ public class WebimChatFragment extends Fragment {
         textReplyMessage.setText(replyMessage);
     }
 
+    public void onKeyBoardButtonClicked(String currentChatId, String buttonId) {
+        session.getStream().sendKeyboardRequest(currentChatId, buttonId, null);
+    }
+
     void clearEditableMessage(Message message) {
         if (editButton.getVisibility() == View.VISIBLE
                 && inEdit.getCurrentChatId().equals(message.getCurrentChatId())) {
@@ -818,6 +831,50 @@ public class WebimChatFragment extends Fragment {
         editButton.setVisibility(View.GONE);
         editingLayout.setVisibility(View.GONE);
         sendButton.setVisibility(View.VISIBLE);
+    }
+
+    private void scrollToPosition(int position) {
+        listController.recyclerView.scrollToPosition(position);
+    }
+
+    private void hideKeyboard() {
+        Context context = getContext();
+        if (context != null) {
+            InputMethodManager inputMethodManager = (InputMethodManager) context.getSystemService(Activity.INPUT_METHOD_SERVICE);
+            if (inputMethodManager != null) {
+                inputMethodManager.hideSoftInputFromWindow(editTextMessage.getWindowToken(), 0);
+            }
+        }
+    }
+
+    void updateSentMessageDialog(Message message, int adapterPosition) {
+        menuController.updateSentMessageDialog(message, adapterPosition);
+    }
+
+    void updateReceivedMessageDialog(Message message, int adapterPosition) {
+        menuController.updateReceivedMessageDialog(message, adapterPosition);
+    }
+
+    void setContextMenuMessageId(String menuMessageId) {
+        menuController.setContextMenuMessageId(menuMessageId);
+    }
+
+    void openContextDialog(final int adapterPosition, View visibleView) {
+        hideKeyboard();
+        scrollToPosition(adapterPosition);
+        menuController.openContextDialog(visibleView,
+                                         new DynamicContextDialog.ConfigurationChangedListener() {
+                                                @Override
+                                                public void configurationChanged() {
+                                                    scrollToPosition(adapterPosition);
+                                                }
+                                         });
+    }
+
+    void closeContextDialog(String messageId) {
+        if (menuController.closeContextDialog(messageId)) {
+            showToast(getString(R.string.message_deleted_toast), Toast.LENGTH_SHORT);
+        }
     }
 
     private static class ListController implements MessageListener {
@@ -971,6 +1028,7 @@ public class WebimChatFragment extends Fragment {
             if (ind <= 0) {
                 adapter.add(message);
                 adapter.notifyItemInserted(0);
+                recyclerView.stopScroll();
                 recyclerView.smoothScrollToPosition(0);
             } else {
                 adapter.add(ind, message);
@@ -982,7 +1040,7 @@ public class WebimChatFragment extends Fragment {
         public void messageRemoved(@NonNull Message message) {
             int pos = adapter.indexOf(message);
             if (pos != -1) {
-                adapter.remove(pos);
+                adapter.remove(pos, message.getCurrentChatId());
                 adapter.notifyItemRemoved(adapter.getItemCount() - pos);
             }
         }

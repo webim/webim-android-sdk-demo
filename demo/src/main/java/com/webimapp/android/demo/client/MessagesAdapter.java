@@ -1,35 +1,22 @@
 package com.webimapp.android.demo.client;
 
 import android.app.Activity;
-import android.app.Dialog;
 import android.app.DownloadManager;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.ContextWrapper;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
-import androidx.annotation.NonNull;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.app.ActivityCompat;
-import androidx.core.graphics.drawable.DrawableCompat;
-import androidx.appcompat.content.res.AppCompatResources;
-import androidx.recyclerview.widget.RecyclerView;
 import android.text.format.DateFormat;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -37,6 +24,12 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -55,6 +48,7 @@ import static com.webimapp.android.sdk.Message.Quote;
 import static com.webimapp.android.sdk.Message.SendStatus;
 import static com.webimapp.android.sdk.Message.Type.FILE_FROM_OPERATOR;
 import static com.webimapp.android.sdk.Message.Type.FILE_FROM_VISITOR;
+import static com.webimapp.android.sdk.Message.Type.KEYBOARD_RESPONSE;
 import static com.webimapp.android.sdk.Message.Type.OPERATOR;
 import static com.webimapp.android.sdk.Message.Type.VISITOR;
 
@@ -85,6 +79,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             case INFO:
             case INFO_OPERATOR_BUSY:
                 return new MessageHolder(view);
+            case KEYBOARD:
+                return new BotMessageHolder(view);
             default:
                 return null;
         }
@@ -140,6 +136,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                 return message.getAttachment() == null || message.getAttachment().getFileInfo().getImageInfo() != null
                         ? ViewType.OPERATOR.ordinal()
                         : ViewType.FILE_FROM_OPERATOR.ordinal();
+            case KEYBOARD:
+                return ViewType.KEYBOARD.ordinal();
             case INFO:
             default:
                 return ViewType.INFO.ordinal();
@@ -161,9 +159,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                 return R.layout.item_message_sent;
             case INFO_OPERATOR_BUSY:
                 return R.layout.item_op_busy_message;
-            case INFO:
             case KEYBOARD:
+                return R.layout.item_keyboard_message;
             case KEYBOARD_RESPONSE:
+            case INFO:
             default:
                 return R.layout.item_info_message;
         }
@@ -201,7 +200,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
         return messageList.set(i, message);
     }
 
-    public Message remove(int i) {
+    public Message remove(int i, String messageId) {
+        webimChatFragment.closeContextDialog(messageId);
         return messageList.remove(i);
     }
 
@@ -250,6 +250,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
         public void bind(final Message message, boolean showDate) {
             this.message = message;
 
+            ViewGroup.LayoutParams layoutParams = itemView.getLayoutParams();
+            if (message.getType() == KEYBOARD_RESPONSE) {
+                layoutParams.height = 0;
+                return;
+            }
+            layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
             messageBody.setVisibility(View.GONE);
             if (messageText != null &&
                     message.getType() != FILE_FROM_OPERATOR &&
@@ -330,6 +336,31 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
         }
     }
 
+    class BotMessageHolder extends MessageHolder {
+        LinearLayout keyboardView;
+        KeyboardAdapter keyboardAdapter;
+
+        BotMessageHolder(final View itemView) {
+            super(itemView);
+
+            keyboardView = itemView.findViewById(R.id.lay_bot_keyboard);
+            keyboardAdapter = new KeyboardAdapter(keyboardView, new KeyboardAdapter.KeyboardButtonClickListener() {
+                @Override
+                public void keyboardButtonClick(String buttonId) {
+                    webimChatFragment.onKeyBoardButtonClicked(message.getCurrentChatId(), buttonId);
+                }
+            });
+        }
+
+        @Override
+        public void bind(final Message message, boolean showDate) {
+            super.bind(message, showDate);
+
+            messageText.setVisibility(View.GONE);
+            keyboardAdapter.showKeyboard(message.getKeyboard());
+        }
+    }
+
     abstract class FileMessageHolder extends MessageHolder {
 
         ImageView thumbView;
@@ -344,12 +375,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
         TextView textEdited;
         RelativeLayout layoutAttachedFile;
         ProgressBar progressFileUpload;
+        CardView cardView;
 
-        Dialog dialog;
-        RelativeLayout menuReplyLayout;
-        RelativeLayout menuCopyLayout;
-        RelativeLayout menuEditLayout;
-        RelativeLayout menuDeleteLayout;
         int bubbleColor;
         int selectedColor;
         int messageBackground;
@@ -367,36 +394,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             fileSize = itemView.findViewById(R.id.file_size);
             fileError = itemView.findViewById(R.id.error_text);
             progressFileUpload = itemView.findViewById(R.id.progress_file_upload);
+            cardView = itemView.findViewById(R.id.card_view);
             textEdited = itemView.findViewById(R.id.text_edited);
-
-            createContextMenuDialog(itemView.getContext());
-        }
-
-        void createContextMenuDialog(Context context) {
-            dialog = new Dialog(context);
-            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-            dialog.setContentView(R.layout.dialog_message_menu);
-            if (dialog.getWindow() != null) {
-                WindowManager.LayoutParams layoutParams = dialog.getWindow().getAttributes();
-                layoutParams.dimAmount = 0.6f; // level shading
-                dialog.getWindow().setAttributes(layoutParams);
-            }
-            menuReplyLayout = dialog.findViewById(R.id.relLayoutReply);
-            menuCopyLayout = dialog.findViewById(R.id.relLayoutCopy);
-            menuEditLayout = dialog.findViewById(R.id.relLayoutEdit);
-            menuDeleteLayout = dialog.findViewById(R.id.relLayoutDelete);
-
-            dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                @Override
-                public void onDismiss(DialogInterface dialogInterface) {
-                    changeBackgroundDrawable(
-                            (message.getType() == FILE_FROM_VISITOR)
-                                    ? layoutAttachedFile
-                                    : messageBody,
-                            messageBackground,
-                            bubbleColor);
-                }
-            });
         }
 
         @Override
@@ -504,7 +503,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             layoutAttachedFile.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View view) {
-                    openContextDialog(view);
+                    openContextDialog();
                     return true;
                 }
             });
@@ -574,7 +573,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             imageView.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View view) {
-                    openContextDialog(view);
+                    openContextDialog();
                     return true;
                 }
             });
@@ -709,29 +708,30 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             }
         }
 
-        void openContextDialog(View view) {
-            if (enableContextDialog()) {
-                changeBackgroundDrawable(
-                        (message.getType() == FILE_FROM_VISITOR)
-                                ? layoutAttachedFile
-                                : messageBody,
-                        messageBackground,
-                        selectedColor);
-                dialog.show();
+        void openContextDialog() {
+            int adapterPosition = getAdapterPosition();
+            webimChatFragment.setContextMenuMessageId(message.getCurrentChatId());
+            if (this instanceof SentMessageHolder) {
+                webimChatFragment.updateSentMessageDialog(message, adapterPosition);
+            } else if (this instanceof ReceivedMessageHolder) {
+                webimChatFragment.updateReceivedMessageDialog(message, adapterPosition);
             }
+            webimChatFragment.openContextDialog(adapterPosition, getVisibleView());
         }
 
-        boolean enableContextDialog() {
-            return menuReplyLayout.getVisibility() == View.VISIBLE ||
-                    menuCopyLayout.getVisibility() == View.VISIBLE;
-        }
-
-        protected void disableContextMenuItem(ViewGroup menuItem) {
-            menuItem.setVisibility(View.GONE);
-        }
-
-        protected void enableContextMenuItem(ViewGroup menuItem) {
-            menuItem.setVisibility(View.VISIBLE);
+        private View getVisibleView() {
+            switch (message.getType()) {
+                case FILE_FROM_VISITOR:
+                case FILE_FROM_OPERATOR:
+                    Attachment attachment = message.getAttachment();
+                    if (attachment != null && attachment.getFileInfo().getImageInfo() != null) {
+                        return cardView;
+                    } else {
+                        return layoutAttachedFile;
+                    }
+                default:
+                    return messageBody;
+            }
         }
     }
 
@@ -750,7 +750,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(final View view) {
-                    openContextDialog(view);
+                    openContextDialog();
                 }
             });
         }
@@ -759,76 +759,13 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
         public void bind(Message message, boolean showDate) {
             super.bind(message, showDate);
 
-            updateDialog();
+            webimChatFragment.updateSentMessageDialog(message, getAdapterPosition());
             boolean sending = message.getSendStatus() == SendStatus.SENDING;
             if (messageTime != null) {
                 messageTime.setVisibility(sending ? View.GONE : View.VISIBLE);
             }
             if (sendingProgress != null) {
                 sendingProgress.setVisibility(sending ? View.VISIBLE : View.GONE);
-            }
-        }
-
-        void updateDialog() {
-            disableContextMenuItem(menuReplyLayout);
-            disableContextMenuItem(menuCopyLayout);
-            disableContextMenuItem(menuEditLayout);
-            disableContextMenuItem(menuDeleteLayout);
-
-            if (message.canBeReplied()) {
-                enableContextMenuItem(menuReplyLayout);
-                menuReplyLayout.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        webimChatFragment.onReplyMessageAction(message, getAdapterPosition());
-                        dialog.dismiss();
-                    }
-                });
-            }
-
-            if (message.getType() != FILE_FROM_VISITOR) {
-                enableContextMenuItem(menuCopyLayout);
-                menuCopyLayout.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        ClipData clip =
-                                ClipData.newPlainText("message", message.getText());
-                        ClipboardManager clipboard =
-                                (ClipboardManager) view.getContext()
-                                        .getSystemService(Context.CLIPBOARD_SERVICE);
-                        if (clipboard != null) {
-                            clipboard.setPrimaryClip(clip);
-                            showMessage(view.getResources()
-                                    .getString(R.string.copied_message), view.getContext());
-                        } else {
-                            showMessage(view.getResources()
-                                    .getString(R.string.copy_failed), view.getContext());
-                        }
-                        dialog.dismiss();
-                    }
-                });
-
-                if (message.canBeEdited()) {
-                    enableContextMenuItem(menuEditLayout);
-                    menuEditLayout.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            webimChatFragment.onEditMessageAction(message, getAdapterPosition());
-                            dialog.dismiss();
-                        }
-                    });
-                }
-            }
-
-            if (message.canBeEdited()) {
-                enableContextMenuItem(menuDeleteLayout);
-                menuDeleteLayout.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        webimChatFragment.onDeleteMessageAction(message);
-                        dialog.dismiss();
-                    }
-                });
             }
         }
     }
@@ -857,7 +794,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(final View view) {
-                    openContextDialog(view);
+                    openContextDialog();
                 }
             });
         }
@@ -866,7 +803,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
         public void bind(Message message, boolean showDate) {
             super.bind(message, showDate);
 
-            updateDialog();
+            webimChatFragment.updateReceivedMessageDialog(message, getAdapterPosition());
             timeText.setText(DateFormat.getTimeFormat(webimChatFragment.getContext())
                     .format(message.getTime()));
             if (showSenderInfo) {
@@ -904,67 +841,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                 showSenderInfo = true;
             }
         }
-
-        void updateDialog() {
-            disableContextMenuItem(menuReplyLayout);
-            disableContextMenuItem(menuCopyLayout);
-            disableContextMenuItem(menuEditLayout);
-            disableContextMenuItem(menuDeleteLayout);
-
-            if (message.canBeReplied()) {
-                enableContextMenuItem(menuReplyLayout);
-                menuReplyLayout.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        webimChatFragment.onReplyMessageAction(message, getAdapterPosition());
-                        dialog.dismiss();
-                    }
-                });
-            }
-
-            if (message.getType() != FILE_FROM_OPERATOR) {
-                enableContextMenuItem(menuCopyLayout);
-                menuCopyLayout.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        ClipData clip =
-                                ClipData.newPlainText("message", message.getText());
-                        ClipboardManager clipboard =
-                                (ClipboardManager) view.getContext()
-                                        .getSystemService(Context.CLIPBOARD_SERVICE);
-                        if (clipboard != null) {
-                            clipboard.setPrimaryClip(clip);
-                            showMessage(view.getResources()
-                                    .getString(R.string.copied_message), view.getContext());
-                        } else {
-                            showMessage(view.getResources()
-                                    .getString(R.string.copy_failed), view.getContext());
-                        }
-                        dialog.dismiss();
-                    }
-                });
-            }
-        }
     }
 
     private boolean fileIsImage(Message message) {
         return message.getAttachment() != null
                 && message.getAttachment().getFileInfo().getImageInfo() != null;
-    }
-
-    private void changeBackgroundDrawable(View layout, int drawableResource, int colorForSelect) {
-        Drawable unwrappedDrawable =
-                AppCompatResources.getDrawable(layout.getContext(), drawableResource);
-        if (unwrappedDrawable != null) {
-            DrawableCompat.setTint(
-                    DrawableCompat.wrap(unwrappedDrawable),
-                    layout.getResources().getColor(colorForSelect));
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            layout.setBackground(layout.getResources().getDrawable(drawableResource));
-        } else {
-            layout.setBackgroundDrawable(layout.getResources().getDrawable(drawableResource));
-        }
     }
 }

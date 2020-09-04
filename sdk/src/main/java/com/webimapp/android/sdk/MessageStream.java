@@ -533,6 +533,152 @@ public interface MessageStream {
                                   @NonNull SendDialogToEmailAddressCallback sendDialogToEmailAddressCallback);
 
     /**
+     * Sets listener for greeting message
+     * @param listener {@link GreetingMessageListener} object
+     */
+    void setGreetingMessageListener(@NonNull GreetingMessageListener listener);
+
+    /**
+     * @see MessageStream#setGreetingMessageListener(GreetingMessageListener)
+     */
+    interface GreetingMessageListener {
+        /**
+         * Invoked when greeting message is available. Method is called at the beginning of chat
+         * when no messages have been sent yet.
+         * @param message greeting message
+         */
+        void greetingMessage(@NonNull String message);
+    }
+
+    /**
+     * Sending survey answer.
+     * @param surveyAnswer answer to survey. If question type is 'stars', answer is var 1-5 that
+     * corresponds the rating. If question type is 'radio', answer is index of element in options
+     * array beginning with 1. If question type is 'comment', answer is a string.
+     * @param callback shows if the call to send the survey answer is completed or not
+     * @see SurveyAnswerCallback
+     * @see Survey.Question.Type
+     */
+    void sendSurveyAnswer(@NonNull String surveyAnswer,
+                          @Nullable SurveyAnswerCallback callback);
+
+    /**
+     * Method closes current survey.
+     * @param callback shows if the call to close the survey is completed or not.
+     * @see SurveyCloseCallback
+     */
+    void closeSurvey(@Nullable SurveyCloseCallback callback);
+
+    /**
+     * Set listener, that will be called when new survey will come.
+     * @param surveyListener {@link SurveyListener} object
+     */
+    void setSurveyListener(@NonNull SurveyListener surveyListener);
+
+    /**
+     * @see MessageStream#sendSurveyAnswer(String, SurveyAnswerCallback)
+     */
+    interface SurveyAnswerCallback {
+        /**
+         * Invoked when survey answer is sent successfully.
+         */
+        void onSuccess();
+
+        /**
+         * Invoked when an error occurred while sending survey answer.
+         */
+        void onFailure(WebimError<SurveyAnswerError> webimError);
+
+        /**
+         * @see SurveyAnswerCallback#onFailure(WebimError)
+         */
+        enum SurveyAnswerError {
+
+            /**
+             * Incorrect value for question type 'radio'.
+             */
+            INCORRECT_RADIO_VALUE,
+
+            /**
+             * Incorrect value for question type 'stars'.
+             */
+            INCORRECT_STARS_VALUE,
+
+            /**
+             * Incorrect survey id.
+             */
+            INCORRECT_SURVEY_ID,
+
+            /**
+             * Max comment length was exceeded for question type 'comment'.
+             */
+            MAX_COMMENT_LENGTH_EXCEEDED,
+
+            /**
+             * No current survey on server.
+             */
+            NO_CURRENT_SURVEY,
+
+            /**
+             * Question was not found.
+             */
+            QUESTION_NOT_FOUND,
+
+            /**
+             * Survey is disabled on server.
+             */
+            SURVEY_DISABLED,
+
+            /**
+             * Received error is not supported by current WebimClientLibrary version.
+             */
+            UNKNOWN
+        }
+    }
+
+    /**
+     * @see MessageStream#closeSurvey(SurveyCloseCallback)
+     */
+    interface SurveyCloseCallback {
+
+        /**
+         * Invoked when survey was successfully closed on server.
+         */
+        void onSuccess();
+
+        /**
+         * Invoked when an error occurred while closing a survey on server.
+         */
+        void onFailure(WebimError<SurveyCloseCallback.SurveyCloseError> webimError);
+
+        /**
+         * @see SurveyCloseCallback#onFailure(WebimError)
+         */
+        enum SurveyCloseError {
+
+            /**
+             * Incorrect survey id.
+             */
+            INCORRECT_SURVEY_ID,
+
+            /**
+             * No current survey on server.
+             */
+            NO_CURRENT_SURVEY,
+
+            /**
+             * Survey is disabled on server.
+             */
+            SURVEY_DISABLED,
+
+            /**
+             * Received error is not supported by current WebimClientLibrary version.
+             */
+            UNKNOWN
+        }
+    }
+
+    /**
      * @see MessageStream#searchMessages(String, SearchMessagesCallback)
      * */
     interface SearchMessagesCallback {
@@ -799,7 +945,11 @@ public interface MessageStream {
             /**
              * When sending a file there is no started chat
              */
-            CHAT_NOT_STARTED
+            CHAT_NOT_STARTED,
+            /**
+             * Visitor authorization error on the server
+             */
+            UNAUTHORIZED
         }
     }
 
@@ -1167,6 +1317,32 @@ public interface MessageStream {
          */
         void onUnreadByVisitorMessageCountChanged(int newMessageCount);
 
+    }
+
+    /**
+     * @see MessageStream#setSurveyListener(SurveyListener)
+     */
+    interface SurveyListener {
+
+        /**
+         * This method is called one time when new survey was sent by server.
+         * @param survey survey that was sent
+         */
+        void onSurvey(Survey survey);
+
+        /**
+         * This method provide next question in  the survey. It is called in one of two ways:
+         * survey first received or answer for previous question was successfully sent to server.
+         * @param question next question in the survey
+         * @see MessageStream#sendSurveyAnswer(String, MessageStream.SurveyAnswerCallback)
+         */
+        void onNextQuestion(Survey.Question question);
+
+        /**
+         * This method is called when survey timeout expires on server. It means that survey
+         * deletes and you can no longer send an answer to the question.
+         */
+        void onSurveyCancelled();
     }
 
     /**

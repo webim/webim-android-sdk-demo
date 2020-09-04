@@ -204,7 +204,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                                           int index,
                                           MessageImpl message) {
         // Binding to msg_id / client_side_id
-        statement.bindString(index, message.getId().toString());
+        statement.bindString(index, message.getCurrentChatId());
 
         // Binding to ts
         statement.bindLong((index + 1), message.getHistoryId().getTimeMicros());
@@ -257,7 +257,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
 
     private MessageImpl createMessage(Cursor cursor) {
         String id = cursor.getString(0);
-        String clientSideId = cursor.getString(1);
+        String currentChatId = cursor.getString(1);
         long ts = cursor.getLong(2);
         String avatar = cursor.getString(5);
         Message.Type type = idToMessageType(cursor.getInt(6));
@@ -308,9 +308,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
 
         return new MessageImpl(
                 serverUrl,
-                StringId.forMessage(clientSideId != null
-                        ? clientSideId
-                        : id),
+                StringId.forMessage(id),
                 null,
                 cursor.isNull(3)
                         ? null
@@ -320,7 +318,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                 type,
                 text,
                 ts,
-                id,
+                currentChatId,
                 rawText,
                 true,
                 attachment,

@@ -73,4 +73,12 @@ public interface WebimActions {
     void sendSticker(int stickerId,
                      @NonNull String clientSideId,
                      @Nullable MessageStream.SendStickerCallback callback);
+
+    void sendQuestionAnswer(@NonNull String surveyId,
+                            int formId,
+                            int questionId,
+                            @NonNull String surveyAnswer,
+                            @Nullable SurveyQuestionCallback callback);
+
+    void closeSurvey(@NonNull String surveyId, @NonNull SurveyFinishCallback callback);
 }

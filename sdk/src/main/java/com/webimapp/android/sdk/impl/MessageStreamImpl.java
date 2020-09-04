@@ -9,10 +9,13 @@ import com.webimapp.android.sdk.MessageListener;
 import com.webimapp.android.sdk.MessageStream;
 import com.webimapp.android.sdk.MessageTracker;
 import com.webimapp.android.sdk.Operator;
+import com.webimapp.android.sdk.Survey;
 import com.webimapp.android.sdk.impl.backend.DefaultCallback;
 import com.webimapp.android.sdk.impl.backend.LocationSettingsImpl;
 import com.webimapp.android.sdk.impl.backend.SendKeyboardErrorListener;
 import com.webimapp.android.sdk.impl.backend.SendOrDeleteMessageInternalCallback;
+import com.webimapp.android.sdk.impl.backend.SurveyFinishCallback;
+import com.webimapp.android.sdk.impl.backend.SurveyQuestionCallback;
 import com.webimapp.android.sdk.impl.backend.WebimActions;
 import com.webimapp.android.sdk.impl.backend.WebimInternalError;
 import com.webimapp.android.sdk.impl.items.ChatItem;
@@ -20,6 +23,7 @@ import com.webimapp.android.sdk.impl.items.DepartmentItem;
 import com.webimapp.android.sdk.impl.items.MessageItem;
 import com.webimapp.android.sdk.impl.items.OnlineStatusItem;
 import com.webimapp.android.sdk.impl.items.RatingItem;
+import com.webimapp.android.sdk.impl.items.SurveyItem;
 import com.webimapp.android.sdk.impl.items.VisitSessionStateItem;
 import com.webimapp.android.sdk.impl.items.delta.DeltaFullUpdate;
 import com.webimapp.android.sdk.impl.items.responses.SearchResponse;
@@ -56,6 +60,7 @@ public class MessageStreamImpl implements MessageStream {
     private LocationSettingsChangeListener locationSettingsChangeListener;
     private OnlineStatusChangeListener onlineStatusChangeListener;
     private MessageFactories.OperatorFactory operatorFactory;
+    private SurveyFactory surveyFactory;
     private @Nullable OperatorTypingListener operatorTypingListener;
     private String serverUrlString;
     private @Nullable ChatStateListener stateListener;
@@ -69,12 +74,15 @@ public class MessageStreamImpl implements MessageStream {
     private @Nullable UnreadByVisitorTimestampChangeListener
             unreadByVisitorTimestampChangeListener;
     private VisitSessionStateListener visitSessionStateListener;
+    private GreetingMessageListener greetingMessageListener;
+    private SurveyController surveyController;
 
     MessageStreamImpl(
             String serverUrlString,
             MessageFactories.Mapper<MessageImpl> currentChatMessageMapper,
             MessageFactories.SendingFactory sendingMessageFactory,
             MessageFactories.OperatorFactory operatorFactory,
+            SurveyFactory surveyFactory,
             AccessChecker accessChecker,
             WebimActions actions,
             MessageHolder messageHolder,
@@ -85,6 +93,7 @@ public class MessageStreamImpl implements MessageStream {
         this.currentChatMessageMapper = currentChatMessageMapper;
         this.sendingMessageFactory = sendingMessageFactory;
         this.operatorFactory = operatorFactory;
+        this.surveyFactory = surveyFactory;
         this.accessChecker = accessChecker;
         this.actions = actions;
         this.messageHolder = messageHolder;
@@ -532,6 +541,9 @@ public class MessageStreamImpl implements MessageStream {
                                 case WebimInternalError.FILE_NOT_FOUND:
                                     fileError = SendFileCallback.SendFileError.FILE_NOT_FOUND;
                                     break;
+                                case WebimInternalError.UNAUTHORIZED:
+                                    fileError = SendFileCallback.SendFileError.UNAUTHORIZED;
+                                    break;
                                 default:
                                     fileError = SendFileCallback.SendFileError.UNKNOWN;
                             }
@@ -629,6 +641,132 @@ public class MessageStreamImpl implements MessageStream {
         }
     }
 
+    @Override
+    public void setGreetingMessageListener(@NonNull GreetingMessageListener listener) {
+        greetingMessageListener = listener;
+    }
+
+    @Override
+    public void sendSurveyAnswer(@NonNull final String surveyAnswer,
+                                 @Nullable final SurveyAnswerCallback callback) {
+        accessChecker.checkAccess();
+
+        if (surveyController == null) {
+            throw new IllegalStateException("SurveyController has not been initialized. " +
+                    "Call method setSurveyListener(SurveyListener surveyListener)");
+        }
+
+        Survey survey = surveyController.getSurvey();
+        if (survey == null) {
+            if (callback != null) {
+                callback.onFailure(new WebimErrorImpl<>(
+                    SurveyAnswerCallback.SurveyAnswerError.NO_CURRENT_SURVEY,
+                    null
+                ));
+            }
+            return;
+        }
+
+        int formId = surveyController.getCurrentFormId();
+        int questionId = surveyController.getCurrentQuestionPointer();
+        String surveyId = survey.getId();
+        actions.sendQuestionAnswer(
+            surveyId,
+            formId,
+            questionId,
+            surveyAnswer,
+            new SurveyQuestionCallback() {
+                @Override
+                public void onSuccess() {
+                    if (callback != null) {
+                        callback.onSuccess();
+                    }
+                    surveyController.nextQuestion();
+                }
+
+                @Override
+                public void onFailure(String error) {
+                    if (callback != null) {
+                        SurveyAnswerCallback.SurveyAnswerError surveyAnswerError;
+                        switch (error) {
+                            case WebimInternalError.SURVEY_DISABLED:
+                                surveyAnswerError = SurveyAnswerCallback.SurveyAnswerError.SURVEY_DISABLED;
+                                break;
+                            case WebimInternalError.NO_CURRENT_SURVEY:
+                                surveyAnswerError = SurveyAnswerCallback.SurveyAnswerError.NO_CURRENT_SURVEY;
+                                break;
+                            case WebimInternalError.INCORRECT_SURVEY_ID:
+                                surveyAnswerError = SurveyAnswerCallback.SurveyAnswerError.INCORRECT_SURVEY_ID;
+                                break;
+                            case WebimInternalError.INCORRECT_STARS_VALUE:
+                                surveyAnswerError = SurveyAnswerCallback.SurveyAnswerError.INCORRECT_STARS_VALUE;
+                                break;
+                            case WebimInternalError.INCORRECT_RADIO_VALUE:
+                                surveyAnswerError = SurveyAnswerCallback.SurveyAnswerError.INCORRECT_RADIO_VALUE;
+                                break;
+                            case WebimInternalError.MAX_COMMENT_LENGTH_EXCEEDED:
+                                surveyAnswerError = SurveyAnswerCallback.SurveyAnswerError.MAX_COMMENT_LENGTH_EXCEEDED;
+                                break;
+                            case WebimInternalError.QUESTION_NOT_FOUND:
+                                surveyAnswerError = SurveyAnswerCallback.SurveyAnswerError.QUESTION_NOT_FOUND;
+                                break;
+                            default:
+                                surveyAnswerError = SurveyAnswerCallback.SurveyAnswerError.UNKNOWN;
+                        }
+
+                        callback.onFailure(new WebimErrorImpl<>(surveyAnswerError, error));
+                    }
+                }
+            }
+        );
+    }
+
+    @Override
+    public void closeSurvey(@Nullable final SurveyCloseCallback callback) {
+        accessChecker.checkAccess();
+
+        if (surveyController != null) {
+            actions.closeSurvey(
+                surveyController.getSurvey().getId(),
+                new SurveyFinishCallback() {
+                    @Override
+                    public void onSuccess() {
+                        if (callback != null) {
+                            callback.onSuccess();
+                            surveyController.deleteSurvey();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(String error) {
+                        if (callback != null) {
+                            MessageStream.SurveyCloseCallback.SurveyCloseError surveyCloseError;
+                            switch (error) {
+                                case WebimInternalError.SURVEY_DISABLED:
+                                    surveyCloseError = MessageStream.SurveyCloseCallback.SurveyCloseError.SURVEY_DISABLED;
+                                    break;
+                                case WebimInternalError.INCORRECT_SURVEY_ID:
+                                    surveyCloseError = MessageStream.SurveyCloseCallback.SurveyCloseError.INCORRECT_SURVEY_ID;
+                                    break;
+                                case WebimInternalError.NO_CURRENT_SURVEY:
+                                    surveyCloseError = MessageStream.SurveyCloseCallback.SurveyCloseError.NO_CURRENT_SURVEY;
+                                    break;
+                                default:
+                                    surveyCloseError = MessageStream.SurveyCloseCallback.SurveyCloseError.UNKNOWN;
+                            }
+                            callback.onFailure(new WebimErrorImpl<>(surveyCloseError, error));
+                        }
+                    }
+                }
+            );
+        }
+    }
+
+    @Override
+    public void setSurveyListener(@NonNull SurveyListener surveyListener) {
+        this.surveyController = new SurveyController(surveyListener);
+    }
+
     void setUnreadByOperatorTimestamp(long unreadByOperatorTimestamp) {
         long previousValue = this.unreadByOperatorTimestamp;
 
@@ -665,10 +803,10 @@ public class MessageStreamImpl implements MessageStream {
         }
     }
 
-    void onChatStateTransition(@Nullable ChatItem currentChat) {
+    void onChatStateTransition(@Nullable ChatItem currentChat, boolean isFullUpdate) {
         ChatItem oldChat = chat;
         chat = currentChat;
-        if (this.chat != oldChat) {
+        if (!InternalUtils.equals(this.chat, oldChat)) {
             if (chat == null) {
                 messageHolder.onChatReceive(oldChat, null, Collections.<MessageImpl>emptyList());
             } else {
@@ -683,6 +821,11 @@ public class MessageStreamImpl implements MessageStream {
                 }
                 messageHolder.onChatReceive(oldChat, chat,
                         currentChatMessageMapper.mapAll(currentMessages));
+            }
+        } else {
+            if (chat != null && isFullUpdate) {
+                messageHolder.onChatReceive(oldChat, chat,
+                        currentChatMessageMapper.mapAll(chat.getMessages()));
             }
         }
         ChatItem.ItemChatState newState = (chat == null)
@@ -754,8 +897,21 @@ public class MessageStreamImpl implements MessageStream {
         }
     }
 
+    void onSurveyReceived(SurveyItem surveyItem) {
+        if (surveyController != null) {
+            surveyController.setSurvey(surveyFactory.createSurvey(surveyItem));
+            surveyController.nextQuestion();
+        }
+    }
+
+    void onSurveyCancelled() {
+        if (surveyController != null) {
+            surveyController.cancelSurvey();
+        }
+    }
+
     void onFullUpdate(ChatItem currentChat) {
-        onChatStateTransition(currentChat);
+        onChatStateTransition(currentChat, true);
     }
 
     @NonNull
@@ -777,6 +933,19 @@ public class MessageStreamImpl implements MessageStream {
                 && (locationSettingsChangeListener != null)) {
             locationSettingsChangeListener.onLocationSettingsChanged(oldLocationSettings,
                     newLocationSettings);
+        }
+    }
+
+    void handleGreetingMessage(boolean showHelloMessage,
+                               boolean chatStartAfterMessage,
+                               boolean currentChatEmpty,
+                               String helloMessageDescr) {
+        if (greetingMessageListener != null
+                && chatStartAfterMessage
+                && showHelloMessage
+                && currentChatEmpty
+                && messageHolder.historyMessagesEmpty()) {
+            greetingMessageListener.greetingMessage(helloMessageDescr);
         }
     }
 

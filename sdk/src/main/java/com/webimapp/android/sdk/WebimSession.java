@@ -52,4 +52,80 @@ public interface WebimSession {
      * @see com.webimapp.android.sdk.Webim.SessionBuilder#setPushToken
      */
     void setPushToken(@NonNull String pushToken);
+
+    /**
+     * This method allows you to manually unbind the push token.
+     * @param tokenCallback - tokenCallback shows if a call is completed or failed.
+     */
+    void removePushToken(@NonNull TokenCallback tokenCallback);
+
+    /**
+     * @see WebimSession#removePushToken(TokenCallback tokenCallback)
+     */
+    interface TokenCallback {
+        /**
+         * Invoked if request succeed.
+         */
+        void onSuccess();
+
+        /**
+         * Invoked if request failed.
+         * @param webimError - error that was occurred
+         * @see TokenError
+         */
+        void onFailure(WebimError<TokenError> webimError);
+
+        /**
+         * @see TokenCallback#onFailure
+         */
+        enum TokenError {
+            /**
+             * Timeout of unbinding push token was expired
+             */
+            SOCKET_TIMEOUT_EXPIRED,
+
+            /**
+             * An unexpected error occurred
+             */
+            UNKNOWN
+        }
+    }
+
+    /**
+     *  @see Webim.SessionBuilder#build(SessionCallback)
+     */
+    interface SessionCallback {
+
+        /**
+         * Invoked when session was successfully created on server.
+         */
+        void onSuccess();
+
+        /**
+         * Invoked when an error occurred while creating session on server.
+         * @param sessionError Error
+         * @see SessionError
+         */
+        void onFailure(WebimError<SessionError> sessionError);
+
+        /**
+         * @see SessionCallback#onFailure
+         */
+        enum SessionError {
+            /**
+             * Error occurred while sending init-request to server.
+             */
+            REQUEST_ERROR,
+
+            /**
+             * Error occurred while session parameter has invalid value.
+             */
+            INVALID_PARAMETER_VALUE,
+
+            /**
+             * An unexpected error
+             */
+            UNKNOWN
+        }
+    }
 }

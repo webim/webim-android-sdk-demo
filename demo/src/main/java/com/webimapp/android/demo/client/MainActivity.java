@@ -38,8 +38,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initNewChatButton() {
-        Button newChartButtom = findViewById(R.id.buttonStartChat);
-        newChartButtom.setOnClickListener(new View.OnClickListener() {
+        Button newChatButton = findViewById(R.id.buttonStartChat);
+        newChatButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 startActivity(new Intent(MainActivity.this, WebimChatActivity.class));

@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.webimapp.android.sdk.MessageStream;
+import com.webimapp.android.sdk.WebimSession;
 import com.webimapp.android.sdk.impl.WebimErrorImpl;
 import com.webimapp.android.sdk.impl.items.responses.DefaultResponse;
 import com.webimapp.android.sdk.impl.items.responses.HistoryBeforeResponse;
@@ -15,6 +16,8 @@ import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
 import retrofit2.Call;
+
+import com.webimapp.android.sdk.NotFatalErrorHandler.NotFatalErrorType;
 
 public class WebimActionsImpl implements WebimActions {
     private static final MediaType PLAIN_TEXT = MediaType.parse("text/plain");
@@ -34,6 +37,8 @@ public class WebimActionsImpl implements WebimActions {
     private static final String ACTION_SET_PRECHAT_FIELDS = "chat.set_prechat_fields";
     private static final String ACTION_VISITOR_TYPING = "chat.visitor_typing";
     private static final String ACTION_WIDGET_UPDATE = "widget.update";
+    private static final String ACTION_SURVEY_ANSWER = "survey.answer";
+    private static final String ACTION_SURVEY_CANCEL = "survey.cancel";
     private static final String CHARACTERS_TO_ENCODE = "\n!#$&'()*+,/:;=?@[] \"%-.<>\\^_`{|}~";
     @NonNull
     private final ActionRequestLoop requestLoop;
@@ -223,6 +228,7 @@ public class WebimActionsImpl implements WebimActions {
             public boolean isHandleError(@NonNull String error) {
                 return (error.equals(WebimInternalError.FILE_TYPE_NOT_ALLOWED)
                         || error.equals(WebimInternalError.FILE_SIZE_EXCEEDED)
+                        || error.equals(WebimInternalError.UNAUTHORIZED)
                         || error.equals(WebimInternalError.UPLOADED_FILE_NOT_FOUND));
             }
 
@@ -339,9 +345,10 @@ public class WebimActionsImpl implements WebimActions {
         });
     }
 
-    public void updatePushToken(@NonNull final String pushToken) {
+    public void updatePushToken(@NonNull final String pushToken,
+                                @Nullable final WebimSession.TokenCallback callback) {
         pushToken.getClass(); // NPE
-        enqueue(new ActionRequestLoop.WebimRequest<DefaultResponse>(false) {
+        enqueue(new ActionRequestLoop.WebimRequest<DefaultResponse>(callback != null) {
             @Override
             public Call<DefaultResponse> makeRequest(AuthData authData) {
                 return webim.updatePushToken(
@@ -349,6 +356,31 @@ public class WebimActionsImpl implements WebimActions {
                         pushToken,
                         authData.getPageId(),
                         authData.getAuthToken());
+            }
+
+            @Override
+            public void runCallback(DefaultResponse response) {
+                if (callback != null) {
+                    callback.onSuccess();
+                }
+            }
+
+            @Override
+            public boolean isHandleError(@NonNull String error) {
+                return callback != null;
+            }
+
+            @Override
+            public void handleError(@NonNull String error) {
+                if (callback != null) {
+                    WebimSession.TokenCallback.TokenError tokenError;
+                    if (error.equals(NotFatalErrorType.SOCKET_TIMEOUT_EXPIRED.toString())) {
+                        tokenError = WebimSession.TokenCallback.TokenError.SOCKET_TIMEOUT_EXPIRED;
+                    } else {
+                        tokenError = WebimSession.TokenCallback.TokenError.UNKNOWN;
+                    }
+                    callback.onFailure(new WebimErrorImpl<>(tokenError, error));
+                }
             }
         });
     }
@@ -551,6 +583,77 @@ public class WebimActionsImpl implements WebimActions {
                     }
                     sendStickerCallback.onFailure((new WebimErrorImpl<>(sendStickerError, error)));
                 }
+            }
+        });
+    }
+
+    @Override
+    public void sendQuestionAnswer(@NonNull final String surveyId,
+                                   final int formId,
+                                   final int questionId,
+                                   @NonNull final String surveyAnswer,
+                                   @Nullable final SurveyQuestionCallback callback) {
+        enqueue(new ActionRequestLoop.WebimRequest<DefaultResponse>(callback != null) {
+            @Override
+            public Call<DefaultResponse> makeRequest(AuthData authData) {
+                return webim.sendSurveyAnswer(
+                    ACTION_SURVEY_ANSWER,
+                        formId,
+                        questionId,
+                        surveyId,
+                        surveyAnswer,
+                        authData.getPageId(),
+                        authData.getAuthToken()
+                );
+            }
+
+            @Override
+            public void runCallback(DefaultResponse response) {
+                if (callback != null) {
+                    callback.onSuccess();
+                }
+            }
+
+            @Override
+            public boolean isHandleError(@NonNull String error) {
+                return callback != null;
+            }
+
+            @Override
+            public void handleError(@NonNull String error) {
+                if (callback != null) {
+                    callback.onFailure(error);
+                }
+            }
+        });
+    }
+
+    @Override
+    public void closeSurvey(@NonNull final String surveyId, @NonNull final SurveyFinishCallback callback) {
+        enqueue(new ActionRequestLoop.WebimRequest<DefaultResponse>(true) {
+            @Override
+            public Call<DefaultResponse> makeRequest(AuthData authData) {
+                return webim.closeSurvey(
+                    ACTION_SURVEY_CANCEL,
+                    surveyId,
+                    authData.getPageId(),
+                    authData.getAuthToken()
+                );
+            }
+
+            @Override
+            public void runCallback(DefaultResponse response) {
+                callback.onSuccess();
+            }
+
+            @Override
+            public boolean isHandleError(@NonNull String error) {
+                return true;
+            }
+
+            @Override
+            public void handleError(@NonNull String error) {
+                callback.onFailure(error);
             }
         });
     }

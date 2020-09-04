@@ -47,7 +47,7 @@ public class MessageImpl implements Message, TimeMicrosHolder {
             @NonNull Type type,
             @NonNull String text,
             long timeMicros,
-            String internalId,
+            String currentChatId,
             @Nullable String rawText,
             boolean isHistoryMessage,
             @Nullable Attachment attachment,
@@ -67,7 +67,7 @@ public class MessageImpl implements Message, TimeMicrosHolder {
         text.getClass(); // NPE
 
         if (isHistoryMessage) {
-            historyId = new HistoryId(internalId, timeMicros);
+            historyId = new HistoryId(currentChatId, timeMicros);
         }
 
         this.serverUrl = serverUrl;
@@ -79,7 +79,7 @@ public class MessageImpl implements Message, TimeMicrosHolder {
         this.type = type;
         this.text = text;
         this.timeMicros = timeMicros;
-        this.currentChatId = internalId;
+        this.currentChatId = currentChatId;
         this.rawText = rawText;
         this.isHistoryMessage = isHistoryMessage;
         this.attachment = attachment;
@@ -277,6 +277,10 @@ public class MessageImpl implements Message, TimeMicrosHolder {
 
     public void setCanBeEdited(boolean canBeEdited) {
         this.canBeEdited = canBeEdited;
+    }
+
+    public void setCanBeReplied(boolean canBeReplied) {
+        this.canBeReplied = canBeReplied;
     }
 
     public void setSecondaryHistory(@History MessageImpl historyEquivalent) {

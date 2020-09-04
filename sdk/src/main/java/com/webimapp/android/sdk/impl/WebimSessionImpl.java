@@ -16,6 +16,7 @@ import com.webimapp.android.sdk.MessageStream;
 import com.webimapp.android.sdk.NotFatalErrorHandler;
 import com.webimapp.android.sdk.ProvidedAuthorizationTokenStateListener;
 import com.webimapp.android.sdk.Webim;
+import com.webimapp.android.sdk.WebimError;
 import com.webimapp.android.sdk.WebimSession;
 import com.webimapp.android.sdk.impl.backend.AuthData;
 import com.webimapp.android.sdk.impl.backend.DefaultCallback;
@@ -35,6 +36,7 @@ import com.webimapp.android.sdk.impl.items.MessageItem;
 import com.webimapp.android.sdk.impl.items.OnlineStatusItem;
 import com.webimapp.android.sdk.impl.items.OperatorItem;
 import com.webimapp.android.sdk.impl.items.RatingItem;
+import com.webimapp.android.sdk.impl.items.SurveyItem;
 import com.webimapp.android.sdk.impl.items.UnreadByVisitorMessagesItem;
 import com.webimapp.android.sdk.impl.items.VisitSessionStateItem;
 import com.webimapp.android.sdk.impl.items.delta.DeltaFullUpdate;
@@ -139,7 +141,17 @@ public class WebimSessionImpl implements WebimSession {
             return;
         }
         checkAccess();
-        destroyer.destroyAndClearVisitorData();
+        removePushToken(new TokenCallback() {
+            @Override
+            public void onSuccess() {
+                destroyer.destroyAndClearVisitorData();
+            }
+
+            @Override
+            public void onFailure(WebimError<TokenError> webimError) {
+                destroyer.destroyAndClearVisitorData();
+            }
+        });
     }
 
     @NonNull
@@ -156,8 +168,15 @@ public class WebimSessionImpl implements WebimSession {
     @Override
     public void setPushToken(@NonNull String pushToken) {
         checkAccess();
-        client.setPushToken(pushToken);
+        client.setPushToken(pushToken, null);
         // FIXME this method may be invoked before checkPushToken callback executed, so the push token will be overwritten
+    }
+
+    @Override
+    public void removePushToken(@NonNull TokenCallback tokenCallback) {
+        checkAccess();
+        String emptyPushToken = "none";
+        client.setPushToken(emptyPushToken, tokenCallback);
     }
 
     @NonNull
@@ -181,7 +200,8 @@ public class WebimSessionImpl implements WebimSession {
             boolean clearVisitorData,
             SSLSocketFactory sslSocketFactory,
             X509TrustManager trustManager,
-            @NonNull String multivisitorSection
+            @NonNull String multivisitorSection,
+            @Nullable SessionCallback sessionCallback
     ) {
         context.getClass(); // NPE
         accountName.getClass(); // NPE
@@ -251,6 +271,7 @@ public class WebimSessionImpl implements WebimSession {
                 .setDeviceId(getDeviceId(context, multivisitorSection))
                 .setPrechatFields(prechatFields)
                 .setSslSocketFactoryAndTrustManager(sslSocketFactory, trustManager)
+                .setSessionCallback(sessionCallback)
                 .build();
 
         historyMessageMapper.setClient(client);
@@ -300,6 +321,7 @@ public class WebimSessionImpl implements WebimSession {
                 currentChatMessageMapper,
                 new MessageFactories.SendingFactory(serverUrl),
                 new MessageFactories.OperatorFactory(serverUrl),
+                new SurveyFactory(),
                 accessChecker,
                 actions,
                 messageHolder,
@@ -824,8 +846,17 @@ public class WebimSessionImpl implements WebimSession {
                 firstFullUpdateReceived = true;
                 messageHolder.onFirstFullUpdateReceived();
             }
+            messageStream.handleGreetingMessage(
+                    fullUpdate.getShowHelloMessage(),
+                    fullUpdate.getChatStartAfterMessage(),
+                    currentChat == null || currentChat.getMessages().isEmpty(),
+                    fullUpdate.getHelloMessageDescr());
+            if (fullUpdate.getSurvey() != null) {
+                messageStream.onSurveyReceived(fullUpdate.getSurvey());
+            }
             messageStream.onFullUpdate(currentChat);
             messageStream.saveLocationSettings(fullUpdate);
+
             String status = fullUpdate.getOnlineStatus();
             session.setOnlineStatus(status);
 
@@ -932,6 +963,9 @@ public class WebimSessionImpl implements WebimSession {
                         handleVisitSessionStateDelta(deltaItem);
                         break;
                     }
+                    case SURVEY: {
+                        handleSurveyDelta(deltaItem);
+                    }
                     default: {
                         break;
                     }
@@ -949,7 +983,7 @@ public class WebimSessionImpl implements WebimSession {
                 currentChat.setUnreadByVisitorTimestamp(0);
             }
 
-            messageStream.onChatStateTransition(currentChat);
+            messageStream.onChatStateTransition(currentChat, false);
         }
 
         private void handleChatMessageDelta(DeltaItem deltaItem) {
@@ -1024,7 +1058,7 @@ public class WebimSessionImpl implements WebimSession {
                 currentChat.setOperator(operatorItem);
             }
 
-            messageStream.onChatStateTransition(currentChat);
+            messageStream.onChatStateTransition(currentChat, false);
         }
 
         private void handleChatOperatorTypingDelta(DeltaItem deltaItem) {
@@ -1037,7 +1071,7 @@ public class WebimSessionImpl implements WebimSession {
                 currentChat.setOperatorTyping(isTyping);
             }
 
-            messageStream.onChatStateTransition(currentChat);
+            messageStream.onChatStateTransition(currentChat, false);
         }
 
         private void handleChatReadByVisitorDelta(DeltaItem deltaItem) {
@@ -1069,7 +1103,7 @@ public class WebimSessionImpl implements WebimSession {
                 currentChat.setState(state);
             }
 
-            messageStream.onChatStateTransition(currentChat);
+            messageStream.onChatStateTransition(currentChat, false);
         }
 
         private void handleChatUnreadByOperatorSinceTimestampDelta(DeltaItem deltaItem) {
@@ -1199,6 +1233,15 @@ public class WebimSessionImpl implements WebimSession {
                 messageStream.setInvitationState(VisitSessionStateItem.getType(sessionState));
             }
         }
+
+        private void handleSurveyDelta(DeltaItem deltaItem) {
+            SurveyItem surveyItem = (SurveyItem) deltaItem.getData();
+            if (surveyItem != null) {
+                messageStream.onSurveyReceived(surveyItem);
+            } else {
+                messageStream.onSurveyCancelled();
+            }
+        }
     }
 
     private static class DestroyIfNotErrorListener implements InternalErrorListener {
@@ -1307,10 +1350,12 @@ public class WebimSessionImpl implements WebimSession {
             actions.add(action);
         }
 
+        @Override
         public boolean isDestroyed() {
             return destroyed;
         }
 
+        @Override
         public void destroy() {
             if (!destroyed) {
                 destroyed = true;

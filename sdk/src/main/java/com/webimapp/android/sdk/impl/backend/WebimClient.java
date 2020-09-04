@@ -3,6 +3,8 @@ package com.webimapp.android.sdk.impl.backend;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.webimapp.android.sdk.WebimSession;
+
 public interface WebimClient {
 
     void start();
@@ -19,6 +21,5 @@ public interface WebimClient {
 
     @NonNull DeltaRequestLoop getDeltaRequestLoop();
 
-    void setPushToken(@NonNull String token);
-
+    void setPushToken(@NonNull String token, @Nullable WebimSession.TokenCallback callback);
 }

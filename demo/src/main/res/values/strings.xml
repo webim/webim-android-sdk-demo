@@ -31,6 +31,7 @@
     <string name="file_upload_failed_type">Не удалось загрузить файл: тип файла не разрешен сервером</string>
     <string name="file_upload_failed_name">Не удалось загрузить файл: ошибка в имени файла</string>
     <string name="file_upload_failed_unknown">Не удалось загрузить файл: неизвестная ошибка</string>
+    <string name="file_upload_failed_unauthorized">Не удалось загрузить файл: посетитель не авторизован</string>
     <string name="file_upload_failed_no_chat">Чтобы начать чат, отправьте текстовое сообщение</string>
     <string name="file_upload_message_text">Отправка файла…</string>
     <string name="file_send">Отправил(а) файл:\n</string>
@@ -69,7 +70,7 @@
     <string name="saved_file">Файл %1$s сохранён</string>
     <string name="saving_failed">Не удалось загрузить файл</string>
 
-    <string name="upload_file">Загрузка файла</string>
+    <string name="send_file">Отправить файл</string>
     <string name="rate_operator">Оценить оператора</string>
     <string name="close_chat">Завершить чат</string>
 
@@ -89,6 +90,7 @@
     <string name="quote_is_pending">Цитата загружается</string>
     <string name="quote_is_not_found">Цитата недоступна</string>
     <string name="message_edited">изменено</string>
+    <string name="message_deleted_toast">Сообщение было удалено</string>
 
     <string name="empty_reply_text"> </string>
     <string name="reply_message_with_image">"Изображение "</string>

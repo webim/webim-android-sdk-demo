@@ -36,5 +36,13 @@ public class OperatorImpl implements Operator {
         return avatarUrl;
     }
 
-
+    @Override
+    public boolean equals(@Nullable Object obj) {
+        if (obj instanceof Operator) {
+            Operator operator = (Operator) obj;
+            return operator.getId().equals(this.getId());
+        } else {
+            return false;
+        }
+    }
 }

@@ -18,6 +18,7 @@ public class WebimInternalError {
 	public static final String SETTING_DISABLED = "setting_disabled";
 	public static final String SERVER_NOT_READY = "server-not-ready";
 	public static final String SESSION_NOT_FOUND = "session_not_found";
+	public static final String UNAUTHORIZED = "unauthorized";
 	public static final String UPLOADED_FILE_NOT_FOUND = "uploaded-file-not-found";
 	public static final String VISITOR_BANNED = "visitor_banned";
 	public static final String WRONG_ARGUMENT_VALUE = "wrong-argument-value";
@@ -63,4 +64,13 @@ public class WebimInternalError {
 
 	//Errors for sending chat on email
 	public  static final String SENT_TOO_MANY_TIMES = "chat-history-sent-too-many-times";
+
+	//Survey errors
+	public static final String SURVEY_DISABLED = "survey-disabled";
+	public static final String NO_CURRENT_SURVEY = "no-current-survey";
+	public static final String INCORRECT_SURVEY_ID = "incorrect-survey-id";
+	public static final String INCORRECT_STARS_VALUE = "incorrect-stars-value";
+	public static final String INCORRECT_RADIO_VALUE = "incorrect-radio-value";
+	public static final String MAX_COMMENT_LENGTH_EXCEEDED = "max-comment-length-exceeded";
+	public static final String QUESTION_NOT_FOUND = "question-not-found";
 }

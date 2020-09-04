@@ -32,7 +32,7 @@ public class MessageHolderImpl implements MessageHolder {
     private final List<MessageSending> sendingMessages = new ArrayList<>();
     private boolean isReachedEndOfLocalHistory = false;
     private boolean isReachedEndOfRemoteHistory;
-    private int lastChatIndex = 0;
+    private int lastChatMessageIndex = 0;
     @Nullable
     private MessageTrackerImpl messageTracker;
 
@@ -74,11 +74,11 @@ public class MessageHolderImpl implements MessageHolder {
                         for (int i = 0; i < currentChatMessages.size(); i++) {
                             MessageImpl chatMessage = currentChatMessages.get(i);
                             if (chatMessage.getId().equals(historyMessage.getId())) {
-                                if (i < lastChatIndex) {
+                                if (i < lastChatMessageIndex) {
                                     MessageImpl replacementMessage
                                             = chatMessage.transferToHistory(historyMessage);
                                     currentChatMessages.remove(i);
-                                    lastChatIndex--;
+                                    lastChatMessageIndex--;
 
                                     if (messageTracker != null) {
                                         messageTracker.idToHistoryMessageMap.put(
@@ -279,7 +279,7 @@ public class MessageHolderImpl implements MessageHolder {
         } else {
             if (newChat == null) {
                 historifyCurrentChat();
-            } else if (oldChat == null || !isChatsEquals(oldChat, newChat)) {
+            } else if (oldChat == null || !InternalUtils.equals(oldChat, newChat)) {
                 historifyCurrentChat();
                 receiveNewMessages(newMessages);
             } else {
@@ -298,6 +298,7 @@ public class MessageHolderImpl implements MessageHolder {
                     MessageImpl historyMessage = messageTracker.idToHistoryMessageMap.get(id);
                     if ((historyMessage != null)) {
                         historyMessage.setCanBeEdited(false);
+                        historyMessage.setCanBeReplied(false);
                         if (!MessageImpl.isContentEquals(chatMessage, historyMessage)) {
                             messageTracker.messageListener.messageChanged(chatMessage, historyMessage);
                         } else {
@@ -307,18 +308,19 @@ public class MessageHolderImpl implements MessageHolder {
                 }
                 iterator.remove();
             } else {
-                if (messageTracker != null && chatMessage.canBeEdited()) {
+                if (messageTracker != null && (chatMessage.canBeEdited() || chatMessage.canBeReplied())) {
                     chatMessage.setCanBeEdited(false);
+                    chatMessage.setCanBeReplied(false);
                     messageTracker.messageListener.messageChanged(chatMessage, chatMessage);
                 }
             }
         }
 
-        lastChatIndex = currentChatMessages.size();
+        lastChatMessageIndex = currentChatMessages.size();
     }
 
     private void mergeCurrentChatWith(@CurrentChat List<? extends MessageImpl> newMessages) {
-        int oldMessageIndex = this.lastChatIndex;
+        int oldMessageIndex = this.lastChatMessageIndex;
         boolean isOldMessagesEnded = false;
         for (int newMessageIndex = 0; (newMessageIndex < newMessages.size()); newMessageIndex++) {
             MessageImpl newMessage = newMessages.get(newMessageIndex);
@@ -381,7 +383,7 @@ public class MessageHolderImpl implements MessageHolder {
 
     @Override
     public void onMessageChanged(@NonNull @CurrentChat MessageImpl newMessage) {
-        for (int i = lastChatIndex; i < currentChatMessages.size(); i++) {
+        for (int i = lastChatMessageIndex; i < currentChatMessages.size(); i++) {
             @CurrentChat MessageImpl oldMessage = currentChatMessages.get(i);
             if (oldMessage.getIdInCurrentChat().equals(newMessage.getIdInCurrentChat())) {
                 currentChatMessages.set(i, newMessage);
@@ -396,7 +398,7 @@ public class MessageHolderImpl implements MessageHolder {
 
     @Override
     public void onMessageDeleted(@NonNull String idInCurrentChat) {
-        for (int i = lastChatIndex; i < currentChatMessages.size(); i++) {
+        for (int i = lastChatMessageIndex; i < currentChatMessages.size(); i++) {
             @CurrentChat MessageImpl oldMessage = currentChatMessages.get(i);
             if (oldMessage.getIdInCurrentChat().equals(idInCurrentChat)) {
                 currentChatMessages.remove(i);
@@ -524,9 +526,9 @@ public class MessageHolderImpl implements MessageHolder {
         historyStorage.getReadBeforeTimestampListener().onTimestampChanged(timestamp);
     }
 
-    private boolean isChatsEquals(@NonNull ChatItem c1, @NonNull ChatItem c2) {
-        return c1.getId() != null && c1.getId().equals(c2.getId()) ||
-                c1.getClientSideId() != null && c1.getClientSideId().equals(c2.getClientSideId());
+    @Override
+    public boolean historyMessagesEmpty() {
+        return messageTracker == null || messageTracker.idToHistoryMessageMap.isEmpty();
     }
 
     private class MessageTrackerImpl implements MessageTracker {
@@ -832,6 +834,9 @@ public class MessageHolderImpl implements MessageHolder {
 
                         if (replacementMessage != historyMessage) {
                             messageListener.messageChanged(historyMessage, replacementMessage);
+                            if (headMessage == historyMessage) {
+                                headMessage = replacementMessage;
+                            }
                         }
 
                         iterator.remove();
@@ -902,17 +907,11 @@ public class MessageHolderImpl implements MessageHolder {
 
         void onHistoryChanged(@NonNull MessageImpl msg) {
             msg.getSource().assertHistory();
-            if (headMessage != null
-                    && headMessage.getSource().isHistory()
-                    && msg.getTimeMicros() >= headMessage.getTimeMicros()) {
-                MessageImpl prev = idToHistoryMessageMap.put(msg.getHistoryId().getDbId(), msg);
-                if (prev != null) {
-                    messageListener.messageChanged(prev, msg);
+            if (headMessage != null) {
+                if (msg.getTimeMicros() >= headMessage.getTimeMicros()) {
+                    idToHistoryMessageMap.put(msg.getHistoryId().getDbId(), msg);
                 } else {
-                    WebimInternalLog.getInstance().log(
-                            "Unknown message was changed:" + msg.getHistoryId().getDbId(),
-                            Webim.SessionBuilder.WebimLogVerbosityLevel.WARNING
-                    );
+                    setSecondaryHistoryToCurrentMessage(msg);
                 }
             }
         }
@@ -953,6 +952,18 @@ public class MessageHolderImpl implements MessageHolder {
                     GetMessagesCallback callback = cachedCallback;
                     cachedCallback = null;
                     uncheckedGetNextMessages(cachedLimit, callback);
+                }
+            }
+        }
+
+        void setSecondaryHistoryToCurrentMessage(MessageImpl historyMessage) {
+            if (headMessage != null && historyMessage.getTimeMicros() < headMessage.getTimeMicros()) {
+                for (MessageImpl chatMessage : currentChatMessages) {
+                    if (historyMessage.getId().equals(chatMessage.getId())) {
+                        chatMessage.setSecondaryHistory(historyMessage);
+                        idToHistoryMessageMap.put(historyMessage.getHistoryId().getDbId(), historyMessage);
+                        break;
+                    }
                 }
             }
         }

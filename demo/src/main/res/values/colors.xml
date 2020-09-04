@@ -30,8 +30,8 @@
     <color name="sendingMsgEditedText">#805C5F8A</color>
     <color name="sendingMsgSelect">#008AAD</color>
 
-    <color name="message_border">#E0E2EA</color>
-    <color name="items_border">#5C5F8A</color>
+    <color name="messageBorder">#E0E2EA</color>
+    <color name="itemsBorder">#5C5F8A</color>
 
     <color name="systemMsg">#5C5F8A</color>
     <color name="systemMsgTime">#805C5f8A</color>
@@ -48,4 +48,9 @@
     <color name="red">#D24215</color>
 
     <color name="transparent">#00000000 </color>
+
+    <color name="colorPendingKeyboardButton">#15ACD2</color>
+    <color name="colorCompletedKeyboardButton">#FFFFFF</color>
+    <color name="colorCanceledKeyboardButton">#BEBFD0</color>
+    <color name="colorKeyboardBackground">#E0E3EB</color>
 </resources>

@@ -10,6 +10,7 @@ import com.google.gson.GsonBuilder;
 import com.webimapp.android.sdk.BuildConfig;
 import com.webimapp.android.sdk.ProvidedAuthorizationTokenStateListener;
 import com.webimapp.android.sdk.Webim;
+import com.webimapp.android.sdk.WebimSession;
 import com.webimapp.android.sdk.impl.items.delta.DeltaFullUpdate;
 import com.webimapp.android.sdk.impl.items.delta.DeltaItem;
 
@@ -29,8 +30,9 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class WebimClientBuilder {
 
-    private static final int ACTION_TIMEOUT_IN_SECONDS = 30;
-    private static final int DELTA_TIMEOUT_IN_SECONDS = 44;
+    private static final int ACTION_TIMEOUT_READ_IN_SECONDS = 60;
+    private static final int DELTA_TIMEOUT_READ_IN_SECONDS = 44;
+    private static final int TIMEOUT_WRITE_IN_SECONDS = 60;
     private static final String USER_AGENT_FORMAT = "Android: Webim-Client/%s (%s; Android %s)";
     private static final String USER_AGENT_STRING
             = String.format(USER_AGENT_FORMAT, BuildConfig.VERSION_NAME,
@@ -56,6 +58,7 @@ public class WebimClientBuilder {
     private String prechatFields;
     private SSLSocketFactory sslSocketFactory;
     private X509TrustManager trustManager;
+    private WebimSession.SessionCallback sessionCallback;
 
 
     public WebimClientBuilder() {
@@ -183,9 +186,10 @@ public class WebimClientBuilder {
             }
         });
         builder.readTimeout(isDelta
-                        ? DELTA_TIMEOUT_IN_SECONDS
-                        : ACTION_TIMEOUT_IN_SECONDS,
+                        ? DELTA_TIMEOUT_READ_IN_SECONDS
+                        : ACTION_TIMEOUT_READ_IN_SECONDS,
                 TimeUnit.SECONDS);
+        builder.writeTimeout(TIMEOUT_WRITE_IN_SECONDS, TimeUnit.SECONDS);
         if (sslSocketFactory != null && trustManager != null) {
             builder.sslSocketFactory(sslSocketFactory, trustManager);
         }
@@ -209,6 +213,11 @@ public class WebimClientBuilder {
                                                                  X509TrustManager trustManager) {
         this.sslSocketFactory = sslSocketFactory;
         this.trustManager = trustManager;
+        return this;
+    }
+
+    public WebimClientBuilder setSessionCallback(WebimSession.SessionCallback sessionCallback) {
+        this.sessionCallback = sessionCallback;
         return this;
     }
 
@@ -252,7 +261,8 @@ public class WebimClientBuilder {
                 pushToken,
                 visitorJson,
                 sessionId,
-                authData
+                authData,
+                sessionCallback
         );
 
         return new WebimClientImpl(requestLoop, delta,
@@ -330,9 +340,9 @@ public class WebimClientBuilder {
         }
 
         @Override
-        public void setPushToken(@NonNull String token) {
+        public void setPushToken(@NonNull String token, @Nullable WebimSession.TokenCallback callback) {
             deltaLoop.setPushToken(token);
-            actions.updatePushToken(token);
+            actions.updatePushToken(token, callback);
         }
     }
 

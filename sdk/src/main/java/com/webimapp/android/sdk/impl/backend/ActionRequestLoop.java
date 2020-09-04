@@ -3,6 +3,7 @@ package com.webimapp.android.sdk.impl.backend;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.webimapp.android.sdk.NotFatalErrorHandler;
 import com.webimapp.android.sdk.Webim;
 import com.webimapp.android.sdk.impl.items.responses.ErrorResponse;
 
@@ -70,6 +71,15 @@ public class ActionRequestLoop extends AbstractRequestLoop {
                 } catch (SocketTimeoutException e) {
                     WebimInternalLog.getInstance().log(e.toString(),
                             Webim.SessionBuilder.WebimLogVerbosityLevel.DEBUG);
+                    final WebimRequest<?> request = lastRequest;
+                    callbackExecutor.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (request != null) {
+                                request.handleError(NotFatalErrorHandler.NotFatalErrorType.SOCKET_TIMEOUT_EXPIRED.toString());
+                            }
+                        }
+                    });
                     this.lastRequest = null;
                 } catch (InterruptedRuntimeException ignored) { }
             }

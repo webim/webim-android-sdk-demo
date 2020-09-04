@@ -12,6 +12,7 @@ import com.webimapp.android.sdk.impl.items.HistoryRevisionItem;
 import com.webimapp.android.sdk.impl.items.MessageItem;
 import com.webimapp.android.sdk.impl.items.OperatorItem;
 import com.webimapp.android.sdk.impl.items.RatingItem;
+import com.webimapp.android.sdk.impl.items.SurveyItem;
 import com.webimapp.android.sdk.impl.items.UnreadByVisitorMessagesItem;
 import com.webimapp.android.sdk.impl.items.delta.DeltaItem;
 
@@ -61,6 +62,9 @@ class DeltaDeserializer implements JsonDeserializer<DeltaItem> {
                     break;
                 case VISIT_SESSION_STATE:
                     listType = new TypeToken<DeltaItem<String>>() {}.getType();
+                    break;
+                case SURVEY:
+                    listType = new TypeToken<DeltaItem<SurveyItem>>() {}.getType();
                     break;
                 default:
                     listType = new TypeToken<DeltaItem<Object>>() {}.getType();

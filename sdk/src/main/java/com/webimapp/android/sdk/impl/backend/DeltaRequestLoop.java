@@ -6,7 +6,9 @@ import androidx.annotation.Nullable;
 import com.webimapp.android.sdk.BuildConfig;
 import com.webimapp.android.sdk.ProvidedAuthorizationTokenStateListener;
 import com.webimapp.android.sdk.Webim;
+import com.webimapp.android.sdk.WebimSession;
 import com.webimapp.android.sdk.impl.InternalUtils;
+import com.webimapp.android.sdk.impl.WebimErrorImpl;
 import com.webimapp.android.sdk.impl.items.delta.DeltaFullUpdate;
 import com.webimapp.android.sdk.impl.items.delta.DeltaItem;
 import com.webimapp.android.sdk.impl.items.responses.DeltaResponse;
@@ -39,6 +41,7 @@ public class DeltaRequestLoop extends AbstractRequestLoop {
     private @Nullable String providedAuthorizationToken;
     private @Nullable String visitorJson;
     private @Nullable String sessionId;
+    private @Nullable WebimSession.SessionCallback sessionCallback;
     private long since = 0;
 
     public DeltaRequestLoop(@NonNull DeltaCallback callback,
@@ -55,7 +58,8 @@ public class DeltaRequestLoop extends AbstractRequestLoop {
                                     providedAuthorizationTokenStateListener,
                             @Nullable String providedAuthorizationToken,
                             @NonNull String deviceId,
-                            @Nullable String prechatFields) {
+                            @Nullable String prechatFields,
+                            @Nullable WebimSession.SessionCallback sessionCallback) {
         super(callbackExecutor, errorListener);
         this.callback = callback;
         this.sessionParamsListener = sessionParamsListener;
@@ -69,6 +73,7 @@ public class DeltaRequestLoop extends AbstractRequestLoop {
         this.providedAuthorizationToken = providedAuthorizationToken;
         this.deviceId = deviceId;
         this.prechatFields = prechatFields;
+        this.sessionCallback = sessionCallback;
     }
 
     public DeltaRequestLoop(@NonNull DeltaCallback callback,
@@ -90,7 +95,8 @@ public class DeltaRequestLoop extends AbstractRequestLoop {
                             @Nullable String pushToken,
                             @Nullable String visitorJson,
                             @Nullable String sessionId,
-                            @Nullable AuthData authData) {
+                            @Nullable AuthData authData,
+                            @Nullable WebimSession.SessionCallback sessionCallback) {
         this(
                 callback,
                 sessionParamsListener,
@@ -105,7 +111,8 @@ public class DeltaRequestLoop extends AbstractRequestLoop {
                 providedAuthorizationTokenStateListener,
                 providedAuthorizationToken,
                 deviceId,
-                prechatFields
+                prechatFields,
+                sessionCallback
         );
 
         this.pushSystem = pushSystem;
@@ -198,6 +205,12 @@ public class DeltaRequestLoop extends AbstractRequestLoop {
                 callbackExecutor.execute(new Runnable() {
                     @Override
                     public void run() {
+                        if (sessionCallback != null) {
+                            sessionCallback.onFailure(new WebimErrorImpl<>(
+                                    WebimSession.SessionCallback.SessionError.REQUEST_ERROR,
+                                    null)
+                            );
+                        }
                         errorListener.onError(
                                 request.request().url().toString(),
                                 INCORRECT_SERVER_ANSWER,
@@ -214,8 +227,27 @@ public class DeltaRequestLoop extends AbstractRequestLoop {
                 since = delta.getRevision();
             }
 
+            callbackExecutor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    if (sessionCallback != null) {
+                        sessionCallback.onSuccess();
+                    }
+                }
+            });
             processFullUpdate(delta.getFullUpdate());
-        } catch (final AbortByWebimErrorException exception) {
+        } catch (Exception exception) {
+            callbackExecutor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    if (sessionCallback != null) {
+                        sessionCallback.onFailure(new WebimErrorImpl<>(
+                                WebimSession.SessionCallback.SessionError.REQUEST_ERROR,
+                                null)
+                        );
+                    }
+                }
+            });
             throw exception;
         }
     }

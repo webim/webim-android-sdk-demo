@@ -42,4 +42,6 @@ public interface MessageHolder {
     void onMessageChangingCancelled(@NonNull Message.Id id, @NonNull String text);
 
     void updateReadBeforeTimestamp(Long timestamp);
+
+    boolean historyMessagesEmpty();
 }

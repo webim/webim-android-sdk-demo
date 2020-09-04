@@ -56,6 +56,10 @@ public interface WebimService {
     String PARAMETER_SDK_VERSION = "x-webim-sdk-version";
     String PARAMETER_SINCE = "since";
     String PARAMETER_STICKER = "sticker-id";
+    String PARAMETER_SURVEY_ANSWER = "answer";
+    String PARAMETER_SURVEY_FORM_ID = "form-id";
+    String PARAMETER_SURVEY_QUESTION_ID = "question-id";
+    String PARAMETER_SURVEY_ID = "survey-id";
     String PARAMETER_TIMESTAMP = "ts";
     String PARAMETER_TIMESTAMP_BEFORE = "before-ts";
     String PARAMETER_TITLE = "title";
@@ -275,5 +279,26 @@ public interface WebimService {
             @Field(PARAMETER_CLIENT_SIDE_ID) String clientSideId,
             @Field(PARAMETER_PAGE_ID) String pageId,
             @Field(PARAMETER_AUTHORIZATION_TOKEN) String authorizationToken
+    );
+
+    @FormUrlEncoded
+    @POST(URL_SUFFIX_ACTION)
+    Call<DefaultResponse> sendSurveyAnswer(
+            @Field(PARAMETER_ACTION) String action,
+            @Field(PARAMETER_SURVEY_FORM_ID) int formId,
+            @Field(PARAMETER_SURVEY_QUESTION_ID) int questionId,
+            @Field(PARAMETER_SURVEY_ID) String surveyId,
+            @Field(PARAMETER_SURVEY_ANSWER) String surveyAnswer,
+            @Field(PARAMETER_PAGE_ID) String pageId,
+            @Field(PARAMETER_AUTHORIZATION_TOKEN) String authorizationToken
+    );
+
+    @FormUrlEncoded
+    @POST(URL_SUFFIX_ACTION)
+    Call<DefaultResponse> closeSurvey(
+        @Field(PARAMETER_ACTION) String action,
+        @Field(PARAMETER_SURVEY_ID) String surveyId,
+        @Field(PARAMETER_PAGE_ID) String pageId,
+        @Field(PARAMETER_AUTHORIZATION_TOKEN) String authorizationToken
     );
 }

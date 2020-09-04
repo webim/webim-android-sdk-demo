@@ -1,6 +1,7 @@
 package com.webimapp.android.sdk.impl.items;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -149,6 +150,17 @@ public final class ChatItem {
             operatorIdToRate = new HashMap<>();
         }
         return operatorIdToRate;
+    }
+
+    @Override
+    public boolean equals(@Nullable Object object) {
+        if (object instanceof ChatItem && this.getId() != null && this.getClientSideId() != null) {
+            ChatItem chatItem = (ChatItem) object;
+            return this.getId().equals(chatItem.getId())
+                    && this.clientSideId.equals(chatItem.clientSideId);
+        } else {
+            return false;
+        }
     }
 
     public enum ItemChatState {

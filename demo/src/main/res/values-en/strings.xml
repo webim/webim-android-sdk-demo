@@ -30,6 +30,7 @@
     <string name="file_upload_failed_size">Failed to upload file: max file size exceeded</string>
     <string name="file_upload_failed_type">File upload failed: file type not allowed by server</string>
     <string name="file_upload_failed_unknown">Unable to load file: unknown error</string>
+    <string name="file_upload_failed_unauthorized">Failed to upload file: visitor is not logged in</string>
     <string name="file_upload_message_text">Sending file…</string>
     <string name="file_send">Sent a file:\n</string>
     <string name="error_user_banned_header">You are banned by the agent</string>
@@ -78,6 +79,7 @@
     <string name="quote_is_pending">Quote is loading</string>
     <string name="quote_is_not_found">Quote unavailable</string>
     <string name="message_edited">edited</string>
+    <string name="message_deleted_toast">Message was deleted</string>
 
     <string name="empty_reply_text">" "</string>
     <string name="reply_message_with_image">"Image "</string>
@@ -94,7 +96,7 @@
     <string name="operation_denied_toast">Operation denied</string>
 
     <string name="default_date">November 12</string>
-    <string name="upload_file">Upload file</string>
+    <string name="send_file">Send file</string>
     <string name="file_upload_failed_name">Failed to upload file: error in file name</string>
     <string name="visitor_sender_name">You</string>
     <string name="file_transfer_by_operator">"Transferring the file "</string>

@@ -21,6 +21,7 @@
     <dimen name="alert_dialog_relative_marginEnd">35dp</dimen>
     <dimen name="alert_dialog_relative_marginBottom">8dp</dimen>
     <dimen name="alert_dialog_image_margin">7dp</dimen>
+    <dimen name="alert_dialog_image_padding">1dp</dimen>
 
     <dimen name="message_time_marginTop">2dp</dimen>
 
@@ -30,5 +31,12 @@
 
     <dimen name="line_spacing_normal">2dp</dimen>
 
-
+    <dimen name="visible_area_margin">10dp</dimen>
+    <dimen name="keyboard_padding">8dp</dimen>
+    <dimen name="button_padding">10dp</dimen>
+    <dimen name="button_margin_top">4dp</dimen>
+    <dimen name="button_margin_bottom">4dp</dimen>
+    <dimen name="button_margin_left">4dp</dimen>
+    <dimen name="button_margin_right">4dp</dimen>
+    <dimen name="button_text_size">14sp</dimen>
 </resources>

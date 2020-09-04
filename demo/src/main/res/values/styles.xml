@@ -36,4 +36,8 @@
         <item name="android:textColor">@color/white</item>
     </style>
 
+    <style name="DynamicContextMenuTheme">
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
+
 </resources>
