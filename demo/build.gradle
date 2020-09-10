@@ -67,9 +67,7 @@ dependencies {
     implementation 'com.google.android.material:material:1.1.0'
     implementation 'com.google.firebase:firebase-messaging:20.2.0'
     implementation 'com.firebase:firebase-jobdispatcher:0.8.5'
-    implementation ('com.google.firebase:firebase-crashlytics:17.0.1') {
-        exclude group: "com.squareup.okhttp3"
-    }
+    implementation 'com.google.firebase:firebase-crashlytics:17.0.1'
     implementation 'com.github.thijsk:TouchImageView:v1.3.1'
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
