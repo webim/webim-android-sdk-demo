@@ -189,13 +189,6 @@ public final class ChatItem {
                     || this == UNKNOWN;
         }
 
-        public boolean cantSendImageMessage() {
-            return  this == CLOSED
-                    || this == DELETED
-                    || this == ROUTING
-                    || this == UNKNOWN;
-        }
-
         public boolean isOpen() {
             return !isClosed();
         }

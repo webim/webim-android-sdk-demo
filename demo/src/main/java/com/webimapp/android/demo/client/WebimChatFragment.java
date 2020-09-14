@@ -14,16 +14,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import androidx.fragment.app.Fragment;
-import androidx.core.view.ViewCompat;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.appcompat.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -45,7 +35,18 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.ViewCompat;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.bumptech.glide.Glide;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.webimapp.android.demo.client.util.DynamicContextDialog;
 import com.webimapp.android.demo.client.util.EndlessScrollListener;
 import com.webimapp.android.demo.client.util.MenuController;
@@ -712,10 +713,6 @@ public class WebimChatFragment extends Fragment {
                                                 case FILE_NAME_INCORRECT:
                                                     message = getContext().getString(
                                                             R.string.file_upload_failed_name);
-                                                    break;
-                                                case CHAT_NOT_STARTED:
-                                                    message = getContext().getString(
-                                                            R.string.file_upload_failed_no_chat);
                                                     break;
                                                 case UNAUTHORIZED:
                                                     message = getContext().getString(

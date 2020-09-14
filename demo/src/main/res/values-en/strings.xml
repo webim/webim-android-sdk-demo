@@ -100,6 +100,5 @@
     <string name="file_upload_failed_name">Failed to upload file: error in file name</string>
     <string name="visitor_sender_name">You</string>
     <string name="file_transfer_by_operator">"Transferring the file "</string>
-    <string name="file_upload_failed_no_chat">To start a chat, send a text message</string>
     <string name="editing_title">Editing</string>
 </resources>

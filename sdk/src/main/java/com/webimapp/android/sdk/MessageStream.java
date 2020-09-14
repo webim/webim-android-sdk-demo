@@ -943,10 +943,6 @@ public interface MessageStream {
              */
             FILE_NAME_INCORRECT,
             /**
-             * When sending a file there is no started chat
-             */
-            CHAT_NOT_STARTED,
-            /**
              * Visitor authorization error on the server
              */
             UNAUTHORIZED

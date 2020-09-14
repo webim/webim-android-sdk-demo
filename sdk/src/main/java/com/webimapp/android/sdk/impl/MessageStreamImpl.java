@@ -488,17 +488,10 @@ public class MessageStreamImpl implements MessageStream {
         mimeType.getClass(); // NPE
 
         accessChecker.checkAccess();
-        final Message.Id id = StringId.generateForMessage();
-        if (chat == null || chat.getState().cantSendImageMessage()) {
-            if (callback != null) {
-                callback.onFailure(id, (new WebimErrorImpl<>(
-                        SendFileCallback.SendFileError.CHAT_NOT_STARTED, null)));
-            }
-            return id;
-        }
 
         startChatWithDepartmentKeyFirstQuestion(null, null);
 
+        final Message.Id id = StringId.generateForMessage();
         messageHolder.onSendingMessage(sendingMessageFactory.createFile(id, fileName));
         Matcher matcher = Pattern.compile("^[()_.а-яА-ЯёЁa-zA-Z0-9\\s\\-]+$").matcher(fileName);
         if (!matcher.matches()) {
