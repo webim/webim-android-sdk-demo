@@ -61,7 +61,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
             "WHERE msg_id=?";
     private static final String DELETE_HISTORY_STATEMENT = "DELETE FROM history " +
             "WHERE msg_id=?";
-    private static final int VERSION = 7;
+    private static final int VERSION = 8;
 
     private final MyDBHelper dbHelper;
     private final Handler handler;
@@ -377,27 +377,16 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                 prepare();
 
                 SQLiteDatabase db = dbHelper.getWritableDatabase();
-                SQLiteStatement insertStatement = db.compileStatement("INSERT OR FAIL " +
-                        "INTO history " +
-                        "(msg_id, " +
-                        "ts, " +
-                        "sender_id, " +
-                        "sender_name, " +
-                        "avatar, " +
-                        "type, " +
-                        "text, " +
-                        "data, " +
-                        "quote) " +
-                        "VALUES " +
-                        "(?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                SQLiteStatement insertStatement = db.compileStatement(INSERT_HISTORY_STATEMENT);
 
                 long newFirstKnownTs = Long.MAX_VALUE;
                 for (MessageImpl message : messages) {
                     if (message != null) {
                         newFirstKnownTs = Math.min(newFirstKnownTs,
                                 message.getHistoryId().getTimeMicros());
-                        bindMessageFields(insertStatement, 1, message);
                         try {
+                            insertStatement.bindString(1, message.getId().toString());
+                            bindMessageFields(insertStatement, 2, message);
                             insertStatement.executeInsert();
                         } catch (SQLException e) {
                             WebimInternalLog.getInstance().log("Insert failed. " + e,
