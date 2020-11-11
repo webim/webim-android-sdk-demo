@@ -15,20 +15,26 @@ android {
         minSdkVersion 16
         targetSdkVersion 29
         versionName version
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
     }
     lintOptions {
         abortOnError false
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 dependencies {
-    testImplementation 'junit:junit:4.12'
     api 'androidx.annotation:annotation:1.1.0'
     api 'com.squareup.retrofit2:retrofit:2.2.0'
     api 'com.squareup.retrofit2:converter-gson:2.2.0'
     api 'com.squareup.okhttp3:logging-interceptor:4.5.0'
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'org.mockito:mockito-core:3.3.3'
     testImplementation 'org.codehaus.groovy:groovy-all:2.4.12'
     testImplementation 'org.spockframework:spock-core:1.0-groovy-2.4'
     testImplementation 'cglib:cglib-nodep:2.2.2'

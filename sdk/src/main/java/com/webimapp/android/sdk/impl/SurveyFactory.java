@@ -57,6 +57,6 @@ class SurveyFactory {
     private Survey.CurrentQuestionInfo createCurrentQuestionInfo(
         SurveyItem.CurrentQuestionInfo currentQuestionInfo) {
         return new SurveyImpl.CurrentQuestionInfoImpl(
-            currentQuestionInfo.getFormId(), currentQuestionInfo.getFormId());
+            currentQuestionInfo.getFormId(), currentQuestionInfo.getQuestionId());
     }
 }

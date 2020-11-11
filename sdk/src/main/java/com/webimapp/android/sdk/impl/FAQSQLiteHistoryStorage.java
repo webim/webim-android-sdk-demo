@@ -103,9 +103,8 @@ public class FAQSQLiteHistoryStorage {
             @Override
             public void run() {
                 SQLiteDatabase db = dbHelper.getWritableDatabase();
-                Cursor cursor
-                        = db.rawQuery("SELECT data FROM categories WHERE id == " + id + " LIMIT 1",
-                        new String[0]);
+                Cursor cursor = db.rawQuery("SELECT data FROM categories WHERE id = ? LIMIT 1",
+                        new String[] { id });
                 List<FAQCategory> list = new ArrayList<>();
                 try {
                     while (cursor.moveToNext()) {
@@ -115,7 +114,8 @@ public class FAQSQLiteHistoryStorage {
                     cursor.close();
                     db.close();
                 }
-                runCallback(callback, list.get(0));
+
+                runCallback(list, callback);
             }
         });
     }
@@ -126,9 +126,8 @@ public class FAQSQLiteHistoryStorage {
             @Override
             public void run() {
                 SQLiteDatabase db = dbHelper.getWritableDatabase();
-                Cursor cursor
-                        = db.rawQuery("SELECT data FROM structures WHERE id == " + id + " LIMIT 1",
-                        new String[0]);
+                Cursor cursor = db.rawQuery("SELECT data FROM structures WHERE id = ? LIMIT 1",
+                    new String[] { id });
                 List<FAQStructure> list = new ArrayList<>();
                 try {
                     while (cursor.moveToNext()) {
@@ -138,7 +137,8 @@ public class FAQSQLiteHistoryStorage {
                     cursor.close();
                     db.close();
                 }
-                runCallback(callback, list.get(0));
+
+                runCallback(list, callback);
             }
         });
     }
@@ -149,9 +149,9 @@ public class FAQSQLiteHistoryStorage {
             @Override
             public void run() {
                 SQLiteDatabase db = dbHelper.getWritableDatabase();
-                Cursor cursor
-                        = db.rawQuery("SELECT data FROM itemss WHERE id == " + id + " LIMIT 1",
-                        new String[0]);
+                Cursor cursor = db.rawQuery("SELECT data FROM items WHERE id = ? LIMIT 1",
+                    new String[]{ id });
+
                 List<FAQItem> list = new ArrayList<>();
                 try {
                     while (cursor.moveToNext()) {
@@ -161,37 +161,34 @@ public class FAQSQLiteHistoryStorage {
                     cursor.close();
                     db.close();
                 }
-                runCallback(callback, list.get(0));
+
+                runCallback(list, callback);
             }
         });
     }
 
-    private void runCallback(final FAQ.GetCallback<FAQCategory> callback,
-                             final FAQCategory category) {
+    private <T> void runCallback(List<T> list, FAQ.GetCallback<T> callback) {
+        if (!list.isEmpty()) {
+            runSuccessCallback(callback, list.get(0));
+        } else {
+            runErrorCallback(callback);
+        }
+    }
+
+    private <T> void runSuccessCallback(final FAQ.GetCallback<T> callback, final T object) {
         handler.post(new Runnable() {
             @Override
             public void run() {
-                callback.receive(category);
+                callback.receive(object);
             }
         });
     }
 
-    private void runCallback(final FAQ.GetCallback<FAQStructure> callback,
-                             final FAQStructure structure) {
+    private <T> void runErrorCallback(final FAQ.GetCallback<T> callback) {
         handler.post(new Runnable() {
             @Override
             public void run() {
-                callback.receive(structure);
-            }
-        });
-    }
-
-    private void runCallback(final FAQ.GetCallback<FAQItem> callback,
-                             final FAQItem item) {
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                callback.receive(item);
+                callback.onError();
             }
         });
     }
