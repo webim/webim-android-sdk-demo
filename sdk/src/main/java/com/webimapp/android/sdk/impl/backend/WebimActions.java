@@ -18,6 +18,11 @@ public interface WebimActions {
                      boolean isHintQuestion,
                      @Nullable SendOrDeleteMessageInternalCallback callback);
 
+    void sendFiles(@NonNull String message,
+                   @NonNull String clientSideId,
+                   boolean isHintQuestion,
+                   @Nullable SendOrDeleteMessageInternalCallback callback);
+
     void sendKeyboard(@NonNull String requestMessageId,
                       @NonNull String buttonId,
                       @Nullable SendKeyboardErrorListener callback);
@@ -33,6 +38,9 @@ public interface WebimActions {
                   @NonNull String filename,
                   @NonNull String clientSideId,
                   @Nullable SendOrDeleteMessageInternalCallback callback);
+
+    void deleteUploadedFile(@NonNull String fileGuid,
+                            @Nullable SendOrDeleteMessageInternalCallback callback);
 
     void closeChat();
 

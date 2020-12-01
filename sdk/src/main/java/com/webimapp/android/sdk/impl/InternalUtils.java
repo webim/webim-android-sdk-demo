@@ -5,11 +5,13 @@ import androidx.annotation.Nullable;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.webimapp.android.sdk.Message;
 import com.webimapp.android.sdk.Operator;
 import com.webimapp.android.sdk.Survey;
+import com.webimapp.android.sdk.UploadedFile;
 import com.webimapp.android.sdk.Webim;
 import com.webimapp.android.sdk.WebimPushNotification;
 import com.webimapp.android.sdk.impl.backend.WebimClient;
@@ -21,6 +23,9 @@ import com.webimapp.android.sdk.impl.items.KeyboardRequestItem;
 import com.webimapp.android.sdk.impl.items.MessageItem;
 import com.webimapp.android.sdk.impl.items.StickerItem;
 import com.webimapp.android.sdk.impl.items.SurveyItem;
+
+import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
@@ -213,25 +218,46 @@ public final class InternalUtils {
     private static Message.Attachment getAttachment(@NonNull String serverUrl,
                                                     @Nullable FileItem.File file,
                                                     @NonNull WebimClient client) {
-        return file != null
-                ? new MessageImpl.AttachmentImpl(
+        if (file != null) {
+            Message.FileInfo fileInfo = getFileInfo(serverUrl, file, client);
+            List<Message.FileInfo> filesInfo = new ArrayList<>();
+            filesInfo.add(fileInfo);
+            return new MessageImpl.AttachmentImpl(
                     file.getDownloadProgress(),
                     file.getErrorType(),
                     file.getErrorMessage(),
-                    getFileInfo(serverUrl, file, client),
-                    getFileState(file.getState()))
-                : null;
+                    fileInfo,
+                    filesInfo,
+                    getFileState(file.getState()));
+        } else {
+            return null;
+        }
     }
 
     @NonNull
     private static Message.Attachment getAttachment(@NonNull String serverUrl,
                                                     @NonNull String message,
-                                                    @NonNull WebimClient client) {
+                                                    @NonNull WebimClient client) throws JSONException {
+        List<Message.FileInfo> filesInfo = new ArrayList<>();
+        Message.FileInfo fileInfo;
+        Boolean messageIsArray = new JsonParser().parse(message).isJsonArray();
+        if (messageIsArray) {
+            JSONArray jsonArray = new JSONArray(message);
+            fileInfo = getFileInfo(serverUrl, jsonArray.get(0).toString(), client);
+            filesInfo.add(fileInfo);
+            for (int i = 1; i < jsonArray.length(); i++) {
+                filesInfo.add(getFileInfo(serverUrl, jsonArray.get(i).toString(), client));
+            }
+        } else {
+            fileInfo = getFileInfo(serverUrl, message, client);
+            filesInfo.add(fileInfo);
+        }
         return new MessageImpl.AttachmentImpl(
                 100,
                 "",
                 "",
-                getFileInfo(serverUrl, message, client),
+                fileInfo,
+                filesInfo,
                 Message.Attachment.AttachmentState.READY);
     }
 
@@ -286,6 +312,18 @@ public final class InternalUtils {
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @NonNull
+    public static UploadedFile getUploadedFile(@NonNull String response) {
+        FileParametersItem fileParams = fromJson(response, FileParametersItem.class);
+        return new UploadedFileImpl(
+                fileParams.getSize(),
+                fileParams.getGuid(),
+                fileParams.getContentType(),
+                fileParams.getFilename(),
+                fileParams.getVisitorId(),
+                fileParams.getClientContentType());
     }
 
     @NonNull

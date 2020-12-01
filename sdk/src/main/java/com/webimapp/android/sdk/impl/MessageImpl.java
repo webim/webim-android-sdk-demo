@@ -360,17 +360,20 @@ public class MessageImpl implements Message, TimeMicrosHolder {
         private @Nullable String errorMessage;
         private @Nullable String errorType;
         private @NonNull FileInfo fileInfo;
+        private @NonNull List<FileInfo> filesInfo;
         private @NonNull AttachmentState state;
 
         public AttachmentImpl(int downloadProgress,
                               @Nullable String errorMessage,
                               @Nullable String errorType,
                               @NonNull FileInfo fileInfo,
+                              @NonNull List<FileInfo> filesInfo,
                               @NonNull AttachmentState state) {
             this.downloadProgress = downloadProgress;
             this.errorMessage = errorMessage;
             this.errorType = errorType;
             this.fileInfo = fileInfo;
+            this.filesInfo = filesInfo;
             this.state = state;
         }
 
@@ -396,6 +399,10 @@ public class MessageImpl implements Message, TimeMicrosHolder {
         public FileInfo getFileInfo() {
             return fileInfo;
         }
+
+        @Override
+        @NonNull
+        public List<FileInfo> getFilesInfo() { return filesInfo; }
 
         @Override
         @NonNull

@@ -8,11 +8,13 @@ public class WebimInternalError {
 	public static final String FILE_NAME_INCORRECT = "incorrect-file-name";
 	public static final String FILE_NOT_FOUND = "file_not_found";
 	public static final String FILE_SIZE_EXCEEDED = "max_file_size_exceeded";
+	public static final String FILE_SIZE_TOO_SMALL = "file_size_too_small";
 	public static final String FILE_TYPE_NOT_ALLOWED = "not_allowed_file_type";
 	public static final String NOT_ALLOWED_MIME_TYPE = "not_allowed_mime_type";
 	public static final String NO_PREVIOUS_CHATS = "no_previous_chats";
 	public static final String NO_STICKER_ID = "no-sticker-id";
 	public static final String NOT_MATCHING_MAGIC_NUMBERS = "not_matching_magic_numbers";
+	public static final String MAX_FILES_COUNT_PER_CHAT_EXCEEDED = "max_files_count_per_chat_exceeded";
 	public static final String PROVIDED_VISITOR_EXPIRED = "provided-visitor-expired";
 	public static final String REINIT_REQUIRED = "reinit-required";
 	public static final String SETTING_DISABLED = "setting_disabled";
@@ -73,4 +75,7 @@ public class WebimInternalError {
 	public static final String INCORRECT_RADIO_VALUE = "incorrect-radio-value";
 	public static final String MAX_COMMENT_LENGTH_EXCEEDED = "max-comment-length-exceeded";
 	public static final String QUESTION_NOT_FOUND = "question-not-found";
+
+	//Errors for Delete files
+	public static final String FILE_HAS_BEEN_SENT = "file-has-been-sent";
 }

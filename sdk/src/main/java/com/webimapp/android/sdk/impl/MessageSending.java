@@ -11,7 +11,8 @@ public class MessageSending extends MessageImpl {
                           @NonNull String text,
                           long timeMicros,
                           @Nullable Quote quote,
-                          @Nullable Sticker sticker) {
+                          @Nullable Sticker sticker,
+                          @Nullable Attachment attachment) {
         super(serverUrl,
                 id,
                 null,

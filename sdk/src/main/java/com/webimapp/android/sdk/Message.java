@@ -202,6 +202,11 @@ public interface Message {
         @NonNull FileInfo getFileInfo();
 
         /**
+         * @return the filesInfo of the attachment
+         */
+        @NonNull List<FileInfo> getFilesInfo();
+
+        /**
          * @return type of error in case of problems during attachment upload
          */
         @Nullable String getErrorType();

@@ -7,6 +7,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.webimapp.android.sdk.Message;
 import com.webimapp.android.sdk.Operator;
+import com.webimapp.android.sdk.UploadedFile;
 import com.webimapp.android.sdk.impl.backend.WebimClient;
 import com.webimapp.android.sdk.impl.items.KeyboardItem;
 import com.webimapp.android.sdk.impl.items.KeyboardRequestItem;
@@ -197,6 +198,7 @@ public final class MessageFactories {
                     text,
                     System.currentTimeMillis() * 1000,
                     null,
+                    null,
                     null);
         }
 
@@ -222,6 +224,7 @@ public final class MessageFactories {
                     text,
                     System.currentTimeMillis() * 1000,
                     quote,
+                    null,
                     null);
         }
 
@@ -233,6 +236,7 @@ public final class MessageFactories {
                     Message.Type.FILE_FROM_VISITOR,
                     fileName,
                     System.currentTimeMillis() * 1000,
+                    null,
                     null,
                     null);
         }
@@ -247,7 +251,39 @@ public final class MessageFactories {
                     "",
                     System.currentTimeMillis() * 1000,
                     null,
-                    sticker);
+                    sticker,
+                    null);
+        }
+
+        public MessageSending createAttachment(Message.Id id, List<UploadedFile> uploadedFiles) {
+            List<Message.FileInfo> filesInfo = new ArrayList<>();
+            for (UploadedFile uploadedFile : uploadedFiles) {
+                Message.FileInfo fileInfo = new MessageImpl.FileInfoImpl(
+                        uploadedFile.getContentType(),
+                        uploadedFile.getFileName(),
+                        null,
+                        uploadedFile.getSize(),
+                        null);
+                filesInfo.add(fileInfo);
+            }
+            MessageImpl.AttachmentImpl attachment = new  MessageImpl.AttachmentImpl(
+                    100,
+                    "",
+                    "",
+                    filesInfo.get(0),
+                    filesInfo,
+                    Message.Attachment.AttachmentState.READY);
+
+            return new MessageSending(
+                    serverUrl,
+                    id,
+                    "",
+                    Message.Type.FILE_FROM_VISITOR,
+                    "",
+                    System.currentTimeMillis() * 1000,
+                    null,
+                    null,
+                    attachment);
         }
     }
 

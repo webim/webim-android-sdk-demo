@@ -1,5 +1,7 @@
 package com.webimapp.android.sdk.impl.items;
 
+import androidx.annotation.NonNull;
+
 import com.google.gson.annotations.SerializedName;
 
 public class FileParametersItem {
@@ -8,11 +10,15 @@ public class FileParametersItem {
     @SerializedName("guid")
     private String guid;
     @SerializedName("content_type")
-    private String content_type;
+    private String contentType;
     @SerializedName("filename")
     private String filename;
     @SerializedName("image")
     private WMImageParams image;
+    @SerializedName("visitor_id")
+    private String visitorId;
+    @SerializedName("client_content_type")
+    private String clientContentType;
 
     public long getSize() {
         return size;
@@ -23,7 +29,7 @@ public class FileParametersItem {
     }
 
     public String getContentType() {
-        return content_type;
+        return contentType;
     }
 
     public String getFilename() {
@@ -32,6 +38,23 @@ public class FileParametersItem {
 
     public WMImageParams getImageParams() {
         return image;
+    }
+
+    public String getVisitorId() { return visitorId; }
+
+    public String getClientContentType() { return clientContentType; }
+
+    @NonNull
+    @Override
+    public String toString() {
+
+        return "{\"client_content_type\":\" " + getClientContentType() +
+                " \",\"visitor_id\":\"" + getVisitorId() +
+                "\",\"filename\":\"" + getFilename()  +
+                "\",\"content_type\":\"" + getContentType() +
+                "\",\"guid\":\"" + getGuid() +
+                "\",\"size\":"+ getSize() +
+                " }";
     }
 
     public static class WMImageParams {

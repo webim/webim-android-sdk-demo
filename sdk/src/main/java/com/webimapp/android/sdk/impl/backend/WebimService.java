@@ -36,7 +36,9 @@ public interface WebimService {
     String PARAMETER_EMAIL = "email";
     String PARAMETER_EVENT = "event";
     String PARAMETER_FILE_UPLOAD = "webim_upload_file";
+    String PARAMETER_GUID = "guid";
     String PARAMETER_LOCATION = "location";
+    String PARAMETER_KIND = "kind";
     String PARAMETER_MESSAGE = "message";
     String PARAMETER_MESSAGE_DRAFT = "message-draft";
     String PARAMETER_MESSAGE_DRAFT_DELETE = "del-message-draft";
@@ -70,6 +72,7 @@ public interface WebimService {
     String PARAMETER_VISITOR_TYPING = "typing";
     String URL_SUFFIX_ACTION = "/l/v/m/action";
     String URL_SUFFIX_DELTA = "/l/v/m/delta";
+    String URL_SUFFIX_FILE_DELETE = "l/v/file-delete";
     String URL_SUFFIX_FILE_UPLOAD = "/l/v/m/upload";
     String URL_SUFFIX_HISTORY = "/l/v/m/history";
     String URL_SUFFIX_SEARCH_MESSAGES = "/l/v/m/search-messages";
@@ -82,6 +85,13 @@ public interface WebimService {
             @Part(PARAMETER_CLIENT_SIDE_ID) RequestBody clientSideId,
             @Part(PARAMETER_PAGE_ID) RequestBody pageId,
             @Part(PARAMETER_AUTHORIZATION_TOKEN) RequestBody authorizationToken
+    );
+
+    @POST(URL_SUFFIX_FILE_DELETE)
+    Call<DefaultResponse> deleteUploadedFile(
+            @Field(PARAMETER_PAGE_ID) String pageId,
+            @Field(PARAMETER_GUID) String guid,
+            @Field(PARAMETER_AUTHORIZATION_TOKEN) String authorizationToken
     );
 
     @GET(URL_SUFFIX_DELTA)
@@ -138,6 +148,7 @@ public interface WebimService {
     Call<DefaultResponse> sendMessage(
             @Field(PARAMETER_ACTION) String action,
             @Field(value = PARAMETER_MESSAGE, encoded = true) String message,
+            @Field(PARAMETER_KIND) String kind,
             @Field(PARAMETER_CLIENT_SIDE_ID) String clientSideId,
             @Field(PARAMETER_PAGE_ID) String pageId,
             @Field(PARAMETER_AUTHORIZATION_TOKEN) String authorizationToken,

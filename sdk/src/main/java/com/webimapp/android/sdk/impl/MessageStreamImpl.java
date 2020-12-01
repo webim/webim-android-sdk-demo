@@ -10,6 +10,7 @@ import com.webimapp.android.sdk.MessageStream;
 import com.webimapp.android.sdk.MessageTracker;
 import com.webimapp.android.sdk.Operator;
 import com.webimapp.android.sdk.Survey;
+import com.webimapp.android.sdk.UploadedFile;
 import com.webimapp.android.sdk.impl.backend.DefaultCallback;
 import com.webimapp.android.sdk.impl.backend.LocationSettingsImpl;
 import com.webimapp.android.sdk.impl.backend.SendKeyboardErrorListener;
@@ -34,7 +35,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import okhttp3.MediaType;
@@ -258,6 +258,65 @@ public class MessageStreamImpl implements MessageStream {
     @Override
     public Message.Id sendMessage(@NonNull String message, boolean isHintQuestion) {
         return sendMessageInternally(message, null, isHintQuestion, null);
+    }
+
+    @NonNull
+    @Override
+    public Message.Id sendFiles(@NonNull List<UploadedFile> uploadedFiles,
+                                @Nullable final SendFilesCallback sendFilesCallback) {
+        accessChecker.checkAccess();
+
+        startChatWithDepartmentKeyFirstQuestion(null, null);
+        final Message.Id messageId = StringId.generateForMessage();
+        if (uploadedFiles.isEmpty()) {
+            if (sendFilesCallback != null) {
+                sendFilesCallback.onFailure(messageId, (new WebimErrorImpl<>(
+                        SendFilesCallback.SendFilesError.FILE_NOT_FOUND,
+                        null)));
+            }
+            return messageId;
+        }
+
+        if (uploadedFiles.size() > 10) {
+            if (sendFilesCallback != null) {
+                sendFilesCallback.onFailure(messageId, new WebimErrorImpl<>(
+                        SendFilesCallback.SendFilesError.MAX_FILES_COUNT_PER_MESSAGE,
+                        null));
+            }
+            return messageId;
+        }
+
+        StringBuilder messageBuilder = new StringBuilder("[");
+        messageBuilder.append(uploadedFiles.get(0).toString());
+        for(int i = 1; i < uploadedFiles.size(); i++) {
+            messageBuilder.append(", ").append(uploadedFiles.get(i).toString());
+        }
+        messageBuilder.append("]");
+        messageHolder.onSendingMessage(sendingMessageFactory.createAttachment(messageId, uploadedFiles));
+        actions.sendFiles(
+                messageBuilder.toString(),
+                messageId.toString(),
+                false,
+                new SendOrDeleteMessageInternalCallback() {
+                    @Override
+                    public void onSuccess(String response) {
+                        if (sendFilesCallback != null) {
+                            sendFilesCallback.onSuccess(messageId);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(String error) {
+                        messageHolder.onMessageSendingCancelled(messageId);
+                        if (sendFilesCallback != null) {
+                            sendFilesCallback.onFailure(
+                                    messageId,
+                                    new WebimErrorImpl<>(SendFilesCallback.SendFilesError.UNKNOWN, error)
+                            );
+                        }
+                    }
+                });
+        return messageId;
     }
 
     @Override
@@ -492,12 +551,58 @@ public class MessageStreamImpl implements MessageStream {
         startChatWithDepartmentKeyFirstQuestion(null, null);
 
         final Message.Id id = StringId.generateForMessage();
-        messageHolder.onSendingMessage(sendingMessageFactory.createFile(id, fileName));
-        Matcher matcher = Pattern.compile("^[()_.а-яА-ЯёЁa-zA-Z0-9\\s\\-]+$").matcher(fileName);
-        if (!matcher.matches()) {
-            messageHolder.onMessageSendingCancelled(id);
+        if (!patternMatches(fileName)) {
             if (callback != null) {
                 callback.onFailure(id, (new WebimErrorImpl<>(
+                        SendFileCallback.SendFileError.FILE_NAME_INCORRECT,
+                        WebimInternalError.FILE_NAME_INCORRECT)));
+            }
+            return id;
+        }
+        messageHolder.onSendingMessage(sendingMessageFactory.createFile(id, fileName));
+        actions.sendFile(
+                RequestBody.create(MediaType.parse(mimeType), file),
+                fileName,
+                id.toString(),
+                new SendOrDeleteMessageInternalCallback() {
+                    @Override
+                    public void onSuccess(String response) {
+                        if (callback != null) {
+                            callback.onSuccess(id);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(String error) {
+                        messageHolder.onMessageSendingCancelled(id);
+
+                        if (callback != null) {
+                            callback.onFailure(id, (new WebimErrorImpl<>(getFileError(error), error)));
+                        }
+                    }
+                });
+
+        return id;
+    }
+
+    @NonNull
+    @Override
+    public Message.Id uploadFilesToServer(@NonNull File file,
+                                          @NonNull String fileName,
+                                          @NonNull String mimeType,
+                                          @Nullable final UploadFileToServerCallback uploadFileToServerCallback) {
+        file.getClass(); // NPE
+        fileName.getClass(); // NPE
+        mimeType.getClass(); // NPE
+
+        accessChecker.checkAccess();
+
+        startChatWithDepartmentKeyFirstQuestion(null, null);
+
+        final Message.Id id = StringId.generateForMessage();
+        if (!patternMatches(fileName)) {
+            if (uploadFileToServerCallback != null) {
+                uploadFileToServerCallback.onFailure(id, (new WebimErrorImpl<>(
                         SendFileCallback.SendFileError.FILE_NAME_INCORRECT,
                         WebimInternalError.FILE_NAME_INCORRECT)));
             }
@@ -509,44 +614,81 @@ public class MessageStreamImpl implements MessageStream {
                 id.toString(),
                 new SendOrDeleteMessageInternalCallback() {
                     @Override
-                    public void onSuccess() {
-                        if (callback != null) {
-                            callback.onSuccess(id);
+                    public void onSuccess(String response) {
+                        if (uploadFileToServerCallback != null) {
+                            UploadedFile uploadedFile = InternalUtils.getUploadedFile(response);
+                            uploadFileToServerCallback.onSuccess(id, uploadedFile);
                         }
                     }
 
                     @Override
                     public void onFailure(String error) {
-                        messageHolder.onMessageSendingCancelled(id);
-
-                        if (callback != null) {
-                            SendFileCallback.SendFileError fileError;
-                            switch (error) {
-                                case WebimInternalError.FILE_TYPE_NOT_ALLOWED:
-                                    fileError = SendFileCallback.SendFileError.FILE_TYPE_NOT_ALLOWED;
-                                    break;
-                                case WebimInternalError.FILE_SIZE_EXCEEDED:
-                                    fileError = SendFileCallback.SendFileError.FILE_SIZE_EXCEEDED;
-                                    break;
-                                case WebimInternalError.UPLOADED_FILE_NOT_FOUND:
-                                    fileError = SendFileCallback.SendFileError.UPLOADED_FILE_NOT_FOUND;
-                                    break;
-                                case WebimInternalError.FILE_NOT_FOUND:
-                                    fileError = SendFileCallback.SendFileError.FILE_NOT_FOUND;
-                                    break;
-                                case WebimInternalError.UNAUTHORIZED:
-                                    fileError = SendFileCallback.SendFileError.UNAUTHORIZED;
-                                    break;
-                                default:
-                                    fileError = SendFileCallback.SendFileError.UNKNOWN;
-                            }
-
-                            callback.onFailure(id, (new WebimErrorImpl<>(fileError, error)));
+                        if (uploadFileToServerCallback != null) {
+                            uploadFileToServerCallback.onFailure(id, (new WebimErrorImpl<>(getFileError(error), error)));
                         }
                     }
                 });
-
         return id;
+    }
+
+    @Override
+    public void deleteUploadedFiles(@NonNull String fileGuid,
+                                    @Nullable final DeleteUploadedFileCallback deleteUploadedFileCallback) {
+        accessChecker.checkAccess();
+        actions.deleteUploadedFile(
+                fileGuid,
+                new SendOrDeleteMessageInternalCallback() {
+                    @Override
+                    public void onSuccess(String response) {
+                        if (deleteUploadedFileCallback != null) {
+                            deleteUploadedFileCallback.onSuccess();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(String error) {
+                        if (deleteUploadedFileCallback != null) {
+                            deleteUploadedFileCallback.onFailure(new WebimErrorImpl<>(getDeleteUploadedFileError(error), error));
+                        }
+                    }
+                }
+        );
+    }
+
+    private Boolean patternMatches(String fileName) {
+        return Pattern.compile("^[()_.а-яА-ЯёЁa-zA-Z0-9\\s\\-]+$").matcher(fileName).matches();
+    }
+
+    private SendFileCallback.SendFileError getFileError(String error) {
+        switch (error) {
+            case WebimInternalError.FILE_TYPE_NOT_ALLOWED:
+                return SendFileCallback.SendFileError.FILE_TYPE_NOT_ALLOWED;
+            case WebimInternalError.FILE_SIZE_EXCEEDED:
+                return SendFileCallback.SendFileError.FILE_SIZE_EXCEEDED;
+            case WebimInternalError.UPLOADED_FILE_NOT_FOUND:
+                return SendFileCallback.SendFileError.UPLOADED_FILE_NOT_FOUND;
+            case WebimInternalError.FILE_NOT_FOUND:
+                return SendFileCallback.SendFileError.FILE_NOT_FOUND;
+            case WebimInternalError.UNAUTHORIZED:
+                return SendFileCallback.SendFileError.UNAUTHORIZED;
+            case WebimInternalError.FILE_SIZE_TOO_SMALL:
+                return SendFileCallback.SendFileError.FILE_SIZE_TOO_SMALL;
+            case WebimInternalError.MAX_FILES_COUNT_PER_CHAT_EXCEEDED:
+                return SendFileCallback.SendFileError.MAX_FILES_COUNT_PER_CHAT_EXCEEDED;
+            default:
+                return SendFileCallback.SendFileError.UNKNOWN;
+        }
+    }
+
+    private DeleteUploadedFileCallback.DeleteUploadedFileError getDeleteUploadedFileError(String error) {
+        switch (error) {
+            case WebimInternalError.FILE_NOT_FOUND:
+                return DeleteUploadedFileCallback.DeleteUploadedFileError.FILE_NOT_FOUND;
+            case WebimInternalError.FILE_HAS_BEEN_SENT:
+                return DeleteUploadedFileCallback.DeleteUploadedFileError.FILE_HAS_BEEN_SENT;
+            default:
+                return DeleteUploadedFileCallback.DeleteUploadedFileError.UNKNOWN;
+        }
     }
 
     @Override
@@ -1012,7 +1154,7 @@ public class MessageStreamImpl implements MessageStream {
                 isHintQuestion,
                 new SendOrDeleteMessageInternalCallback() {
                     @Override
-                    public void onSuccess() {
+                    public void onSuccess(String response) {
                         if (dataMessageCallback != null) {
                             dataMessageCallback.onSuccess(messageId);
                         }
@@ -1056,7 +1198,7 @@ public class MessageStreamImpl implements MessageStream {
                     false,
                     new SendOrDeleteMessageInternalCallback() {
                         @Override
-                        public void onSuccess() {
+                        public void onSuccess(String response) {
                             if (editMessageCallback != null) {
                                 editMessageCallback.onSuccess(message.getId(), text);
                             }
@@ -1094,7 +1236,7 @@ public class MessageStreamImpl implements MessageStream {
                     message.getId().toString(),
                     new SendOrDeleteMessageInternalCallback() {
                         @Override
-                        public void onSuccess() {
+                        public void onSuccess(String response) {
                             if (deleteMessageCallback != null) {
                                 deleteMessageCallback.onSuccess(message.getId());
                             }

@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.webimapp.android.sdk.MessageStream;
+import com.webimapp.android.sdk.NotFatalErrorHandler.NotFatalErrorType;
 import com.webimapp.android.sdk.WebimSession;
 import com.webimapp.android.sdk.impl.WebimErrorImpl;
 import com.webimapp.android.sdk.impl.items.responses.DefaultResponse;
@@ -16,8 +17,6 @@ import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
 import retrofit2.Call;
-
-import com.webimapp.android.sdk.NotFatalErrorHandler.NotFatalErrorType;
 
 public class WebimActionsImpl implements WebimActions {
     private static final MediaType PLAIN_TEXT = MediaType.parse("text/plain");
@@ -73,6 +72,7 @@ public class WebimActionsImpl implements WebimActions {
                 return webim.sendMessage(
                         ACTION_CHAT_MESSAGE,
                         percentEncode(message),
+                        null,
                         clientSideId,
                         authData.getPageId(),
                         authData.getAuthToken(),
@@ -83,7 +83,50 @@ public class WebimActionsImpl implements WebimActions {
             @Override
             public void runCallback(DefaultResponse response) {
                 //noinspection ConstantConditions
-                callback.onSuccess();
+                callback.onSuccess("");
+            }
+
+            @Override
+            public boolean isHandleError(@NonNull String error) {
+                return true;
+            }
+
+            @Override
+            public void handleError(@NonNull String error) {
+                //noinspection ConstantConditions
+                callback.onFailure(error);
+            }
+        });
+    }
+
+    @Override
+    public void sendFiles(@NonNull final String message,
+                          @NonNull final String clientSideId,
+                          final boolean isHintQuestion,
+                          @Nullable final SendOrDeleteMessageInternalCallback callback) {
+
+        enqueue(new ActionRequestLoop.WebimRequest<DefaultResponse>((callback != null)) {
+            @Override
+            public Call<DefaultResponse> makeRequest(AuthData authData) {
+                /*
+                Custom percent encoding for message because Retrofit/OkHTTP don't encode
+                semicolons.
+                */
+                return webim.sendMessage(
+                        ACTION_CHAT_MESSAGE,
+                        percentEncode(message),
+                        "file_visitor",
+                        clientSideId,
+                        authData.getPageId(),
+                        authData.getAuthToken(),
+                        (isHintQuestion ? true : null),
+                        null);
+            }
+
+            @Override
+            public void runCallback(DefaultResponse response) {
+                //noinspection ConstantConditions
+                callback.onSuccess("");
             }
 
             @Override
@@ -151,7 +194,7 @@ public class WebimActionsImpl implements WebimActions {
             @Override
             public void runCallback(DefaultResponse response) {
                 //noinspection ConstantConditions
-                callback.onSuccess();
+                callback.onSuccess("");
             }
 
             @Override
@@ -221,7 +264,7 @@ public class WebimActionsImpl implements WebimActions {
             @Override
             public void runCallback(UploadResponse response) {
                 //noinspection ConstantConditions
-                callback.onSuccess();
+                callback.onSuccess(response.getData().toString());
             }
 
             @Override
@@ -230,6 +273,41 @@ public class WebimActionsImpl implements WebimActions {
                         || error.equals(WebimInternalError.FILE_SIZE_EXCEEDED)
                         || error.equals(WebimInternalError.UNAUTHORIZED)
                         || error.equals(WebimInternalError.UPLOADED_FILE_NOT_FOUND));
+            }
+
+            @Override
+            public void handleError(@NonNull String error) {
+                //noinspection ConstantConditions
+                callback.onFailure(error);
+            }
+        });
+    }
+
+    @Override
+    public void deleteUploadedFile(@NonNull final String fileGuid,
+                                   @Nullable final SendOrDeleteMessageInternalCallback callback) {
+
+        fileGuid.getClass();
+
+        enqueue(new ActionRequestLoop.WebimRequest<DefaultResponse>((callback != null)) {
+            @Override
+            public Call<DefaultResponse> makeRequest(AuthData authData) {
+                return webim.deleteUploadedFile(
+                        authData.getPageId(),
+                        fileGuid,
+                        authData.getAuthToken());
+            }
+
+            @Override
+            public void runCallback(DefaultResponse response) {
+                //noinspection ConstantConditions
+                callback.onSuccess("");
+            }
+
+            @Override
+            public boolean isHandleError(@NonNull String error) {
+                return (error.equals(WebimInternalError.FILE_NOT_FOUND)
+                        || error.equals(WebimInternalError.FILE_HAS_BEEN_SENT));
             }
 
             @Override

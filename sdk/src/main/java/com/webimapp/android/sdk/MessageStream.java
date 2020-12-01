@@ -315,6 +315,23 @@ public interface MessageStream {
     Message.Id sendMessage(@NonNull String message, boolean isHintQuestion);
 
     /**
+     * Sends a message with file description.
+     * When calling this method, if there is an active {@link MessageTracker} (see
+     * {@link MessageStream#newMessageTracker}),
+     * {@link MessageListener#messageAdded(Message, Message)} with a message
+     * {@link Message.SendStatus#SENDING} in the status is also called.
+     * @param uploadedFiles files description
+     * @param sendFilesCallback shows if a call is completed or failed
+     * @return id of the message
+     * @throws IllegalStateException if the WebimSession was destroyed
+     * @throws RuntimeException if the method was called not from the thread the WebimSession was
+     * created in
+     */
+    @NonNull
+    Message.Id sendFiles(@NonNull List<UploadedFile> uploadedFiles,
+                         @Nullable SendFilesCallback sendFilesCallback);
+
+    /**
      * Sends a reply on message.
      * When calling this method, if there is an active {@link MessageTracker} (see
      * {@link MessageStream#newMessageTracker}),
@@ -386,7 +403,7 @@ public interface MessageStream {
      * created in
      */
     boolean deleteMessage(@NonNull Message message,
-                       @Nullable DeleteMessageCallback deleteMessageCallback);
+                          @Nullable DeleteMessageCallback deleteMessageCallback);
 
     /**
      * Sends a file message. A name of a file must contain file extension which is appropriate to
@@ -409,6 +426,35 @@ public interface MessageStream {
                         @NonNull String name,
                         @NonNull String mimeType,
                         @Nullable SendFileCallback callback);
+
+    /**
+     * Uploads the file to the server. A name of a file must contain file extension which is appropriate to
+     * the  specified MIME type. (use {@link android.webkit.MimeTypeMap}).
+     * @param file the file to send
+     * @param name the name of the file (must end with a valid extension)
+     * @param mimeType MIME type of the file
+     * @param uploadFileToServerCallback shows if a call on file upload is completed or failed
+     * @return id of the message
+     * @throws IllegalStateException if the WebimSession was destroyed
+     * @throws RuntimeException if the method was called not from the thread the WebimSession was
+     * created in
+     */
+    @NonNull
+    Message.Id uploadFilesToServer(@NonNull File file,
+                                   @NonNull String name,
+                                   @NonNull String mimeType,
+                                   @Nullable UploadFileToServerCallback uploadFileToServerCallback);
+
+    /**
+     * Deletes files uploaded to the server ({@link MessageStream#uploadFilesToServer}).
+     * @param fileGuid guid file to delete
+     * @param deleteUploadedFileCallback shows if a call on file delete is completed or failed
+     * @throws IllegalStateException if the WebimSession was destroyed
+     * @throws RuntimeException if the method was called not from the thread the WebimSession was
+     * created in
+     */
+    void deleteUploadedFiles(@NonNull String fileGuid,
+                             @Nullable DeleteUploadedFileCallback deleteUploadedFileCallback);
 
     /**
      * Send sticker to chat.
@@ -748,6 +794,47 @@ public interface MessageStream {
     }
 
     /**
+     * @see MessageStream#sendFiles(List, SendFilesCallback)
+     */
+    interface SendFilesCallback {
+
+        /**
+         * Invoked when message with files is sent successfully.
+         * @param messageId ID of the message
+         */
+        void onSuccess(@NonNull Message.Id messageId);
+
+        /**
+         * Invoked when an error occurred while sending message with files.
+         * @param messageId ID of the message
+         * @param sendFilesError Error
+         * @see DataMessageCallback.DataMessageError
+         */
+        void onFailure(@NonNull Message.Id messageId,
+                       @NonNull WebimError<SendFilesCallback.SendFilesError> sendFilesError);
+
+        /**
+         * @see SendFilesCallback#onFailure(Message.Id, WebimError)
+         */
+        enum SendFilesError {
+            /**
+             * Message does not contain file or files.
+             */
+            FILE_NOT_FOUND,
+
+            /**
+             * The message has exceeded the maximum number of files.
+             */
+            MAX_FILES_COUNT_PER_MESSAGE,
+
+            /**
+             * Received error is not supported by current WebimClientLibrary version.
+             */
+            UNKNOWN,
+        }
+    }
+
+    /**
      * @see MessageStream#sendKeyboardRequest(String, String, SendKeyboardCallback)
      */
     interface SendKeyboardCallback {
@@ -931,6 +1018,14 @@ public interface MessageStream {
              */
             FILE_SIZE_EXCEEDED,
             /**
+             * The file uploaded to the server is too small
+             */
+            FILE_SIZE_TOO_SMALL,
+            /**
+             * The maximum number of files uploaded per chat
+             */
+            MAX_FILES_COUNT_PER_CHAT_EXCEEDED,
+            /**
              * Sending files in body is not supported. Use multipart form only.
              * */
             UPLOADED_FILE_NOT_FOUND,
@@ -946,6 +1041,61 @@ public interface MessageStream {
              * Visitor authorization error on the server
              */
             UNAUTHORIZED
+        }
+    }
+
+    /**
+     * @see MessageStream#uploadFilesToServer
+     */
+    interface UploadFileToServerCallback {
+        /**
+         * Invoked when file sending succeed.
+         * @param id ID of the message
+         * @param uploadedFile description of the uploaded file
+         */
+        void onSuccess(@NonNull Message.Id id, @NonNull UploadedFile uploadedFile);
+
+        /**
+         * Invoked when file sending failed.
+         * @param id ID of the message
+         * @param error Error
+         * @see SendFileCallback.SendFileError
+         */
+        void onFailure(@NonNull Message.Id id, @NonNull WebimError<SendFileCallback.SendFileError> error);
+    }
+
+    /**
+     * @see MessageStream#deleteUploadedFiles
+     */
+    interface DeleteUploadedFileCallback {
+        /**
+         * Invoked when file deleting succeed.
+         */
+        void onSuccess();
+
+        /**
+         * Invoked when file deleting failed.
+         * @param error Error
+         * @see DeleteUploadedFileCallback.DeleteUploadedFileError
+         */
+        void onFailure(@NonNull WebimError<DeleteUploadedFileError> error);
+
+        /**
+         * @see DeleteUploadedFileCallback#onFailure
+         */
+        enum DeleteUploadedFileError {
+            /**
+             * File not found on server
+             */
+            FILE_NOT_FOUND,
+            /**
+             * The file is attached to the message and cannot be deleted
+             */
+            FILE_HAS_BEEN_SENT,
+            /**
+             * Received error is not supported by current WebimClientLibrary version.
+             */
+            UNKNOWN
         }
     }
 
