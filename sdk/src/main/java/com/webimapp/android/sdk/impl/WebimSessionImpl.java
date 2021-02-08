@@ -840,6 +840,10 @@ public class WebimSessionImpl implements WebimSession {
 
         @Override
         public void onFullUpdate(@NonNull DeltaFullUpdate fullUpdate) {
+            final List<DepartmentItem> departmentItemList = fullUpdate.getDepartments();
+            if (departmentItemList != null) {
+                messageStream.onReceivingDepartmentList(departmentItemList);
+            }
             messageStream.setInvitationState(VisitSessionStateItem.getType(fullUpdate.getState()));
             currentChat = fullUpdate.getChat();
             if (!firstFullUpdateReceived) {
@@ -864,11 +868,6 @@ public class WebimSessionImpl implements WebimSession {
             if (revision != null) {
                 historyPoller.setHasHistoryRevisionDelta(true);
                 historyPoller.requestHistorySince(revision);
-            }
-
-            final List<DepartmentItem> departmentItemList = fullUpdate.getDepartments();
-            if (departmentItemList != null) {
-                messageStream.onReceivingDepartmentList(departmentItemList);
             }
 
             if (currentChat != null) {
@@ -995,7 +994,7 @@ public class WebimSessionImpl implements WebimSession {
                     for (ListIterator<MessageItem> iterator
                          = currentChat.getMessages().listIterator(); iterator.hasNext(); ) {
                         MessageItem messageItem = iterator.next();
-                        if (messageItem.getId().equals(deltaItem.getSessionId())) {
+                        if (messageItem.getId().equals(deltaItem.getId())) {
                             message = currentChatMessageMapper.map(messageItem);
                             historyMessage = historyChatMessageMapper.map(messageItem);
                             iterator.remove();
@@ -1006,8 +1005,8 @@ public class WebimSessionImpl implements WebimSession {
                 }
 
                 if (message != null && historyMessage != null) {
-                    messageHolder.onMessageDeleted(deltaItem.getSessionId());
-                    historyPoller.deleteMessageFromDB(historyMessage.getId().toString());
+                    messageHolder.onMessageDeleted(deltaItem.getId());
+                    historyPoller.deleteMessageFromDB(historyMessage.getClientSideId().toString());
                 }
             } else {
                 MessageItem messageItem = (MessageItem) deltaItem.getData();
@@ -1023,7 +1022,7 @@ public class WebimSessionImpl implements WebimSession {
                     }
 
                     if (message != null && isNewMessage) {
-                        messageHolder.receiveNewMessage(message);
+                        messageHolder.onMessageAdded(message);
                     }
                     if (historyMessage != null) {
                         historyPoller.insertMessageInDB(historyMessage);
@@ -1160,7 +1159,7 @@ public class WebimSessionImpl implements WebimSession {
 
         private void handleMessageRead(DeltaItem deltaItem) {
             DeltaItem.Event deltaEvent = deltaItem.getEvent();
-            String id = deltaItem.getSessionId();
+            String id = deltaItem.getId();
             Object data = deltaItem.getData();
             if (data instanceof Boolean && deltaEvent == DeltaItem.Event.UPDATE) {
                 boolean isRead = (Boolean) data;

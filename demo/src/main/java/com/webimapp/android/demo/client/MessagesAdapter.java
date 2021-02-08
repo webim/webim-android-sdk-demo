@@ -121,7 +121,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             return ViewType.VISITOR.ordinal();
         }
         switch (message.getType()) {
-            case CONTACT_REQUEST:
             case OPERATOR:
                 return ViewType.OPERATOR.ordinal();
             case VISITOR:
@@ -347,7 +346,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             keyboardAdapter = new KeyboardAdapter(keyboardView, new KeyboardAdapter.KeyboardButtonClickListener() {
                 @Override
                 public void keyboardButtonClick(String buttonId) {
-                    webimChatFragment.onKeyBoardButtonClicked(message.getCurrentChatId(), buttonId);
+                    webimChatFragment.onKeyBoardButtonClicked(message.getServerSideId(), buttonId);
                 }
             });
         }
@@ -710,7 +709,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
 
         void openContextDialog() {
             int adapterPosition = getAdapterPosition();
-            webimChatFragment.setContextMenuMessageId(message.getCurrentChatId());
+            webimChatFragment.setContextMenuMessageId(message.getServerSideId());
             if (this instanceof SentMessageHolder) {
                 webimChatFragment.updateSentMessageDialog(message, adapterPosition);
             } else if (this instanceof ReceivedMessageHolder) {

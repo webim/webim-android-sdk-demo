@@ -334,7 +334,7 @@ public class MessageStreamImpl implements MessageStream {
         actions.replyMessage(
                 message,
                 messageId.toString(),
-                quotedMessage.getCurrentChatId());
+                quotedMessage.getServerSideId());
         messageHolder.onSendingMessage(
                 sendingMessageFactory.createTextWithQuote(
                         messageId,
@@ -661,6 +661,8 @@ public class MessageStreamImpl implements MessageStream {
 
     private SendFileCallback.SendFileError getFileError(String error) {
         switch (error) {
+            case WebimInternalError.CONNECTION_TIMEOUT:
+                return SendFileCallback.SendFileError.CONNECTION_TIMEOUT;
             case WebimInternalError.FILE_TYPE_NOT_ALLOWED:
                 return SendFileCallback.SendFileError.FILE_TYPE_NOT_ALLOWED;
             case WebimInternalError.FILE_SIZE_EXCEEDED:
@@ -1188,28 +1190,28 @@ public class MessageStreamImpl implements MessageStream {
 
         accessChecker.checkAccess();
 
-        final String oldMessage = messageHolder.onChangingMessage(message.getId(), text);
+        final String oldMessage = messageHolder.onChangingMessage(message.getClientSideId(), text);
 
         if (oldMessage != null) {
             actions.sendMessage(
                     text,
-                    message.getId().toString(),
+                    message.getClientSideId().toString(),
                     message.getData(),
                     false,
                     new SendOrDeleteMessageInternalCallback() {
                         @Override
                         public void onSuccess(String response) {
                             if (editMessageCallback != null) {
-                                editMessageCallback.onSuccess(message.getId(), text);
+                                editMessageCallback.onSuccess(message.getClientSideId(), text);
                             }
                         }
 
                         @Override
                         public void onFailure(String error) {
-                            messageHolder.onMessageChangingCancelled(message.getId(), oldMessage);
+                            messageHolder.onMessageChangingCancelled(message.getClientSideId(), oldMessage);
                             if (editMessageCallback != null) {
                                 editMessageCallback.onFailure(
-                                        message.getId(),
+                                        message.getClientSideId(),
                                         new WebimErrorImpl<>(toPublicEditMessageError(error), error)
                                 );
                             }
@@ -1230,24 +1232,24 @@ public class MessageStreamImpl implements MessageStream {
 
         accessChecker.checkAccess();
 
-        final String oldMessage = messageHolder.onChangingMessage(message.getId(), null);
+        final String oldMessage = messageHolder.onChangingMessage(message.getClientSideId(), null);
         if (oldMessage != null) {
             actions.deleteMessage(
-                    message.getId().toString(),
+                    message.getClientSideId().toString(),
                     new SendOrDeleteMessageInternalCallback() {
                         @Override
                         public void onSuccess(String response) {
                             if (deleteMessageCallback != null) {
-                                deleteMessageCallback.onSuccess(message.getId());
+                                deleteMessageCallback.onSuccess(message.getClientSideId());
                             }
                         }
 
                         @Override
                         public void onFailure(String error) {
-                            messageHolder.onMessageChangingCancelled(message.getId(), oldMessage);
+                            messageHolder.onMessageChangingCancelled(message.getClientSideId(), oldMessage);
                             if (deleteMessageCallback != null) {
                                 deleteMessageCallback.onFailure(
-                                        message.getId(),
+                                        message.getClientSideId(),
                                         new WebimErrorImpl<>(toPublicDeleteMessageError(error), error)
                                 );
                             }

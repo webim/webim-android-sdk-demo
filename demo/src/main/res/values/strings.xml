@@ -29,6 +29,7 @@
     <string name="file_selection_failed">Не удалось выбрать файл</string>
     <string name="file_upload_failed_size">Не удалось загрузить файл: превышен максимальный размер файла</string>
     <string name="file_upload_failed_type">Не удалось загрузить файл: тип файла не разрешен сервером</string>
+    <string name="file_upload_connection_timeout">Превышен таймаут отправки файла</string>
     <string name="file_upload_failed_name">Не удалось загрузить файл: ошибка в имени файла</string>
     <string name="file_upload_failed_unknown">Не удалось загрузить файл: неизвестная ошибка</string>
     <string name="file_upload_failed_unauthorized">Не удалось загрузить файл: посетитель не авторизован</string>
@@ -100,4 +101,15 @@
     <string name="channel_name">Webim notification</string>
     <string name="visitor_sender_name">Вы</string>
     <string name="editing_title">Редактирование</string>
+
+    <string name="survey_finish_message">Спасибо за участие в опросе!</string>
+    <string name="survey_rate_title">Оценить оператора</string>
+    <string name="survey_send_answer">Отправить</string>
+    <string name="survey_edit_text_hint">Введите текст комментария</string>
+    <string name="reply_thumbnail" translatable="false">Цитируемая картинка</string>
+    <string name="dialog_ok">ok</string>
+    <string name="dialog_cancel">cancel</string>
+
+    <string name="settings_account_field_hint">Введите полный URL сервера или название аккаунта,
+        размещённого на сервере *.webim.ru. Например, для сервера demo.webim.ru нужно ввести \"demo\"</string>
 </resources>

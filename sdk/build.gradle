@@ -1,19 +1,18 @@
 apply plugin: 'com.android.library'
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'com.github.dcendents.android-maven'
-apply plugin: 'groovyx.android'
 
 version = project.property('versionName')
 group = project.property('sdk_group')
 
 android {
-    compileSdkVersion 29
-    buildToolsVersion '29.0.0'
+    compileSdkVersion 30
+    buildToolsVersion '30.0.2'
     resourcePrefix 'webimsdk__'
 
     defaultConfig {
         minSdkVersion 16
-        targetSdkVersion 29
+        targetSdkVersion 30
         versionName version
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
@@ -29,15 +28,12 @@ android {
 }
 
 dependencies {
-    api 'androidx.annotation:annotation:1.1.0'
-    api 'com.squareup.retrofit2:retrofit:2.2.0'
+    implementation 'androidx.annotation:annotation:1.1.0'
+    implementation 'com.squareup.retrofit2:retrofit:2.2.0'
     api 'com.squareup.retrofit2:converter-gson:2.2.0'
-    api 'com.squareup.okhttp3:logging-interceptor:4.5.0'
-    testImplementation 'junit:junit:4.12'
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.5.0'
+    testImplementation 'junit:junit:4.13.1'
     testImplementation 'org.mockito:mockito-core:3.3.3'
-    testImplementation 'org.codehaus.groovy:groovy-all:2.4.12'
-    testImplementation 'org.spockframework:spock-core:1.0-groovy-2.4'
-    testImplementation 'cglib:cglib-nodep:2.2.2'
 }
 
 def siteUrl = project.property('websiteUrl')     // Homepage URL of the library

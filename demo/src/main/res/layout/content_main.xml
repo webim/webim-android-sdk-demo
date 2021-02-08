@@ -174,7 +174,6 @@
                 android:layout_alignParentRight="true"
                 android:background="@drawable/background_badge"
                 android:gravity="center"
-                android:text="@string/empty_reply_text"
                 android:textColor="@color/colorTextActivityMain"
                 android:textSize="@dimen/badge_text_size"
                 android:textStyle="bold"

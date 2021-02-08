@@ -6,7 +6,6 @@ import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.drawable.AnimationDrawable;
@@ -41,21 +40,26 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.ViewCompat;
+import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.webimapp.android.demo.client.util.DepartmentItemSelectedCallback;
 import com.webimapp.android.demo.client.util.DynamicContextDialog;
 import com.webimapp.android.demo.client.util.EndlessScrollListener;
 import com.webimapp.android.demo.client.util.MenuController;
+import com.webimapp.android.demo.client.util.SurveyDialog;
 import com.webimapp.android.sdk.Department;
 import com.webimapp.android.sdk.Message;
 import com.webimapp.android.sdk.MessageListener;
 import com.webimapp.android.sdk.MessageStream;
 import com.webimapp.android.sdk.MessageTracker;
 import com.webimapp.android.sdk.Operator;
+import com.webimapp.android.sdk.Survey;
 import com.webimapp.android.sdk.WebimError;
 import com.webimapp.android.sdk.WebimSession;
 
@@ -64,6 +68,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.FileNameMap;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -90,6 +96,7 @@ public class WebimChatFragment extends Fragment {
     private TextView textSenderName;
     private TextView textReplyMessage;
     private int replyMessagePosition;
+    private ImageView replyThumbnail;
     private TextView textReplyId;
 
     private RelativeLayout chatMenuLayout;
@@ -102,6 +109,7 @@ public class WebimChatFragment extends Fragment {
     private Button ratingButton;
 
     private MenuController menuController;
+    private SurveyDialog surveyDialog;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -132,6 +140,7 @@ public class WebimChatFragment extends Fragment {
         initDeleteReply(rootView);
         initReplyMessageButton(rootView);
         initOperatorRateDialog();
+        initSurveyDialog();
 
         menuController = new MenuController(this);
 
@@ -189,7 +198,6 @@ public class WebimChatFragment extends Fragment {
                         operatorNameView.setText(getString(R.string.operator_name, operatorName));
                     }
                 });
-
         session.getStream().setVisitSessionStateListener(new MessageStream.VisitSessionStateListener() {
             @Override
             public void onStateChange(@NonNull MessageStream.VisitSessionState previousState,
@@ -197,32 +205,31 @@ public class WebimChatFragment extends Fragment {
                 if (newState == MessageStream.VisitSessionState.DEPARTMENT_SELECTION) {
                     final List<Department> departmentList = session.getStream().getDepartmentList();
                     if (departmentList != null) {
-                        final ArrayList<String> departmentNames = new ArrayList<>();
+                        final List<String> departmentNames = new ArrayList<>();
                         for (Department department : departmentList) {
                             departmentNames.add(department.getName());
                         }
 
-                        AlertDialog.Builder builder = new AlertDialog.Builder(rootView.getContext());
-                        builder.setTitle(R.string.choose_department)
-                                .setItems(
-                                        departmentNames.toArray(new String[0]),
-                                        new DialogInterface.OnClickListener() {
-                                            @Override
-                                            public void onClick(DialogInterface dialog, int which) {
-                                                session.getStream().startChatWithDepartmentKey(
-                                                        departmentList.get(which).getKey());
-                                            }
-                                        })
-                                .setNegativeButton(
-                                        R.string.cancel,
-                                        new DialogInterface.OnClickListener() {
-                                            @Override
-                                            public void onClick(DialogInterface dialog, int id) {
-                                            }
-                                        });
+                        DialogFragment dialogFragment =
+                                new DepartmentDialog(departmentNames, new DepartmentItemSelectedCallback() {
+                                    @Override
+                                    public void departmentItemSelected(int departmentPosition) {
+                                        List<Department> departmentList = session.getStream().getDepartmentList();
+                                        if (departmentList != null && !departmentList.isEmpty()) {
+                                            String selectedDepartment = departmentList.get(departmentPosition).getKey();
+                                            session.getStream().startChatWithDepartmentKey(selectedDepartment);
+                                        }
+                                    }
 
-                        final AlertDialog dialog = builder.create();
-                        dialog.show();
+                                    @Override
+                                    public void onBackPressed() {
+                                        requireActivity().onBackPressed();
+                                    }
+                                });
+                        dialogFragment.setCancelable(false);
+                        dialogFragment.show(
+                                requireFragmentManager(),
+                                DepartmentDialog.DEPARTMENT_DIALOG_TAG);
                     }
                 }
             }
@@ -245,6 +252,31 @@ public class WebimChatFragment extends Fragment {
                         }
                         break;
                 }
+            }
+        });
+
+        session.getStream().setSurveyListener(new MessageStream.SurveyListener() {
+            @Override
+            public void onSurvey(Survey survey) {
+                if (ratingDialog.isShowing()) {
+                    ratingDialog.dismiss();
+                }
+                if (!surveyDialog.isVisible()) {
+                    surveyDialog.showNow(getChildFragmentManager(), "surveyDialog");
+                }
+            }
+
+            @Override
+            public void onNextQuestion(Survey.Question question) {
+                surveyDialog.setCurrentQuestion(question);
+            }
+
+            @Override
+            public void onSurveyCancelled() {
+                if (surveyDialog.isVisible()) {
+                    surveyDialog.dismiss();
+                }
+                showToast(getString(R.string.survey_finish_message), Toast.LENGTH_SHORT);
             }
         });
     }
@@ -338,7 +370,9 @@ public class WebimChatFragment extends Fragment {
         editTextMessage.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
+                if (chatMenuLayout.getVisibility() == View.VISIBLE) {
+                    hideChatMenu();
+                }
             }
 
             @Override
@@ -357,6 +391,14 @@ public class WebimChatFragment extends Fragment {
                     editButton.setAlpha(1f);
                     editButton.setEnabled(true);
                     session.getStream().setVisitorTyping(draft);
+                }
+            }
+        });
+        editTextMessage.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (hasFocus && (chatMenuLayout.getVisibility() == View.VISIBLE)) {
+                    hideChatMenu();
                 }
             }
         });
@@ -382,6 +424,9 @@ public class WebimChatFragment extends Fragment {
                                     message,
                                     quotedMessage);
                         }
+                    }
+                    if (chatMenuLayout.getVisibility() == View.VISIBLE) {
+                        hideChatMenu();
                     }
                 }
             }
@@ -551,11 +596,8 @@ public class WebimChatFragment extends Fragment {
                     ratingButton.setEnabled(rating != 0);
                 }
             });
-            if (rating != 0) {
-                ratingBar.setRating(rating);
-            } else {
-                ratingButton.setEnabled(false);
-            }
+            ratingBar.setRating(rating);
+            ratingButton.setEnabled(rating != 0);
             ratingDialog.show();
             ratingButton.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -579,10 +621,14 @@ public class WebimChatFragment extends Fragment {
     }
 
     public void hideChatMenu() {
-        final Animation animationRotateHide =
-                AnimationUtils.loadAnimation(getContext(), R.anim.rotate_hide);
-        chatMenuButton.startAnimation(animationRotateHide);
         chatMenuBackground.setVisibility(View.GONE);
+
+        Animation animationScaleDown = AnimationUtils.loadAnimation(getContext(), R.anim.scale_down);
+        chatMenuLayout.startAnimation(animationScaleDown);
+
+        Animation animationRotateHide = AnimationUtils.loadAnimation(getContext(), R.anim.rotate_hide);
+        chatMenuButton.startAnimation(animationRotateHide);
+
         chatMenuLayout.setVisibility(View.GONE);
     }
 
@@ -594,14 +640,11 @@ public class WebimChatFragment extends Fragment {
         replyLayout = rootView.findViewById(R.id.linLayReplyMessage);
         textSenderName = rootView.findViewById(R.id.textViewSenderName);
         textReplyMessage = rootView.findViewById(R.id.textViewReplyText);
+        replyThumbnail = rootView.findViewById(R.id.replyThumbnail);
         textReplyId = rootView.findViewById(R.id.quote_Id);
-        LinearLayout replyTextLayout  = rootView.findViewById(R.id.linLayReplyBody);
-        replyTextLayout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                listController.showMessage(replyMessagePosition);
-            }
-        });
+
+        ViewGroup replyTextLayout  = rootView.findViewById(R.id.linLayReplyBody);
+        replyTextLayout.setOnClickListener(view -> listController.showMessage(replyMessagePosition));
         replyLayout.setVisibility(View.GONE);
     }
 
@@ -635,35 +678,50 @@ public class WebimChatFragment extends Fragment {
         ratingDialog = builder.create();
     }
 
+    private void initSurveyDialog() {
+        surveyDialog = new SurveyDialog();
+        surveyDialog.setAnswerListener(answer -> session.getStream().sendSurveyAnswer(answer, null));
+        surveyDialog.setCancelListener(() -> session.getStream().closeSurvey(null));
+    }
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == FILE_SELECT_CODE) {
             if (resultCode == Activity.RESULT_OK) {
                 Uri uri = data.getData();
                 if (uri != null && getActivity() != null) {
-                    String mime = getActivity().getContentResolver().getType(uri);
+                    String mime = null;
+                    String contentScheme = "content";
+                    String fileScheme = "file";
+
+                    if (uri.getScheme().equals(contentScheme)) {
+                        mime = getActivity().getContentResolver().getType(uri);
+                    } else if (uri.getScheme().equals(fileScheme)) {
+                        FileNameMap fileNameMap = URLConnection.getFileNameMap();
+                        mime = fileNameMap.getContentTypeFor(uri.getLastPathSegment());
+                    }
                     String extension = mime == null
-                            ? null
-                            : MimeTypeMap.getSingleton().getExtensionFromMimeType(mime);
+                        ? null
+                        : MimeTypeMap.getSingleton().getExtensionFromMimeType(mime);
                     String name = extension == null
-                            ? null
-                            : uri.getLastPathSegment() + "." + extension;
+                        ? null
+                        : uri.getLastPathSegment() + "." + extension;
                     File file = null;
                     try {
                         InputStream inp = getActivity().getContentResolver().openInputStream(uri);
                         if (inp != null) {
                             file = File.createTempFile("webim",
-                                    extension, getActivity().getCacheDir());
+                                extension, getActivity().getCacheDir());
                             writeFully(file, inp);
                             Cursor cursor = getActivity().getContentResolver().query(
-                                    uri,
-                                    null,
-                                    null,
-                                    null,
-                                    null);
+                                uri,
+                                null,
+                                null,
+                                null,
+                                null);
                             if (cursor != null && cursor.moveToFirst()) {
                                 name = cursor.getString(
-                                        cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                                    cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
                                 cursor.close();
                             }
                         }
@@ -681,63 +739,60 @@ public class WebimChatFragment extends Fragment {
                     if (file != null && name != null && mime != null) {
                         final File fileToUpload = file;
                         session.getStream().sendFile(
-                                fileToUpload,
-                                name,
-                                mime,
-                                new MessageStream.SendFileCallback() {
-                                    @Override
-                                    public void onProgress(@NonNull Message.Id id, long sentBytes) {
+                            fileToUpload,
+                            name,
+                            mime,
+                            new MessageStream.SendFileCallback() {
+                                @Override
+                                public void onProgress(@NonNull Message.Id id, long sentBytes) {
 
-                                    }
+                                }
 
-                                    @Override
-                                    public void onSuccess(@NonNull Message.Id id) {
-                                        deleteFile(fileToUpload);
-                                    }
+                                @Override
+                                public void onSuccess(@NonNull Message.Id id) {
+                                    deleteFile(fileToUpload);
+                                }
 
-                                    @Override
-                                    public void onFailure(@NonNull Message.Id id,
-                                                          @NonNull WebimError<SendFileError> error) {
-                                        deleteFile(fileToUpload);
-                                        if (getContext() != null) {
-                                            String message;
-                                            switch (error.getErrorType()) {
-                                                case FILE_TYPE_NOT_ALLOWED:
-                                                    message = getContext().getString(
-                                                            R.string.file_upload_failed_type);
-                                                    break;
-                                                case FILE_SIZE_EXCEEDED:
-                                                    message = getContext().getString(
-                                                            R.string.file_upload_failed_size);
-                                                    break;
-                                                case FILE_NAME_INCORRECT:
-                                                    message = getContext().getString(
-                                                            R.string.file_upload_failed_name);
-                                                    break;
-                                                case UNAUTHORIZED:
-                                                    message = getContext().getString(
-                                                            R.string.file_upload_failed_unauthorized);
-                                                    break;
-                                                case UPLOADED_FILE_NOT_FOUND:
-                                                default:
-                                                    message = getContext().getString(
-                                                            R.string.file_upload_failed_unknown);
-                                            }
-                                            showToast(message, Toast.LENGTH_SHORT);
+                                @Override
+                                public void onFailure(@NonNull Message.Id id,
+                                                      @NonNull WebimError<SendFileError> error) {
+                                    deleteFile(fileToUpload);
+                                    if (getContext() != null) {
+                                        String message;
+                                        switch (error.getErrorType()) {
+                                            case FILE_TYPE_NOT_ALLOWED:
+                                                message = getContext().getString(
+                                                    R.string.file_upload_failed_type);
+                                                break;
+                                            case FILE_SIZE_EXCEEDED:
+                                                message = getContext().getString(
+                                                    R.string.file_upload_failed_size);
+                                                break;
+                                            case FILE_NAME_INCORRECT:
+                                                message = getContext().getString(
+                                                    R.string.file_upload_failed_name);
+                                                break;
+                                            case UNAUTHORIZED:
+                                                message = getContext().getString(
+                                                    R.string.file_upload_failed_unauthorized);
+                                                break;
+                                            case UPLOADED_FILE_NOT_FOUND:
+                                            default:
+                                                message = getContext().getString(
+                                                    R.string.file_upload_failed_unknown);
                                         }
-
+                                        showToast(message, Toast.LENGTH_SHORT);
                                     }
-                                });
+
+                                }
+                            });
                         return;
                     }
                 }
-
-            }
-            if (resultCode != Activity.RESULT_CANCELED && getContext() != null) {
+            } else if (resultCode == Activity.RESULT_CANCELED && getContext() != null) {
                 showToast(getContext().getString(R.string.file_selection_failed), Toast.LENGTH_SHORT);
             }
             return;
-
         }
         super.onActivityResult(requestCode, resultCode, data);
         if (getActivity() != null) {
@@ -802,13 +857,25 @@ public class WebimChatFragment extends Fragment {
                 (quotedMessage.getType() == VISITOR || quotedMessage.getType() == FILE_FROM_VISITOR)
                         ? this.getResources().getString(R.string.visitor_sender_name)
                         : quotedMessage.getSenderName());
-        textReplyId.setText(quotedMessage.getCurrentChatId());
+        textReplyId.setText(quotedMessage.getServerSideId());
         Message.Attachment quotedMessageAttachment = quotedMessage.getAttachment();
-        String replyMessage =
-                (quotedMessageAttachment != null
-                        && quotedMessageAttachment.getFileInfo().getImageInfo() != null)
-                        ? getResources().getString(R.string.reply_message_with_image)
-                        : quotedMessage.getText();
+
+        String replyMessage;
+        if (quotedMessageAttachment != null && quotedMessageAttachment.getFileInfo().getImageInfo() != null) {
+            replyMessage = getResources().getString(R.string.reply_message_with_image);
+            replyThumbnail.setVisibility(View.VISIBLE);
+
+            Message.FileInfo fileInfo = quotedMessageAttachment.getFileInfo();
+            String imageUrl = fileInfo.getImageInfo().getThumbUrl();
+            Glide.with(getContext())
+                .load(imageUrl)
+                .diskCacheStrategy(DiskCacheStrategy.SOURCE)
+                .into(replyThumbnail);
+        } else {
+            replyMessage = quotedMessage.getText();
+            replyThumbnail.setVisibility(View.GONE);
+        }
+
         textReplyMessage.setText(replyMessage);
     }
 
@@ -818,7 +885,7 @@ public class WebimChatFragment extends Fragment {
 
     void clearEditableMessage(Message message) {
         if (editButton.getVisibility() == View.VISIBLE
-                && inEdit.getCurrentChatId().equals(message.getCurrentChatId())) {
+                && inEdit.getServerSideId().equals(message.getServerSideId())) {
             editTextMessage.getText().clear();
             hideEditLayout();
         }
@@ -981,10 +1048,10 @@ public class WebimChatFragment extends Fragment {
             requestMore(false);
         }
 
-        private void requestMore(final boolean flag) {
+        private void requestMore(final boolean firstCall) {
             requestingMessages = true;
             progressBar.setVisibility(View.VISIBLE);
-            if (flag) {
+            if (firstCall) {
                 recyclerView.setVisibility(View.GONE);
             }
             tracker.getNextMessages(MESSAGES_PER_REQUEST, new MessageTracker.GetMessagesCallback() {
@@ -999,7 +1066,7 @@ public class WebimChatFragment extends Fragment {
                         adapter.notifyItemRangeInserted(adapter.getItemCount() - 1,
                                 received.size());
 
-                        if (flag) {
+                        if (firstCall) {
                             recyclerView.postDelayed(new Runnable() {
                                 @Override
                                 public void run() {
@@ -1037,7 +1104,7 @@ public class WebimChatFragment extends Fragment {
         public void messageRemoved(@NonNull Message message) {
             int pos = adapter.indexOf(message);
             if (pos != -1) {
-                adapter.remove(pos, message.getCurrentChatId());
+                adapter.remove(pos, message.getServerSideId());
                 adapter.notifyItemRemoved(adapter.getItemCount() - pos);
             }
         }

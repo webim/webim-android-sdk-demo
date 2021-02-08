@@ -14,7 +14,7 @@ import com.webimapp.android.sdk.impl.items.delta.DeltaItem;
 import com.webimapp.android.sdk.impl.items.responses.DeltaResponse;
 
 import java.io.FileNotFoundException;
-import java.net.SocketTimeoutException;
+import java.io.InterruptedIOException;
 import java.util.List;
 import java.util.concurrent.Executor;
 
@@ -188,14 +188,14 @@ public class DeltaRequestLoop extends AbstractRequestLoop {
                         requestInit();
                     }
                     break;
-                } catch (SocketTimeoutException | FileNotFoundException ignored) { }
+                } catch (InterruptedIOException | FileNotFoundException ignored) { }
             }
         } catch (final AbortByWebimErrorException exception) {
             throw exception;
         }
     }
 
-    private void requestInit() throws SocketTimeoutException, FileNotFoundException {
+    private void requestInit() throws InterruptedIOException, FileNotFoundException {
         final Call<DeltaResponse> request = makeInitRequest();
         try {
             final DeltaResponse delta = performRequest(request);
@@ -252,7 +252,7 @@ public class DeltaRequestLoop extends AbstractRequestLoop {
         }
     }
 
-    private void requestDelta() throws SocketTimeoutException, FileNotFoundException {
+    private void requestDelta() throws InterruptedIOException, FileNotFoundException {
         try {
             DeltaResponse delta = performRequest(makeDeltaRequest());
 

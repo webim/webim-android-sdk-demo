@@ -13,9 +13,9 @@ import java.util.List;
  */
 public interface Message {
     /**
-	 * @return unique id of the message. Notice that id does not change while changing the content of a message.
+	 * @return unique client id of the message. Notice that id does not change while changing the content of a message.
      */
-    @NonNull Id getId();
+    @NonNull Id getClientSideId();
 
     /**
      * @return session id for current message.
@@ -23,9 +23,9 @@ public interface Message {
     @Nullable String getSessionId();
 
     /**
-     * @return current chat id of the message.
+     * @return unique server id of the message.
      */
-    @NonNull String getCurrentChatId();
+    @NonNull String getServerSideId();
 
     /**
      * @return id of a sender, if the sender is an operator
@@ -83,7 +83,7 @@ public interface Message {
     /**
      * @return true if this message is history.
      */
-    boolean isHistoryMessage();
+    boolean isSavedInHistory();
 
     /**
      * @return true if this visitor message is read by operator or this message is not by visitor.
@@ -112,7 +112,7 @@ public interface Message {
 
     /**
      * Abstracts unique id of the message. The class was designed only to be compared by {@code equals}.
-     * @see Message#getId()
+     * @see Message#getClientSideId()
      */
     interface Id {
     }

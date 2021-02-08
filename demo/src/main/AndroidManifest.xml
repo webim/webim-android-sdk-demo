@@ -38,11 +38,11 @@
 
         <activity
             android:name="com.webimapp.android.demo.client.WebimChatActivity"
-            android:launchMode="singleTask"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
             android:windowSoftInputMode="adjustResize"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme.NoActionBar" >
+            android:theme="@style/AppTheme.NoActionBar"
+            android:parentActivityName=".MainActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.webimapp.android.demo.client.MainActivity" />
@@ -51,7 +51,6 @@
             android:name="com.webimapp.android.demo.client.SettingsActivity"
             android:launchMode="singleTask"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
-            android:windowSoftInputMode="adjustResize"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar" >
             <meta-data

@@ -26,7 +26,7 @@ public interface MessageHolder {
                        @Nullable ChatItem newChat,
                        @CurrentChat List<? extends MessageImpl> newMessages);
 
-    void receiveNewMessage(@NonNull @CurrentChat MessageImpl msg);
+    void onMessageAdded(@NonNull @CurrentChat MessageImpl msg);
 
     void onMessageChanged(@NonNull @CurrentChat MessageImpl newMessage);
 

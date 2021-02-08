@@ -81,7 +81,7 @@
     <string name="message_edited">edited</string>
     <string name="message_deleted_toast">Message was deleted</string>
 
-    <string name="empty_reply_text">" "</string>
+    <string name="empty_reply_text"> </string>
     <string name="reply_message_with_image">"Image "</string>
     <string name="default_text">Text example</string>
     <string name="default_time">10:12</string>
@@ -101,4 +101,15 @@
     <string name="visitor_sender_name">You</string>
     <string name="file_transfer_by_operator">"Transferring the file "</string>
     <string name="editing_title">Editing</string>
+
+    <string name="survey_finish_message">Thanks for taking part in survey!</string>
+    <string name="survey_rate_title">Rate operator</string>
+    <string name="survey_send_answer">Send</string>
+    <string name="survey_edit_text_hint">Type comment text</string>
+    <string name="dialog_ok">ок</string>
+    <string name="dialog_cancel">отмена</string>
+
+    <string name="settings_account_field_hint">Enter the full server URL or account name,
+        hosted on the server *.webim.ru. For example, for the server demo.webim.ru you need to type \"demo\"</string>
+    <string name="file_upload_connection_timeout">File upload timeout exceeded</string>
 </resources>

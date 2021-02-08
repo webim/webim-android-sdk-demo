@@ -10,7 +10,7 @@ import com.webimapp.android.sdk.impl.items.responses.ErrorResponse;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.SocketTimeoutException;
+import java.io.InterruptedIOException;
 import java.net.UnknownHostException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.Condition;
@@ -129,7 +129,7 @@ public abstract class AbstractRequestLoop {
 
     @Nullable
     protected <T extends ErrorResponse> T performRequest(@NonNull Call<T> request)
-            throws SocketTimeoutException, FileNotFoundException {
+            throws InterruptedIOException, FileNotFoundException {
         logRequest(request.request());
 
         int errorCounter = 0;
@@ -190,7 +190,7 @@ public abstract class AbstractRequestLoop {
                 WebimInternalLog.getInstance().log(exception.toString(),
                         Webim.SessionBuilder.WebimLogVerbosityLevel.DEBUG
                 );
-            } catch (SocketTimeoutException exception) {
+            } catch (InterruptedIOException exception) {
                 WebimInternalLog.getInstance().log(exception.toString(),
                         Webim.SessionBuilder.WebimLogVerbosityLevel.DEBUG
                 );

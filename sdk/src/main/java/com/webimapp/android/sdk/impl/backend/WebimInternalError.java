@@ -3,6 +3,7 @@ package com.webimapp.android.sdk.impl.backend;
 public class WebimInternalError {
 	public static final String ACCOUNT_BLOCKED = "account-blocked";
 	public static final String CHAT_REQUIRED = "chat-required";
+	public static final String CONNECTION_TIMEOUT = "connection-timeout";
 	public static final String CONTENT_TYPE_NOT_RECOGNIZED = "content_type_not_recognized";
 	public static final String DOMAIN_NOT_FROM_WHITELIST = "domain-not-from-whitelist";
 	public static final String FILE_NAME_INCORRECT = "incorrect-file-name";

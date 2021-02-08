@@ -27,7 +27,7 @@ public interface HistoryStorage {
 
     void getFull(@NonNull MessageTracker.GetMessagesCallback callback);
 
-    void getBefore(@NonNull HistoryId before,
+    void getBefore(@NonNull MessageImpl msg,
                    int limit,
                    @NonNull MessageTracker.GetMessagesCallback callback);
 
@@ -36,7 +36,7 @@ public interface HistoryStorage {
     interface UpdateHistoryCallback {
         void onHistoryChanged(@NonNull MessageImpl message);
 
-        void onHistoryAdded(@Nullable HistoryId before, @NonNull MessageImpl message);
+        void onHistoryAdded(@Nullable String beforeServerId, @NonNull MessageImpl message);
 
         void onHistoryDeleted(String id);
 

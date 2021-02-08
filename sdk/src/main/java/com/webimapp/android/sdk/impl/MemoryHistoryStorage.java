@@ -15,14 +15,12 @@ import java.util.Set;
 import static java.util.Collections.unmodifiableList;
 
 public class MemoryHistoryStorage implements HistoryStorage {
-    private static final Comparator<TimeMicrosHolder> MSG_TS_COMP
-            = new Comparator<TimeMicrosHolder>() {
+    private static final Comparator<TimeMicrosHolder> MSG_TS_COMP = new Comparator<TimeMicrosHolder>() {
         @Override
         public int compare(TimeMicrosHolder lhs, TimeMicrosHolder rhs) {
             return InternalUtils.compare(lhs.getTimeMicros(), rhs.getTimeMicros());
         }
     };
-
     private final int majorVersion = (int) (System.currentTimeMillis() % (long) Integer.MAX_VALUE);
     private final List<MessageImpl> historyMessages = new ArrayList<>();
     private boolean isReachedEndOfHistory;
@@ -66,9 +64,9 @@ public class MemoryHistoryStorage implements HistoryStorage {
     private void deleteFromHistory(Set<String> deleted, UpdateHistoryCallback callback) {
         for (Iterator<MessageImpl> it = historyMessages.iterator(); it.hasNext(); ) {
             MessageImpl msg = it.next();
-            if (deleted.contains(msg.getHistoryId().getDbId())) {
+            if (deleted.contains(msg.getServerSideId())) {
                 it.remove();
-                callback.onHistoryDeleted(msg.getHistoryId().getDbId());
+                callback.onHistoryDeleted(msg.getServerSideId());
             }
         }
     }
@@ -94,7 +92,7 @@ public class MemoryHistoryStorage implements HistoryStorage {
                     before = historyMessages.get(beforeInd);
                 }
                 historyMessages.add(beforeInd, msg);
-                callback.onHistoryAdded(before == null ? null : before.getHistoryId(), msg);
+                callback.onHistoryAdded(before != null ? before.getServerSideId() : null, msg);
             }
         }
     }
@@ -119,10 +117,10 @@ public class MemoryHistoryStorage implements HistoryStorage {
     }
 
     @Override
-    public void getBefore(@NonNull HistoryId before,
+    public void getBefore(@NonNull MessageImpl msg,
                           int limit,
                           @NonNull MessageTracker.GetMessagesCallback callback) {
-        int ind = Collections.binarySearch(historyMessages, before, MSG_TS_COMP);
+        int ind = Collections.binarySearch(historyMessages, msg, MSG_TS_COMP);
         if (ind == 0) {
             callback.receive(Collections.<Message>emptyList());
             return;

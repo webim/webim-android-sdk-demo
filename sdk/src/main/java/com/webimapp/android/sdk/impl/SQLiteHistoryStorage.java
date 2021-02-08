@@ -45,8 +45,9 @@ public class SQLiteHistoryStorage implements HistoryStorage {
             "type, " +
             "text, " +
             "data, " +
-            "quote) " +
-            "VALUES (?,?,?,?,?,?,?,?,?,?)";
+            "quote," +
+            "can_be_replied) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_HISTORY_STATEMENT = "UPDATE history " +
             "SET " +
             "client_side_id=?, " +
@@ -57,11 +58,12 @@ public class SQLiteHistoryStorage implements HistoryStorage {
             "type=?, " +
             "text=?, " +
             "data=?, " +
-            "quote=? " +
+            "quote=?, " +
+            "can_be_replied=? " +
             "WHERE msg_id=?";
     private static final String DELETE_HISTORY_STATEMENT = "DELETE FROM history " +
             "WHERE msg_id=?";
-    private static final int VERSION = 8;
+    private static final int VERSION = 11;
 
     private final MyDBHelper dbHelper;
     private final Handler handler;
@@ -139,28 +141,26 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                 long newFirstKnownTs = Long.MAX_VALUE;
                 for (MessageImpl message : messages) {
                     if (message != null) {
-                        HistoryId historyId = message.getHistoryId();
                         if (firstKnownTs != -1
-                                && historyId.getTimeMicros() < firstKnownTs
+                                && message.getTimeMicros() < firstKnownTs
                                 && !isReachedEndOfRemoteHistory) {
                             continue;
                         }
 
-                        newFirstKnownTs = Math.min(newFirstKnownTs, historyId.getTimeMicros());
+                        newFirstKnownTs = Math.min(newFirstKnownTs, message.getTimeMicros());
                         Cursor cursor = db.rawQuery(
                                 "SELECT * FROM history WHERE ts > ? ORDER BY ts ASC LIMIT 1",
                                 new String[]{Long.toString(message.getTimeMicros())});
                         try {
-                            insertStatement.bindString(1, message.getId().toString());
+                            insertStatement.bindString(1, message.getServerSideId());
                             bindMessageFields(insertStatement, 2, message);
                             insertStatement.executeInsert();
 
-                            runMessageAdded(callback,
-                                    cursor.moveToNext() ? createMessage(cursor).getHistoryId() : null,
-                                    message);
+                            String beforeId = cursor.moveToNext() ? createMessage(cursor).getServerSideId() : null;
+                            runMessageAdded(callback, beforeId, message);
                         } catch (SQLiteConstraintException ignored) {
                             bindMessageFields(updateStatement, 1, message);
-                            updateStatement.bindString(10, message.getId().toString()/*historyId.getDbId()*/);
+                            updateStatement.bindString(MyDBHelper.COLUMN_COUNT, message.getServerSideId());
                             updateStatement.executeUpdateDelete();
                             runMessageChanged(callback, message);
                         } catch (SQLException e) {
@@ -203,11 +203,11 @@ public class SQLiteHistoryStorage implements HistoryStorage {
     private static void bindMessageFields(SQLiteStatement statement,
                                           int index,
                                           MessageImpl message) {
-        // Binding to msg_id / client_side_id
-        statement.bindString(index, message.getCurrentChatId());
+        // Binding to client_side_id
+        statement.bindString(index, message.getClientSideId().toString());
 
         // Binding to ts
-        statement.bindLong((index + 1), message.getHistoryId().getTimeMicros());
+        statement.bindLong((index + 1), message.getTimeMicros());
 
         // Binding to sender_id
         if ((message.getOperatorId() == null) || (message.getOperatorId().toString() == null)) {
@@ -245,6 +245,9 @@ public class SQLiteHistoryStorage implements HistoryStorage {
         if (quote != null) {
             statement.bindString((index + 8), data);
         }
+
+        // Binding to can_be_replied
+        statement.bindLong(index + 9, message.canBeReplied() ? 1 : 0);
     }
 
     private static int messageTypeToId(Message.Type type) {
@@ -256,14 +259,15 @@ public class SQLiteHistoryStorage implements HistoryStorage {
     }
 
     private MessageImpl createMessage(Cursor cursor) {
-        String id = cursor.getString(0);
-        String currentChatId = cursor.getString(1);
-        long ts = cursor.getLong(2);
+        String serverSideId = cursor.getString(0);
+        String clientSideId = cursor.getString(1);
+        long timestamp = cursor.getLong(2);
         String avatar = cursor.getString(5);
         Message.Type type = idToMessageType(cursor.getInt(6));
         String text = cursor.getString(7);
         String rawText = cursor.getString(8);
         String rawQuote = cursor.getString(9);
+        boolean canBeReplied = cursor.getLong(10) == 1; // this boolean field save in db as 1 or 0
 
         Message.Attachment attachment = null;
         if (rawText != null) {
@@ -272,43 +276,67 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                 attachment = InternalUtils.getAttachment(serverUrl, messageItem, client);
             } catch (Exception e) {
                 WebimInternalLog.getInstance().log("Failed to parse file params for message: "
-                        + id + ", text: " + text + ". " + e,
+                        + serverSideId + ", text: " + text + ". " + e,
                         Webim.SessionBuilder.WebimLogVerbosityLevel.ERROR);
             }
         }
 
         Message.Quote quote = null;
         if (rawQuote != null) {
-            MessageItem.Quote quoteParams = InternalUtils.fromJson(rawQuote, MessageItem.Quote.class);
-            quote = InternalUtils.getQuote(serverUrl, quoteParams, client);
+            try {
+                MessageItem.Quote quoteParams = InternalUtils.fromJson(rawQuote, MessageItem.Quote.class);
+                quote = InternalUtils.getQuote(serverUrl, quoteParams, client);
+            } catch (Exception e) {
+                WebimInternalLog.getInstance().log("Failed to parse quote params for message: "
+                        + serverSideId + ", text: " + text + ". " + e,
+                    Webim.SessionBuilder.WebimLogVerbosityLevel.ERROR);
+            }
         }
 
         Message.Keyboard keyboardButton = null;
         if (type == Message.Type.KEYBOARD) {
-            Type mapType = new TypeToken<KeyboardItem>() {}.getType();
-            KeyboardItem keyboard = InternalUtils.getItem(rawText, true, mapType);
-            keyboardButton = InternalUtils.getKeyboardButton(keyboard);
+            try {
+                Type mapType = new TypeToken<KeyboardItem>() {}.getType();
+                KeyboardItem keyboard = InternalUtils.getItem(rawText, true, mapType);
+                keyboardButton = InternalUtils.getKeyboardButton(keyboard);
+            } catch (Exception e) {
+                WebimInternalLog.getInstance().log("Failed to parse keyboard params for message: "
+                        + serverSideId + ", text: " + text + ". " + e,
+                    Webim.SessionBuilder.WebimLogVerbosityLevel.ERROR);
+            }
         }
 
         Message.KeyboardRequest keyboardRequest = null;
         if (type == Message.Type.KEYBOARD_RESPONSE) {
-            Type mapType = new TypeToken<KeyboardRequestItem>() {}.getType();
-            KeyboardRequestItem keyboard = InternalUtils.getItem(rawText, true, mapType);
-            keyboardRequest = InternalUtils.getKeyboardRequest(keyboard);
+            try {
+                Type mapType = new TypeToken<KeyboardRequestItem>() {}.getType();
+                KeyboardRequestItem keyboard = InternalUtils.getItem(rawText, true, mapType);
+                keyboardRequest = InternalUtils.getKeyboardRequest(keyboard);
+            } catch (Exception e) {
+                WebimInternalLog.getInstance().log("Failed to parse keyboardRequest params for message: "
+                        + serverSideId + ", text: " + text + ". " + e,
+                    Webim.SessionBuilder.WebimLogVerbosityLevel.ERROR);
+            }
         }
 
         Message.Sticker sticker = null;
         if (type == Message.Type.STICKER_VISITOR) {
-            Type mapType = new TypeToken<StickerItem>(){}.getType();
-            StickerItem stickerItem = InternalUtils.getItem(rawText, true, mapType);
-            sticker = InternalUtils.getSticker(stickerItem);
+            try {
+                Type mapType = new TypeToken<StickerItem>(){}.getType();
+                StickerItem stickerItem = InternalUtils.getItem(rawText, true, mapType);
+                sticker = InternalUtils.getSticker(stickerItem);
+            } catch (Exception e) {
+                WebimInternalLog.getInstance().log("Failed to parse sticker params for message: "
+                        + serverSideId + ", text: " + text + ". " + e,
+                    Webim.SessionBuilder.WebimLogVerbosityLevel.ERROR);
+            }
         }
 
-        boolean isRead = ts <= readBeforeTimestamp || readBeforeTimestamp == -1;
+        boolean isRead = timestamp <= readBeforeTimestamp || readBeforeTimestamp == -1;
 
         return new MessageImpl(
                 serverUrl,
-                StringId.forMessage(id),
+                StringId.forMessage(clientSideId),
                 null,
                 cursor.isNull(3)
                         ? null
@@ -317,14 +345,14 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                 cursor.getString(4),
                 type,
                 text,
-                ts,
-                currentChatId,
+                timestamp,
+                serverSideId,
                 rawText,
                 true,
                 attachment,
                 isRead,
                 false,
-                false,
+                canBeReplied,
                 false,
                 quote,
                 keyboardButton,
@@ -332,11 +360,11 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                 sticker);
     }
 
-    private void runMessageAdded(final UpdateHistoryCallback callback, final HistoryId before, final MessageImpl msg) {
+    private void runMessageAdded(final UpdateHistoryCallback callback, final String beforeId, final MessageImpl msg) {
         handler.post(new Runnable() {
             @Override
             public void run() {
-                callback.onHistoryAdded(before, msg);
+                callback.onHistoryAdded(beforeId, msg);
             }
         });
     }
@@ -383,9 +411,9 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                 for (MessageImpl message : messages) {
                     if (message != null) {
                         newFirstKnownTs = Math.min(newFirstKnownTs,
-                                message.getHistoryId().getTimeMicros());
+                                message.getTimeMicros());
                         try {
-                            insertStatement.bindString(1, message.getId().toString());
+                            insertStatement.bindString(1, message.getServerSideId());
                             bindMessageFields(insertStatement, 2, message);
                             insertStatement.executeInsert();
                         } catch (SQLException e) {
@@ -453,7 +481,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
     }
 
     @Override
-    public void getBefore(@NonNull final HistoryId before,
+    public void getBefore(@NonNull MessageImpl msg,
                           final int limit,
                           @NonNull final MessageTracker.GetMessagesCallback callback) {
         executor.execute(new Runnable() {
@@ -461,7 +489,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
             public void run() {
                 SQLiteDatabase db = dbHelper.getWritableDatabase();
                 Cursor c = db.rawQuery("SELECT * FROM history WHERE ts < ? ORDER BY ts DESC LIMIT ?",
-                        new String[]{Long.toString(before.getTimeMicros()), Integer.toString(limit)});
+                        new String[]{Long.toString(msg.timeMicros), Integer.toString(limit)});
                 List<Message> list = new ArrayList<>();
                 try {
                     while (c.moveToNext()) {
@@ -483,7 +511,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
     }
 
     private static class MyDBHelper extends SQLiteOpenHelper {
-
+        private static final int COLUMN_COUNT = 11;
         private static final String CREATE_TABLE = "CREATE TABLE history\n"
                 + "(\n"
                 + "    msg_id VARCHAR(64) PRIMARY KEY NOT NULL,\n"
@@ -495,7 +523,8 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                 + "    type TINYINT NOT NULL,\n"
                 + "    text TEXT NOT NULL,\n"
                 + "    data TEXT,\n"
-                + "    quote TEXT\n"
+                + "    quote TEXT,\n"
+                + "    can_be_replied TINYINT NOT NULL\n"
                 + "); CREATE UNIQUE INDEX history_ts ON history (ts)";
 
         public MyDBHelper(Context context, String dbName) {
@@ -516,9 +545,20 @@ public class SQLiteHistoryStorage implements HistoryStorage {
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             if (oldVersion != newVersion) {
-                db.execSQL("DROP TABLE history");
-                onCreate(db);
+                recreateTable(db);
             }
+        }
+
+        @Override
+        public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            if (oldVersion != newVersion) {
+                recreateTable(db);
+            }
+        }
+
+        private void recreateTable(SQLiteDatabase db) {
+            db.execSQL("DROP TABLE history");
+            onCreate(db);
         }
     }
 }

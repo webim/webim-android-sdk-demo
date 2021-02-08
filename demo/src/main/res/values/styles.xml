@@ -22,6 +22,11 @@
         <item name="colorControlActivated">@color/orange</item>
     </style>
 
+    <style name="SurveyRatingBar" parent="Theme.AppCompat">
+        <item name="colorControlNormal">@color/grey</item>
+        <item name="colorControlActivated">@color/blue</item>
+    </style>
+
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
@@ -38,6 +43,22 @@
 
     <style name="DynamicContextMenuTheme">
         <item name="android:backgroundDimEnabled">false</item>
+    </style>
+
+    <style name="SurveyDialogTheme" parent="Theme.Design.Light.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/SurveyDialogStyle</item>
+
+    </style>
+
+    <style name="SurveyDialogStyle" parent="Widget.Design.BottomSheet.Modal">
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:windowSoftInputMode">adjustResize</item>
+    </style>
+
+    <style name="SurveyEditTextTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="colorControlNormal">@color/grey</item>
+        <item name="colorControlActivated">@color/blue</item>
+        <item name="colorControlHighlight">@color/blue</item>
     </style>
 
 </resources>

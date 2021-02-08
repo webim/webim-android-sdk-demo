@@ -409,7 +409,7 @@
                     android:tint="@color/itemsBorder"
                     android:visibility="visible" />
 
-                <LinearLayout
+                <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/linLayReplyBody"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -421,7 +421,7 @@
 
                     <TextView
                         android:id="@+id/textViewSenderName"
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
                         android:maxLength="2000"
@@ -433,11 +433,14 @@
                         android:text="@string/default_text"
                         android:textColor="@color/colorPrimary"
                         android:textStyle="bold"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/replyThumbnail"
+                        app:layout_constraintTop_toTopOf="parent"
                         tools:ignore="RtlSymmetry" />
 
                     <TextView
                         android:id="@+id/textViewReplyText"
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:ellipsize="end"
                         android:paddingStart="12dp"
@@ -448,9 +451,29 @@
                         android:singleLine="true"
                         android:text="@string/default_text"
                         android:textColor="@color/receivedMsgText"
-                        android:textSize="@dimen/text_size_small" />
+                        android:textSize="@dimen/text_size_small"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="@+id/textViewSenderName"
+                        app:layout_constraintTop_toBottomOf="@+id/textViewSenderName" />
 
-                </LinearLayout>
+                    <ImageView
+                        android:id="@+id/replyThumbnail"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginLeft="8dp"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:adjustViewBounds="true"
+                        android:scaleType="centerCrop"
+                        android:contentDescription="@string/reply_thumbnail"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        tools:srcCompat="@tools:sample/avatars" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
                 <ImageButton
                     android:id="@+id/imageButtonReplyDelete"

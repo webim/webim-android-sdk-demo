@@ -33,6 +33,7 @@ public class WebimClientBuilder {
     private static final int ACTION_TIMEOUT_READ_IN_SECONDS = 60;
     private static final int DELTA_TIMEOUT_READ_IN_SECONDS = 44;
     private static final int TIMEOUT_WRITE_IN_SECONDS = 60;
+    private static final int TIMEOUT_CALL_IN_SECONDS = 60;
     private static final String USER_AGENT_FORMAT = "Android: Webim-Client/%s (%s; Android %s)";
     private static final String USER_AGENT_STRING
             = String.format(USER_AGENT_FORMAT, BuildConfig.VERSION_NAME,
@@ -190,6 +191,7 @@ public class WebimClientBuilder {
                         : ACTION_TIMEOUT_READ_IN_SECONDS,
                 TimeUnit.SECONDS);
         builder.writeTimeout(TIMEOUT_WRITE_IN_SECONDS, TimeUnit.SECONDS);
+        builder.callTimeout(TIMEOUT_CALL_IN_SECONDS, TimeUnit.SECONDS);
         if (sslSocketFactory != null && trustManager != null) {
             builder.sslSocketFactory(sslSocketFactory, trustManager);
         }

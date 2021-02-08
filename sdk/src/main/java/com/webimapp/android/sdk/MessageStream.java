@@ -1004,6 +1004,10 @@ public interface MessageStream {
          */
         enum SendFileError {
             /**
+             * File upload timeout exceeded
+             */
+            CONNECTION_TIMEOUT,
+            /**
              * Upload file not found on device.
              */
             FILE_NOT_FOUND,

@@ -8,6 +8,7 @@ import com.webimapp.android.sdk.Webim;
 import com.webimapp.android.sdk.impl.items.responses.ErrorResponse;
 
 import java.io.FileNotFoundException;
+import java.io.InterruptedIOException;
 import java.net.SocketTimeoutException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -68,7 +69,7 @@ public class ActionRequestLoop extends AbstractRequestLoop {
                             }
                         });
                     }
-                } catch (SocketTimeoutException e) {
+                } catch (InterruptedIOException e) {
                     WebimInternalLog.getInstance().log(e.toString(),
                             Webim.SessionBuilder.WebimLogVerbosityLevel.DEBUG);
                     final WebimRequest<?> request = lastRequest;
@@ -100,7 +101,7 @@ public class ActionRequestLoop extends AbstractRequestLoop {
         return authData;
     }
 
-    private void runIteration(AuthData currentAuthData) throws SocketTimeoutException {
+    private void runIteration(AuthData currentAuthData) throws InterruptedIOException {
         WebimRequest<?> currentRequest = this.lastRequest;
         if (currentRequest == null) {
             try {
@@ -120,6 +121,18 @@ public class ActionRequestLoop extends AbstractRequestLoop {
                     callback.handleError(WebimInternalError.FILE_NOT_FOUND);
                 }
             });
+        } catch (InterruptedIOException exception) {
+            if (exception instanceof SocketTimeoutException) {
+                throw exception;
+            } else {
+                final WebimRequest<?> callback = currentRequest;
+                callbackExecutor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        callback.handleError(WebimInternalError.CONNECTION_TIMEOUT);
+                    }
+                });
+            }
         } catch (AbortByWebimErrorException exception) {
             if ((exception.getError() != null)
                     && currentRequest.isHandleError(exception.getError())) {
@@ -143,7 +156,7 @@ public class ActionRequestLoop extends AbstractRequestLoop {
 
     private <T extends ErrorResponse> void performRequestAndCallback
             (AuthData currentAuthData,
-             WebimRequest<T> currentRequest) throws SocketTimeoutException, FileNotFoundException {
+             WebimRequest<T> currentRequest) throws InterruptedIOException, FileNotFoundException {
         final T response = performRequest(currentRequest.makeRequest(currentAuthData));
 
         if (currentRequest.hasCallback) {

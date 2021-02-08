@@ -80,12 +80,9 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
      * @param remoteMessage FCM message body received.
      */
     private void sendNotification(RemoteMessage remoteMessage) {
-        Intent intent = new Intent(this, MainActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
         onPushMessage(getApplicationContext(),
                 Webim.parseFcmPushNotification(remoteMessage.getData().toString()),
-                WebimChatActivity.class);
+                MainActivity.class);
     }
 
     private static void onPushMessage(Context context,
@@ -161,8 +158,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         Resources res = context.getResources();
         if (cls != null) {
             Intent notificationIntent = new Intent(context, cls);
-            notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
-                    | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            notificationIntent.putExtra(MainActivity.NEED_OPEN_CHAT, true);
             PendingIntent contentIntent = PendingIntent.getActivity(context,
                     0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
             builder.setContentIntent(contentIntent);

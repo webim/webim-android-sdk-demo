@@ -8,10 +8,10 @@ import com.webimapp.android.sdk.Operator;
 
 import java.util.List;
 
-public class MessageImpl implements Message, TimeMicrosHolder {
+public class MessageImpl implements Message, TimeMicrosHolder, Comparable<MessageImpl> {
 
     protected final @Nullable String avatarUrl;
-    protected final @NonNull Id id;
+    protected final @NonNull Id clientSideId;
     protected final @Nullable  String sessionId;
     protected final @Nullable Keyboard keyboard;
     protected final @Nullable KeyboardRequest keyboardRequest;
@@ -27,9 +27,8 @@ public class MessageImpl implements Message, TimeMicrosHolder {
     private final @Nullable Attachment attachment;
     private final @Nullable String rawText;
 
-    private String currentChatId;
-    protected boolean isHistoryMessage;
-    private HistoryId historyId;
+    private String serverSideId;
+    protected boolean savedInHistory;
     private boolean readByOperator;
     private boolean canBeEdited;
     private boolean canBeReplied;
@@ -39,7 +38,7 @@ public class MessageImpl implements Message, TimeMicrosHolder {
 
     public MessageImpl(
             @NonNull String serverUrl,
-            @NonNull Id id,
+            @NonNull Id clientSideId,
             @Nullable String sessionId,
             @Nullable Operator.Id operatorId,
             @Nullable String avatarUrl,
@@ -47,9 +46,9 @@ public class MessageImpl implements Message, TimeMicrosHolder {
             @NonNull Type type,
             @NonNull String text,
             long timeMicros,
-            String currentChatId,
+            String serverSideId,
             @Nullable String rawText,
-            boolean isHistoryMessage,
+            boolean savedInHistory,
             @Nullable Attachment attachment,
             boolean readByOperator,
             boolean canBeEdited,
@@ -61,17 +60,13 @@ public class MessageImpl implements Message, TimeMicrosHolder {
             @Nullable Sticker sticker
     ) {
         serverUrl.getClass(); // NPE
-        id.getClass(); // NPE
+        clientSideId.getClass(); // NPE
         senderName.getClass(); // NPE
         type.getClass(); // NPE
         text.getClass(); // NPE
 
-        if (isHistoryMessage) {
-            historyId = new HistoryId(currentChatId, timeMicros);
-        }
-
         this.serverUrl = serverUrl;
-        this.id = id;
+        this.clientSideId = clientSideId;
         this.sessionId = sessionId;
         this.operatorId = operatorId;
         this.avatarUrl = avatarUrl;
@@ -79,9 +74,9 @@ public class MessageImpl implements Message, TimeMicrosHolder {
         this.type = type;
         this.text = text;
         this.timeMicros = timeMicros;
-        this.currentChatId = currentChatId;
+        this.serverSideId = serverSideId;
         this.rawText = rawText;
-        this.isHistoryMessage = isHistoryMessage;
+        this.savedInHistory = savedInHistory;
         this.attachment = attachment;
         this.readByOperator = readByOperator;
         this.canBeEdited = canBeEdited;
@@ -149,8 +144,8 @@ public class MessageImpl implements Message, TimeMicrosHolder {
     }
 
     @Override
-    public boolean isHistoryMessage() {
-        return isHistoryMessage;
+    public boolean isSavedInHistory() {
+        return savedInHistory;
     }
 
     @Nullable
@@ -160,13 +155,13 @@ public class MessageImpl implements Message, TimeMicrosHolder {
 
     @NonNull
     public MessageSource getSource() {
-        return isHistoryMessage ? MessageSource.HISTORY : MessageSource.CURRENT_CHAT;
+        return savedInHistory ? MessageSource.HISTORY : MessageSource.CURRENT_CHAT;
     }
 
     @NonNull
     @Override
-    public Id getId() {
-        return id;
+    public Id getClientSideId() {
+        return clientSideId;
     }
 
     @Nullable
@@ -177,8 +172,8 @@ public class MessageImpl implements Message, TimeMicrosHolder {
 
     @NonNull
     @Override
-    public String getCurrentChatId() {
-        return currentChatId;
+    public String getServerSideId() {
+        return serverSideId;
     }
 
     @Nullable
@@ -213,7 +208,7 @@ public class MessageImpl implements Message, TimeMicrosHolder {
 
     @Override
     public boolean equals(Object o) {
-        return o instanceof Message && this.getId().equals(((Message) o).getId());
+        return o instanceof Message && this.getClientSideId().equals(((Message) o).getClientSideId());
     }
 
     @Override
@@ -232,49 +227,6 @@ public class MessageImpl implements Message, TimeMicrosHolder {
         return timeMicros;
     }
 
-    @NonNull
-    public HistoryId getHistoryId() {
-        if (historyId == null) {
-            throw new IllegalStateException();
-        }
-        return historyId;
-    }
-
-    @NonNull
-    public String getIdInCurrentChat() {
-        if (currentChatId == null) {
-            throw new IllegalStateException();
-        }
-        return currentChatId;
-    }
-
-    @NonNull
-    public String getPrimaryId() {
-        return getSource().isHistory() ? historyId.getDbId() : currentChatId;
-    }
-
-    @NonNull
-    public MessageImpl transferToHistory(@History MessageImpl historyEquivalent) {
-        if (!isContentEquals(this, historyEquivalent)) {
-            historyEquivalent.setSecondaryCurrentChat(this);
-            return historyEquivalent;
-        }
-        setSecondaryHistory(historyEquivalent);
-        invert();
-        return this;
-    }
-
-    @NonNull
-    public MessageImpl transferToCurrentChat(@CurrentChat MessageImpl currentChatEquivalent) {
-        if (!isContentEquals(this, currentChatEquivalent)) {
-            currentChatEquivalent.setSecondaryHistory(this);
-            return currentChatEquivalent;
-        }
-        setSecondaryCurrentChat(currentChatEquivalent);
-        invert();
-        return this;
-    }
-
     public void setCanBeEdited(boolean canBeEdited) {
         this.canBeEdited = canBeEdited;
     }
@@ -283,63 +235,37 @@ public class MessageImpl implements Message, TimeMicrosHolder {
         this.canBeReplied = canBeReplied;
     }
 
-    public void setSecondaryHistory(@History MessageImpl historyEquivalent) {
-        if (getSource().isHistory()) {
-            throw new IllegalStateException();
-        }
-        if (!historyEquivalent.getSource().isHistory()) {
-            throw new IllegalArgumentException();
-        }
-        historyId = historyEquivalent.getHistoryId();
+    public void setSavedInHistory(boolean savedInHistory) {
+        this.savedInHistory = savedInHistory;
     }
 
-    public void setSecondaryCurrentChat(@CurrentChat MessageImpl currentChatEquivalent) {
-        if (!getSource().isHistory()) {
-            throw new IllegalStateException();
-        }
-        if (currentChatEquivalent.getSource().isHistory()) {
-            throw new IllegalArgumentException();
-        }
-        currentChatId = currentChatEquivalent.currentChatId;
-    }
-
-    public void invert() {
-        if (historyId == null || currentChatId == null) {
-            throw new IllegalStateException();
-        }
-        isHistoryMessage = !isHistoryMessage;
-
-    }
-
-    public boolean hasHistoryComponent() {
-        return historyId != null;
-    }
-
-    public static boolean isContentEquals(MessageImpl m1, MessageImpl m2) {
+    public boolean isContentEquals(MessageImpl message) {
         return
-                m1.id.toString().equals(m2.id.toString())
-                        && InternalUtils.equals(m1.operatorId == null
-                                ? null
-                                : m1.operatorId.toString(),
-                        m2.operatorId == null
-                                ? null
-                                : m2.operatorId.toString())
-                        && InternalUtils.equals(m1.avatarUrl, m2.avatarUrl)
-                        && m1.senderName.equals(m2.senderName)
-                        && m1.type.equals(m2.type)
-                        && m1.text.equals(m2.text)
-                        && m1.timeMicros == m2.timeMicros
-                        && InternalUtils.equals(m1.rawText, m2.rawText)
-                        && m1.isReadByOperator() == m2.isReadByOperator()
-                        && m1.canBeReplied == m2.canBeReplied
-                        && m1.canBeEdited == m2.canBeEdited;
+            clientSideId.toString().equals(message.clientSideId.toString())
+                && serverSideId.equals(message.serverSideId)
+                && InternalUtils.equals(operatorId == null
+                    ? null
+                    : operatorId.toString(),
+                message.operatorId == null
+                    ? null
+                    : message.operatorId.toString())
+                && savedInHistory == message.savedInHistory
+                && InternalUtils.equals(avatarUrl, message.avatarUrl)
+                && senderName.equals(message.senderName)
+                && type.equals(message.type)
+                && text.equals(message.text)
+                && timeMicros == message.timeMicros
+                && InternalUtils.equals(rawText, message.rawText)
+                && isReadByOperator() == message.isReadByOperator()
+                && canBeReplied == message.canBeReplied
+                && canBeEdited == message.canBeEdited;
     }
 
     @Override
     public String toString() {
         return "MessageImpl{"
                 + "\nserverUrl='" + serverUrl + '\''
-                + ", \nid=" + id
+                + ", \nid=" + clientSideId
                 + ", \noperatorId=" + operatorId
                 + ", \navatarUrl='" + avatarUrl + '\''
                 + ", \nsenderName='" + senderName + '\''
@@ -348,11 +274,15 @@ public class MessageImpl implements Message, TimeMicrosHolder {
                 + ", \ntimeMicros=" + timeMicros
                 + ", \nattachment=" + attachment
                 + ", \nrawText='" + rawText + '\''
-                + ", \nisHistoryMessage=" + isHistoryMessage
-                + ", \ncurrentChatId='" + currentChatId + '\''
-                + ", \nhistoryId=" + historyId + '\''
+                + ", \nisHistoryMessage=" + savedInHistory
+                + ", \ncurrentChatId='" + serverSideId + '\''
                 + ", \ncanBeEdited=" + canBeEdited
                 + "\n}";
+    }
+
+    @Override
+    public int compareTo(MessageImpl message) {
+        return message != null ? InternalUtils.compare(getTimeMicros(), message.getTimeMicros()) : 1;
     }
 
     public static class AttachmentImpl implements Message.Attachment {
@@ -500,18 +430,6 @@ public class MessageImpl implements Message, TimeMicrosHolder {
 
         public boolean isCurrentChat() {
             return this == CURRENT_CHAT;
-        }
-
-        public void assertHistory() {
-            if (!isHistory()) {
-                throw new IllegalStateException();
-            }
-        }
-
-        public void assertCurrentChat() {
-            if (!isCurrentChat()) {
-                throw new IllegalStateException();
-            }
         }
     }
 

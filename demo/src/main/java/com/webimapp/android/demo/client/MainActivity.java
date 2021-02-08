@@ -1,25 +1,25 @@
 package com.webimapp.android.demo.client;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
+
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
-import android.util.Log;
+
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
-import com.google.firebase.iid.FirebaseInstanceId;
+import com.webimapp.android.demo.client.util.WebimSessionDirector;
 import com.webimapp.android.sdk.MessageStream;
-import com.webimapp.android.sdk.Webim;
-import com.webimapp.android.sdk.WebimLog;
 import com.webimapp.android.sdk.WebimSession;
 
 public class MainActivity extends AppCompatActivity {
 
+    public static String NEED_OPEN_CHAT = "need_open_chat";
     private WebimSession session;
     private ProgressBar progressBar;
     private TextView numberOfBadge;
@@ -27,8 +27,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         if (!BuildConfig.DEBUG) {
             FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true);
+        }
+        if (needOpenChat()) {
+            openChatActivity();
         }
         setContentView(R.layout.activity_main);
         initNewChatButton();
@@ -37,15 +41,23 @@ public class MainActivity extends AppCompatActivity {
         initSession();
     }
 
+    private boolean needOpenChat() {
+        return getIntent().getBooleanExtra(NEED_OPEN_CHAT, false);
+    }
+
     private void initNewChatButton() {
         Button newChatButton = findViewById(R.id.buttonStartChat);
         newChatButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(new Intent(MainActivity.this, WebimChatActivity.class));
-                overridePendingTransition(R.anim.pull_in_right, R.anim.push_out_left);
+                openChatActivity();
             }
         });
+    }
+
+    private void openChatActivity() {
+        startActivity(new Intent(MainActivity.this, WebimChatActivity.class));
+        overridePendingTransition(R.anim.pull_in_right, R.anim.push_out_left);
     }
 
     private void initViewForBadge() {
@@ -65,31 +77,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initSession() {
-        final String DEFAULT_ACCOUNT_NAME = "demo";
-        final String DEFAULT_LOCATION = "mobile";
         numberOfBadge.setVisibility(View.GONE);
         progressBar.setVisibility(View.VISIBLE);
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        session = Webim.newSessionBuilder()
-                .setContext(this)
-                .setAccountName(sharedPref.getString("account", DEFAULT_ACCOUNT_NAME))
-                .setLocation(sharedPref.getString("location", DEFAULT_LOCATION))
-                .setPushSystem(Webim.PushSystem.FCM)
-                .setPushToken(sharedPref.getBoolean("fcm", true)
-                        ? FirebaseInstanceId.getInstance().getToken()
-                        : "none")
-                .setLogger(BuildConfig.DEBUG
-                                ? new WebimLog() {
-                            @Override
-                            public void log(String log) {
-                                Log.i("WEBIM LOG", log);
-                            }
-                        }
-                                : null,
-                        Webim.SessionBuilder.WebimLogVerbosityLevel.VERBOSE)
-//                .setVisitorFieldsJson("{\"id\":\"1234567890987654321\",\"display_name\":\"Никита\",\"crc\":\"ffadeb6aa3c788200824e311b9aa44cb\"}")
-//                .setVisitorDataPreferences(getSharedPreferences("test2", Context.MODE_PRIVATE))
-                .build();
+        session = WebimSessionDirector.createSessionBuilderWithAnonymousVisitor(this).build();
         session.getStream().setUnreadByVisitorMessageCountChangeListener(new MessageStream.UnreadByVisitorMessageCountChangeListener() {
             @Override
             public void onUnreadByVisitorMessageCountChanged(int newMessageCount) {
@@ -113,5 +103,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         session.destroy();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        if (needOpenChat()) {
+            openChatActivity();
+        }
     }
 }

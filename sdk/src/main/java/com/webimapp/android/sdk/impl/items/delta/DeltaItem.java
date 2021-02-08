@@ -24,7 +24,7 @@ public class DeltaItem<T> {
         return objectType;
     }
 
-    public @NonNull String getSessionId() {
+    public @NonNull String getId() {
         return id;
     }
 

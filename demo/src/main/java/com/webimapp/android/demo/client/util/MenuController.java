@@ -56,8 +56,8 @@ public class MenuController {
     private void updateMenuItems(@NonNull final Message message,
                                  final int adapterPosition,
                                  boolean isSentMessage) {
-        if (message.getCurrentChatId() == null
-                || !message.getCurrentChatId().equals(contextMenuMessageId)) {
+        if (message.getServerSideId() == null
+                || !message.getServerSideId().equals(contextMenuMessageId)) {
             return;
         }
         disableContextMenuItem(menuReplyLayout);
