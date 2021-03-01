@@ -62,6 +62,7 @@ import com.webimapp.android.sdk.Operator;
 import com.webimapp.android.sdk.Survey;
 import com.webimapp.android.sdk.WebimError;
 import com.webimapp.android.sdk.WebimSession;
+import com.webimapp.android.sdk.impl.items.DepartmentItem;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -104,12 +105,14 @@ public class WebimChatFragment extends Fragment {
     private LinearLayout chatMenuBackground;
     private ImageButton chatMenuButton;
 
-    private AlertDialog ratingDialog;
     private RatingBar ratingBar;
     private Button ratingButton;
 
     private MenuController menuController;
+
+    private AlertDialog ratingDialog;
     private SurveyDialog surveyDialog;
+    private DepartmentDialog departmentDialog;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -202,35 +205,22 @@ public class WebimChatFragment extends Fragment {
             @Override
             public void onStateChange(@NonNull MessageStream.VisitSessionState previousState,
                                       @NonNull MessageStream.VisitSessionState newState) {
-                if (newState == MessageStream.VisitSessionState.DEPARTMENT_SELECTION) {
-                    final List<Department> departmentList = session.getStream().getDepartmentList();
-                    if (departmentList != null) {
-                        final List<String> departmentNames = new ArrayList<>();
-                        for (Department department : departmentList) {
-                            departmentNames.add(department.getName());
+                switch (newState) {
+                    case DEPARTMENT_SELECTION:
+                        List<Department> departments = session.getStream().getDepartmentList();
+                        if (departmentDialog == null) {
+                            openDepartmentDialog(departments);
+                        } else {
+                            departmentDialog.dismiss();
+                            departmentDialog.setDepartmentNames(getDepartmentsNames(departments));
+                            departmentDialog.show(getChildFragmentManager(), DepartmentDialog.DEPARTMENT_DIALOG_TAG);
                         }
-
-                        DialogFragment dialogFragment =
-                                new DepartmentDialog(departmentNames, new DepartmentItemSelectedCallback() {
-                                    @Override
-                                    public void departmentItemSelected(int departmentPosition) {
-                                        List<Department> departmentList = session.getStream().getDepartmentList();
-                                        if (departmentList != null && !departmentList.isEmpty()) {
-                                            String selectedDepartment = departmentList.get(departmentPosition).getKey();
-                                            session.getStream().startChatWithDepartmentKey(selectedDepartment);
-                                        }
-                                    }
-
-                                    @Override
-                                    public void onBackPressed() {
-                                        requireActivity().onBackPressed();
-                                    }
-                                });
-                        dialogFragment.setCancelable(false);
-                        dialogFragment.show(
-                                requireFragmentManager(),
-                                DepartmentDialog.DEPARTMENT_DIALOG_TAG);
-                    }
+                        break;
+                    case IDLE_AFTER_CHAT:
+                        if (departmentDialog != null) {
+                            departmentDialog.dismiss();
+                        }
+                        break;
                 }
             }
         });
@@ -279,6 +269,38 @@ public class WebimChatFragment extends Fragment {
                 showToast(getString(R.string.survey_finish_message), Toast.LENGTH_SHORT);
             }
         });
+    }
+
+    private void openDepartmentDialog(List<Department> departmentList) {
+        if (departmentList != null) {
+            departmentDialog =
+                new DepartmentDialog(new DepartmentItemSelectedCallback() {
+                    @Override
+                    public void departmentItemSelected(int departmentPosition) {
+                        List<Department> departmentList = session.getStream().getDepartmentList();
+                        if (departmentList != null && !departmentList.isEmpty()) {
+                            String selectedDepartment = departmentList.get(departmentPosition).getKey();
+                            session.getStream().startChatWithDepartmentKey(selectedDepartment);
+                        }
+                    }
+
+                    @Override
+                    public void onBackPressed() {
+                        requireActivity().onBackPressed();
+                    }
+                });
+            departmentDialog.setDepartmentNames(getDepartmentsNames(departmentList));
+            departmentDialog.setCancelable(false);
+            departmentDialog.show(getChildFragmentManager(), DepartmentDialog.DEPARTMENT_DIALOG_TAG);
+        }
+    }
+
+    private List<String> getDepartmentsNames(List<Department> departmentList) {
+        final List<String> departmentNames = new ArrayList<>();
+        for (Department department : departmentList) {
+            departmentNames.add(department.getName());
+        }
+        return departmentNames;
     }
 
     private void initOperatorState(final View rootView) {
@@ -789,8 +811,6 @@ public class WebimChatFragment extends Fragment {
                         return;
                     }
                 }
-            } else if (resultCode == Activity.RESULT_CANCELED && getContext() != null) {
-                showToast(getContext().getString(R.string.file_selection_failed), Toast.LENGTH_SHORT);
             }
             return;
         }

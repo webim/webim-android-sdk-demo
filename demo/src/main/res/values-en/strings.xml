@@ -110,6 +110,7 @@
     <string name="dialog_cancel">отмена</string>
 
     <string name="settings_account_field_hint">Enter the full server URL or account name,
-        hosted on the server *.webim.ru. For example, for the server demo.webim.ru you need to type \"demo\"</string>
+        hosted on the server *.webim.ru
+        \nFor example, for the server demo.webim.ru you need to type \"demo\"</string>
     <string name="file_upload_connection_timeout">File upload timeout exceeded</string>
 </resources>

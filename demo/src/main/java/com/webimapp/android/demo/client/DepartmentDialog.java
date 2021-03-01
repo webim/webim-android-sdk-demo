@@ -20,9 +20,12 @@ public class DepartmentDialog extends DialogFragment {
     private List<String> departmentNames;
     private DepartmentItemSelectedCallback callback;
 
-    public DepartmentDialog(List<String> departmentNames, DepartmentItemSelectedCallback callback) {
-        this.departmentNames = departmentNames;
+    public DepartmentDialog(DepartmentItemSelectedCallback callback) {
         this.callback = callback;
+    }
+
+    public void setDepartmentNames(List<String> departmentNames) {
+        this.departmentNames = departmentNames;
     }
 
     @NonNull

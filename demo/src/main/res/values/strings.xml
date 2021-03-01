@@ -111,5 +111,6 @@
     <string name="dialog_cancel">cancel</string>
 
     <string name="settings_account_field_hint">Введите полный URL сервера или название аккаунта,
-        размещённого на сервере *.webim.ru. Например, для сервера demo.webim.ru нужно ввести \"demo\"</string>
+        размещённого на сервере *.webim.ru
+        \nНапример, для сервера demo.webim.ru нужно ввести demo</string>
 </resources>
