@@ -6,6 +6,7 @@ import androidx.annotation.Nullable;
 import com.webimapp.android.sdk.MessageStream;
 import com.webimapp.android.sdk.impl.items.responses.HistoryBeforeResponse;
 import com.webimapp.android.sdk.impl.items.responses.HistorySinceResponse;
+import com.webimapp.android.sdk.impl.items.responses.LocationStatusResponse;
 import com.webimapp.android.sdk.impl.items.responses.SearchResponse;
 
 import okhttp3.RequestBody;
@@ -89,4 +90,6 @@ public interface WebimActions {
                             @Nullable SurveyQuestionCallback callback);
 
     void closeSurvey(@NonNull String surveyId, @NonNull SurveyFinishCallback callback);
+
+    void getLocationStatus(@NonNull String location, @NonNull DefaultCallback<LocationStatusResponse> callback);
 }

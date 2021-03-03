@@ -174,6 +174,7 @@ public final class Webim {
         private ProvidedVisitorFields visitorFields;
         @Nullable
         private String prechatFields;
+        private long requestFrequency;
 
         @Nullable
         private SSLSocketFactory sslSocketFactory;
@@ -240,6 +241,17 @@ public final class Webim {
         public SessionBuilder setLocation(@NonNull String location) {
             location.getClass(); // NPE
             this.location = location;
+            return this;
+        }
+
+        /**
+         * If is set, SDK will request location status every 60 seconds and fire listener.
+         * @param requestFrequency - request frequency to server in millis.
+         * @return this builder object
+         * @see MessageStream#setOnlineStatusChangeListener(MessageStream.OnlineStatusChangeListener)
+         */
+        public SessionBuilder setOnlineStatusRequestFrequencyInMillis(long requestFrequency) {
+            this.requestFrequency = requestFrequency;
             return this;
         }
 
@@ -607,7 +619,8 @@ public final class Webim {
                     sslSocketFactory,
                     trustManager,
                     multivisitorSection,
-                    sessionCallback
+                    sessionCallback,
+                    requestFrequency
             );
         }
 

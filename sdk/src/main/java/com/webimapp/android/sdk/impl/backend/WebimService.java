@@ -4,6 +4,7 @@ import com.webimapp.android.sdk.impl.items.responses.DefaultResponse;
 import com.webimapp.android.sdk.impl.items.responses.DeltaResponse;
 import com.webimapp.android.sdk.impl.items.responses.HistoryBeforeResponse;
 import com.webimapp.android.sdk.impl.items.responses.HistorySinceResponse;
+import com.webimapp.android.sdk.impl.items.responses.LocationStatusResponse;
 import com.webimapp.android.sdk.impl.items.responses.SearchResponse;
 import com.webimapp.android.sdk.impl.items.responses.UploadResponse;
 
@@ -76,6 +77,7 @@ public interface WebimService {
     String URL_SUFFIX_FILE_UPLOAD = "/l/v/m/upload";
     String URL_SUFFIX_HISTORY = "/l/v/m/history";
     String URL_SUFFIX_SEARCH_MESSAGES = "/l/v/m/search-messages";
+    String URL_GET_ONLINE_STATUS = "l/v/get-online-status";
 
     @Multipart
     @POST(URL_SUFFIX_FILE_UPLOAD)
@@ -311,5 +313,10 @@ public interface WebimService {
         @Field(PARAMETER_SURVEY_ID) String surveyId,
         @Field(PARAMETER_PAGE_ID) String pageId,
         @Field(PARAMETER_AUTHORIZATION_TOKEN) String authorizationToken
+    );
+
+    @GET(URL_GET_ONLINE_STATUS)
+    Call<LocationStatusResponse> getOnlineStatus(
+        @Query(PARAMETER_LOCATION) String location
     );
 }

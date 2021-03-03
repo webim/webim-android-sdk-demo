@@ -10,6 +10,7 @@ import com.webimapp.android.sdk.impl.WebimErrorImpl;
 import com.webimapp.android.sdk.impl.items.responses.DefaultResponse;
 import com.webimapp.android.sdk.impl.items.responses.HistoryBeforeResponse;
 import com.webimapp.android.sdk.impl.items.responses.HistorySinceResponse;
+import com.webimapp.android.sdk.impl.items.responses.LocationStatusResponse;
 import com.webimapp.android.sdk.impl.items.responses.SearchResponse;
 import com.webimapp.android.sdk.impl.items.responses.UploadResponse;
 
@@ -732,6 +733,22 @@ public class WebimActionsImpl implements WebimActions {
             @Override
             public void handleError(@NonNull String error) {
                 callback.onFailure(error);
+            }
+        });
+    }
+
+    @Override
+    public void getLocationStatus(@NonNull String location, @NonNull DefaultCallback<LocationStatusResponse> callback) {
+        enqueue(new ActionRequestLoop.WebimRequest<LocationStatusResponse>(true) {
+
+            @Override
+            public Call<LocationStatusResponse> makeRequest(AuthData authData) {
+                return webim.getOnlineStatus(location);
+            }
+
+            @Override
+            public void runCallback(LocationStatusResponse response) {
+                callback.onSuccess(response);
             }
         });
     }

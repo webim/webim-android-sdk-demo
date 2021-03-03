@@ -43,6 +43,7 @@ import com.webimapp.android.sdk.impl.items.delta.DeltaFullUpdate;
 import com.webimapp.android.sdk.impl.items.delta.DeltaItem;
 import com.webimapp.android.sdk.impl.items.responses.HistoryBeforeResponse;
 import com.webimapp.android.sdk.impl.items.responses.HistorySinceResponse;
+import com.webimapp.android.sdk.impl.items.responses.LocationStatusResponse;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -82,23 +83,25 @@ public class WebimSessionImpl implements WebimSession {
     private final SessionDestroyer destroyer;
     @NonNull
     private final HistoryPoller historyPoller;
+    @Nullable
+    private final LocationStatusPoller locationStatusPoller;
     @NonNull
     private final MessageStreamImpl stream;
     private boolean clientStarted;
-    private String onlineStatus = "unknown";
 
     private WebimSessionImpl(
-            @NonNull AccessChecker accessChecker,
-            @NonNull SessionDestroyer destroyer,
-            @NonNull WebimClient client,
-            @NonNull HistoryPoller historyPoller,
-            @NonNull MessageStreamImpl stream
-    ) {
+        @NonNull AccessChecker accessChecker,
+        @NonNull SessionDestroyer destroyer,
+        @NonNull WebimClient client,
+        @NonNull HistoryPoller historyPoller,
+        @NonNull MessageStreamImpl stream,
+        @Nullable LocationStatusPoller locationStatusPoller) {
         this.accessChecker = accessChecker;
         this.destroyer = destroyer;
         this.client = client;
         this.historyPoller = historyPoller;
         this.stream = stream;
+        this.locationStatusPoller = locationStatusPoller;
     }
 
     private void checkAccess() {
@@ -114,6 +117,9 @@ public class WebimSessionImpl implements WebimSession {
         }
         client.resume();
         historyPoller.resume();
+        if (locationStatusPoller != null) {
+            locationStatusPoller.resume();
+        }
     }
 
     @Override
@@ -124,6 +130,9 @@ public class WebimSessionImpl implements WebimSession {
         checkAccess();
         client.pause();
         historyPoller.pause();
+        if (locationStatusPoller != null) {
+            locationStatusPoller.pause();
+        }
     }
 
     @Override
@@ -201,7 +210,8 @@ public class WebimSessionImpl implements WebimSession {
             SSLSocketFactory sslSocketFactory,
             X509TrustManager trustManager,
             @NonNull String multivisitorSection,
-            @Nullable SessionCallback sessionCallback
+            @Nullable SessionCallback sessionCallback,
+            long requestLocationFrequency
     ) {
         context.getClass(); // NPE
         accountName.getClass(); // NPE
@@ -349,8 +359,20 @@ public class WebimSessionImpl implements WebimSession {
             }
         });
 
+        LocationStatusPoller locationStatusPoller = null;
+        if (requestLocationFrequency > 0) {
+            locationStatusPoller = new LocationStatusPoller(actions, handler, stream, location, requestLocationFrequency);
+            LocationStatusPoller finalLocationPoller = locationStatusPoller;
+            sessionDestroyer.addDestroyAction(new Runnable() {
+                @Override
+                public void run() {
+                    finalLocationPoller.pause();
+                }
+            });
+        }
+
         WebimSessionImpl session = new WebimSessionImpl(accessChecker,
-                sessionDestroyer, client, hPoller, stream);
+                sessionDestroyer, client, hPoller, stream, locationStatusPoller);
 
         deltaCallback.setStream(stream, messageHolder, session, hPoller);
 
@@ -753,6 +775,67 @@ public class WebimSessionImpl implements WebimSession {
         }
     }
 
+    private static class LocationStatusPoller {
+        @NonNull
+        private final WebimActions actions;
+        @NonNull
+        private final Handler handler;
+        @NonNull
+        private final MessageStreamImpl messageStream;
+        @NonNull
+        private final String location;
+        private final long requestLocationFrequency;
+
+        @Nullable
+        private Runnable callback;
+
+        public LocationStatusPoller(
+            @NonNull WebimActions actions,
+            @NonNull Handler handler,
+            @NonNull MessageStreamImpl messageStream,
+            @NonNull String location,
+            long requestLocationFrequency) {
+            this.actions = actions;
+            this.handler = handler;
+            this.messageStream = messageStream;
+            this.location = location;
+            this.requestLocationFrequency = requestLocationFrequency;
+        }
+
+        public void resume() {
+            pause();
+            callback = createCallback();
+            handler.post(callback);
+        }
+
+        public void pause() {
+            if (callback != null) {
+                handler.removeCallbacks(callback);
+            }
+            callback = null;
+        }
+
+
+        private Runnable createCallback() {
+            return new Runnable() {
+                @Override
+                public void run() {
+                    requestLocationStatus();
+                }
+            };
+        }
+
+        private void requestLocationStatus() {
+            actions.getLocationStatus(location, new DefaultCallback<LocationStatusResponse>() {
+                @Override
+                public void onSuccess(LocationStatusResponse response) {
+                    messageStream.setOnlineStatus(response.getOnlineStatus());
+                    handler.postDelayed(callback, requestLocationFrequency);
+                }
+            });
+        }
+    }
+
     private static class SessionParamsListenerImpl implements SessionParamsListener {
         @NonNull
         private final SharedPreferences preferences;
@@ -862,7 +945,7 @@ public class WebimSessionImpl implements WebimSession {
             messageStream.saveLocationSettings(fullUpdate);
 
             String status = fullUpdate.getOnlineStatus();
-            session.setOnlineStatus(status);
+            messageStream.setOnlineStatus(status);
 
             String revision = fullUpdate.getHistoryRevision();
             if (revision != null) {
@@ -1224,7 +1307,7 @@ public class WebimSessionImpl implements WebimSession {
             String sessionState = (String) deltaItem.getData();
 
             if (sessionState.equals(VisitSessionStateItem.OFFLINE_MESSAGE.getTypeValue())) {
-                session.setOnlineStatus(OnlineStatusItem.OFFLINE.getTypeValue());
+                messageStream.setOnlineStatus(OnlineStatusItem.OFFLINE.getTypeValue());
                 session.client.getActions().closeChat();
             }
 
@@ -1421,23 +1504,6 @@ public class WebimSessionImpl implements WebimSession {
                         }
                     }
                 });
-            }
-        }
-    }
-
-    public OnlineStatusItem getOnlineStatus() {
-        return OnlineStatusItem.getType(onlineStatus);
-    }
-
-    private void setOnlineStatus(String onlineStatus) {
-        if (this.onlineStatus == null || !this.onlineStatus.equals(onlineStatus)) {
-            MessageStream.OnlineStatus oldStatus
-                    = toPublicOnlineStatus(getOnlineStatus());
-            this.onlineStatus = onlineStatus;
-            MessageStream.OnlineStatusChangeListener status =
-                    stream.getOnlineStatusChangeListener();
-            if (status != null) {
-                status.onOnlineStatusChanged(oldStatus, toPublicOnlineStatus(getOnlineStatus()));
             }
         }
     }

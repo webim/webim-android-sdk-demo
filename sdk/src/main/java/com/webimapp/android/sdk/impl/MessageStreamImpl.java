@@ -76,6 +76,7 @@ public class MessageStreamImpl implements MessageStream {
     private VisitSessionStateListener visitSessionStateListener;
     private GreetingMessageListener greetingMessageListener;
     private SurveyController surveyController;
+    private String onlineStatus = "unknown";
 
     MessageStreamImpl(
             String serverUrlString,
@@ -656,7 +657,7 @@ public class MessageStreamImpl implements MessageStream {
     }
 
     private Boolean patternMatches(String fileName) {
-        return Pattern.compile("^[()_.а-яА-ЯёЁa-zA-Z0-9\\s\\-]+$").matcher(fileName).matches();
+        return Pattern.compile("^[()_.а-яА-ЯёЁa-zA-Z0-9\\+\\s\\-]+$").matcher(fileName).matches();
     }
 
     private SendFileCallback.SendFileError getFileError(String error) {
@@ -856,6 +857,21 @@ public class MessageStreamImpl implements MessageStream {
                 }
             }
         );
+    }
+
+    void setOnlineStatus(String onlineStatus) {
+        if (this.onlineStatus == null || !this.onlineStatus.equals(onlineStatus)) {
+            MessageStream.OnlineStatus oldStatus
+                = toPublicOnlineStatus(getOnlineStatus());
+            this.onlineStatus = onlineStatus;
+            if (onlineStatusChangeListener != null) {
+                onlineStatusChangeListener.onOnlineStatusChanged(oldStatus, toPublicOnlineStatus(getOnlineStatus()));
+            }
+        }
+    }
+
+    private OnlineStatusItem getOnlineStatus() {
+        return OnlineStatusItem.getType(onlineStatus);
     }
 
     @Override
@@ -1096,10 +1112,6 @@ public class MessageStreamImpl implements MessageStream {
     public void setOnlineStatusChangeListener(OnlineStatusChangeListener
                                                       onlineStatusChangeListener) {
         this.onlineStatusChangeListener = onlineStatusChangeListener;
-    }
-
-    OnlineStatusChangeListener getOnlineStatusChangeListener() {
-        return this.onlineStatusChangeListener;
     }
 
     private Department.DepartmentOnlineStatus
