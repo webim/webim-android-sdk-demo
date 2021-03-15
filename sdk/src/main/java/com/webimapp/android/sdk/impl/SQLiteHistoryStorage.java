@@ -72,7 +72,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
     private boolean isReachedEndOfRemoteHistory;
     private long firstKnownTs = -1;
     private long readBeforeTimestamp;
-    private WebimClient client;
+    private FileUrlCreator fileUrlCreator;
     private ReadBeforeTimestampListener readBeforeTimestampListener
             = new ReadBeforeTimestampListener() {
         @Override
@@ -88,13 +88,13 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                                 String dbName,
                                 String serverUrl,
                                 boolean isReachedEndOfRemoteHistory,
-                                WebimClient client,
+                                FileUrlCreator fileUrlCreator,
                                 long readBeforeTimestamp) {
         this.dbHelper = new MyDBHelper(context, dbName);
         this.handler = handler;
         this.serverUrl = serverUrl;
         this.isReachedEndOfRemoteHistory = isReachedEndOfRemoteHistory;
-        this.client = client;
+        this.fileUrlCreator = fileUrlCreator;
         this.readBeforeTimestamp = readBeforeTimestamp;
     }
 
@@ -273,7 +273,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
         if (rawText != null) {
             try {
                 MessageItem messageItem = InternalUtils.fromJson(rawText, MessageItem.class);
-                attachment = InternalUtils.getAttachment(serverUrl, messageItem, client);
+                attachment = InternalUtils.getAttachment(messageItem, fileUrlCreator);
             } catch (Exception e) {
                 WebimInternalLog.getInstance().log("Failed to parse file params for message: "
                         + serverSideId + ", text: " + text + ". " + e,
@@ -285,7 +285,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
         if (rawQuote != null) {
             try {
                 MessageItem.Quote quoteParams = InternalUtils.fromJson(rawQuote, MessageItem.Quote.class);
-                quote = InternalUtils.getQuote(serverUrl, quoteParams, client);
+                quote = InternalUtils.getQuote(quoteParams, fileUrlCreator);
             } catch (Exception e) {
                 WebimInternalLog.getInstance().log("Failed to parse quote params for message: "
                         + serverSideId + ", text: " + text + ". " + e,

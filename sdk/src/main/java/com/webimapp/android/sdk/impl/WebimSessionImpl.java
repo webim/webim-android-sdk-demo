@@ -57,8 +57,6 @@ import java.util.concurrent.Executor;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
 
-import static com.webimapp.android.sdk.impl.MessageStreamImpl.toPublicOnlineStatus;
-
 public class WebimSessionImpl implements WebimSession {
     private static final String GUID_SHARED_PREFS_NAME = "com.webimapp.android.sdk.guid";
     private static final String PLATFORM = "android";
@@ -246,9 +244,9 @@ public class WebimSessionImpl implements WebimSession {
         String authToken = preferences.getString(PREFS_KEY_AUTH_TOKEN, null);
 
         MessageFactories.Mapper<MessageImpl> historyMessageMapper =
-                new MessageFactories.MapperHistory(serverUrl, null);
+                new MessageFactories.MapperHistory(serverUrl);
         MessageFactories.Mapper<MessageImpl> currentChatMessageMapper =
-                new MessageFactories.MapperCurrentChat(serverUrl, null);
+                new MessageFactories.MapperCurrentChat(serverUrl);
 
         SessionDestroyerImpl sessionDestroyer = new SessionDestroyerImpl(context, preferences);
         AccessCheckerImpl accessChecker =
@@ -284,8 +282,10 @@ public class WebimSessionImpl implements WebimSession {
                 .setSessionCallback(sessionCallback)
                 .build();
 
-        historyMessageMapper.setClient(client);
-        currentChatMessageMapper.setClient(client);
+        FileUrlCreator fileUrlCreator = new FileUrlCreator(client, serverUrl);
+
+        historyMessageMapper.setUrlCreator(fileUrlCreator);
+        currentChatMessageMapper.setUrlCreator(fileUrlCreator);
 
         WebimActions actions = client.getActions();
 
@@ -303,7 +303,7 @@ public class WebimSessionImpl implements WebimSession {
                     dbName,
                     serverUrl,
                     historyMeta.isHistoryEnded(),
-                    client,
+                    fileUrlCreator,
                     preferences.getLong(PREFS_KEY_READ_BEFORE_TIMESTAMP, -1));
             if (preferences.getInt(PREFS_KEY_HISTORY_MAJOR_VERSION, -1)
                     != historyStorage.getMajorVersion()) {
@@ -329,7 +329,7 @@ public class WebimSessionImpl implements WebimSession {
         MessageStreamImpl stream = new MessageStreamImpl(
                 serverUrl,
                 currentChatMessageMapper,
-                new MessageFactories.SendingFactory(serverUrl),
+                new MessageFactories.SendingFactory(serverUrl, fileUrlCreator),
                 new MessageFactories.OperatorFactory(serverUrl),
                 new SurveyFactory(),
                 accessChecker,
@@ -371,8 +371,14 @@ public class WebimSessionImpl implements WebimSession {
             });
         }
 
-        WebimSessionImpl session = new WebimSessionImpl(accessChecker,
-                sessionDestroyer, client, hPoller, stream, locationStatusPoller);
+        WebimSessionImpl session = new WebimSessionImpl(
+            accessChecker,
+            sessionDestroyer,
+            client,
+            hPoller,
+            stream,
+            locationStatusPoller
+        );
 
         deltaCallback.setStream(stream, messageHolder, session, hPoller);
 

@@ -26,7 +26,7 @@ public final class MessageFactories {
     private static MessageImpl fromWMMessage(@NonNull String serverUrl,
                                              boolean isHistoryMessage,
                                              @NonNull MessageItem message,
-                                             @NonNull WebimClient client) {
+                                             @NonNull FileUrlCreator fileUrlCreator) {
         MessageItem.WMMessageKind kind = message.getType();
 
         if ((((kind == null)
@@ -40,7 +40,7 @@ public final class MessageFactories {
 
         if ((kind == MessageItem.WMMessageKind.FILE_FROM_VISITOR)
                 || (kind == MessageItem.WMMessageKind.FILE_FROM_OPERATOR)) {
-            attachment = InternalUtils.getAttachment(serverUrl, message, client);
+            attachment = InternalUtils.getAttachment(message, fileUrlCreator);
             if (attachment != null ) {
                 text = attachment.getFileInfo().getFileName();
             } else {
@@ -50,7 +50,7 @@ public final class MessageFactories {
             text = (message.getMessage() == null) ? "" : message.getMessage();
         }
 
-        Message.Quote quote = InternalUtils.getQuote(serverUrl, message.getQuote(), client);
+        Message.Quote quote = InternalUtils.getQuote(message.getQuote(), fileUrlCreator);
 
         Object json;
         if (kind == MessageItem.WMMessageKind.FILE_FROM_VISITOR || kind == MessageItem.WMMessageKind.FILE_FROM_OPERATOR) {
@@ -119,17 +119,16 @@ public final class MessageFactories {
         @NonNull
         List<T> mapAll(@NonNull List<MessageItem> list);
 
-        void setClient(@NonNull WebimClient client);
+        void setUrlCreator(@NonNull FileUrlCreator fileUrlCreator);
     }
 
     public static abstract class AbstractMapper<T extends MessageImpl> implements Mapper<T> {
         @NonNull
         protected final String serverUrl;
-        protected WebimClient client;
+        protected FileUrlCreator fileUrlCreator;
 
-        protected AbstractMapper(@NonNull String serverUrl, @Nullable WebimClient client) {
+        public AbstractMapper(@NonNull String serverUrl) {
             this.serverUrl = serverUrl;
-            this.client = client;
         }
 
         @NonNull
@@ -148,45 +147,47 @@ public final class MessageFactories {
 
     public static class MapperHistory extends AbstractMapper<MessageImpl> {
 
-        protected MapperHistory(@NonNull String serverUrl, @Nullable WebimClient client) {
-            super(serverUrl, client);
+        public MapperHistory(@NonNull String serverUrl) {
+            super(serverUrl);
         }
 
         @Nullable
         @Override
         public MessageImpl map(MessageItem msg) {
-            return fromWMMessage(serverUrl, true, msg, client);
+            return fromWMMessage(serverUrl, true, msg, fileUrlCreator);
         }
 
         @Override
-        public void setClient(@NonNull WebimClient client) {
-            this.client = client;
+        public void setUrlCreator(@NonNull FileUrlCreator fileUrlCreator) {
+            this.fileUrlCreator = fileUrlCreator;
         }
     }
 
     public static class MapperCurrentChat extends AbstractMapper<MessageImpl> {
 
-        protected MapperCurrentChat(@NonNull String serverUrl, @Nullable WebimClient client) {
-            super(serverUrl, client);
+        protected MapperCurrentChat(@NonNull String serverUrl) {
+            super(serverUrl);
         }
 
         @Nullable
         @Override
         public MessageImpl map(MessageItem msg) {
-            return fromWMMessage(serverUrl, false, msg, client);
+            return fromWMMessage(serverUrl, false, msg, fileUrlCreator);
         }
 
         @Override
-        public void setClient(@NonNull WebimClient client) {
-            this.client = client;
+        public void setUrlCreator(@NonNull FileUrlCreator fileUrlCreator) {
+            this.fileUrlCreator = fileUrlCreator;
         }
     }
 
     public static class SendingFactory {
         private final String serverUrl;
+        private final FileUrlCreator fileUrlCreator;
 
-        public SendingFactory(String serverUrl) {
+        public SendingFactory(String serverUrl, FileUrlCreator fileUrlCreator) {
             this.serverUrl = serverUrl;
+            this.fileUrlCreator = fileUrlCreator;
         }
 
         public MessageSending createText(Message.Id id, String text) {
@@ -263,7 +264,10 @@ public final class MessageFactories {
                         uploadedFile.getFileName(),
                         null,
                         uploadedFile.getSize(),
-                        null);
+                        null,
+                        uploadedFile.getGuid(),
+                        fileUrlCreator
+                );
                 filesInfo.add(fileInfo);
             }
             MessageImpl.AttachmentImpl attachment = new  MessageImpl.AttachmentImpl(

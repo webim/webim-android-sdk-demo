@@ -554,11 +554,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                     : String.format(Locale.getDefault(), "%.0f EiB", (bytes >> 20) / 0x1p40);
         }
 
-        private void addImageInView(FileInfo attachment,
+        private void addImageInView(FileInfo fileInfo,
                                     ImageView imageView,
                                     TextView textView) {
-            String imageUrl = attachment.getImageInfo().getThumbUrl();
-            final Uri fileUrl = Uri.parse(attachment.getUrl());
+            String imageUrl = fileInfo.getImageInfo().getThumbUrl();
             Glide.with(webimChatFragment.getContext())
                     .load(imageUrl)
                     .diskCacheStrategy(DiskCacheStrategy.SOURCE)
@@ -566,7 +565,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
             imageView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    openImageActivity(view, fileUrl);
+                    openImageActivity(view, Uri.parse(fileInfo.getUrl()));
                 }
             });
             imageView.setOnLongClickListener(new View.OnLongClickListener() {

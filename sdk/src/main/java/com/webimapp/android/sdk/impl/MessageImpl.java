@@ -347,18 +347,24 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
         private final @Nullable ImageInfo imageInfo;
         private final long size;
         private final @Nullable String url;
+        private final @Nullable String guid;
+        private final @NonNull FileUrlCreator fileUrlCreator;
 
         public FileInfoImpl(@Nullable String contentType,
                             @NonNull String filename,
                             @Nullable ImageInfo imageInfo,
                             long size,
-                            @Nullable String url) {
+                            @Nullable String url,
+                            @Nullable String guid,
+                            @NonNull FileUrlCreator fileUrlCreator) {
 
             this.contentType = contentType;
             this.filename = filename;
             this.imageInfo = imageInfo;
             this.size = size;
             this.url = url;
+            this.guid = guid;
+            this.fileUrlCreator = fileUrlCreator;
         }
 
         @Nullable
@@ -385,8 +391,19 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
         }
 
         @Nullable
+        String getGuid() {
+            return guid;
+        }
+
+        @Nullable
         @Override
         public String getUrl() {
+            if (guid != null) {
+                String currentUrl = fileUrlCreator.createFileUrl(filename, guid, false);
+                if (currentUrl != null) {
+                    return currentUrl;
+                }
+            }
             return url;
         }
     }
@@ -395,17 +412,35 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
         private final @NonNull String thumbUrl;
         private final int width;
         private final int height;
+        private final @NonNull String guid;
+        private final @NonNull String filename;
+        private final @NonNull FileUrlCreator fileUrlCreator;
 
-        public ImageInfoImpl(@NonNull String thumbUrl, int width, int height) {
+        public ImageInfoImpl(
+            @NonNull String thumbUrl,
+            int width,
+            int height,
+            @NonNull String filename,
+            @NonNull String guid,
+            @NonNull FileUrlCreator fileUrlCreator) {
             thumbUrl.getClass(); // NPE
             this.thumbUrl = thumbUrl;
             this.width = width;
             this.height = height;
+            this.filename = filename;
+            this.guid = guid;
+            this.fileUrlCreator = fileUrlCreator;
         }
 
         @NonNull
         @Override
         public String getThumbUrl() {
+            if (guid != null) {
+                String currentUrl = fileUrlCreator.createFileUrl(filename, guid, true);
+                if (currentUrl != null) {
+                    return currentUrl;
+                }
+            }
             return thumbUrl;
         }
 
