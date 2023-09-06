@@ -87,7 +87,7 @@
     <string name="message_deleted_toast">Message was deleted</string>
 
     <string name="empty_reply_text"> </string>
-    <string name="reply_message_with_image">"Image "</string>
+    <string name="reply_message_with_image">Image </string>
     <string name="default_text">Text example</string>
     <string name="default_time">10:12</string>
     <string name="channel_id">com.webimapp.android.demo.client.fcm</string>
