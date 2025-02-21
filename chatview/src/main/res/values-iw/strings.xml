@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="message">הודעה…</string>
+    <string name="cancel">בטל</string>
+    <string name="yes">כן</string>
+    <string name="alert_close_chat">לסגור את הצ\'אט?</string>
+    <string name="choose_department">בחר מחלקה</string>
+    <string name="empty_chat_text">הזן הודעה כדי להתחיל צ\'אט עם מפעיל</string>
+    <string name="content_desc_send_message">שלח הודעה</string>
+
+    <string name="rate_operator_button">שלח</string>
+    <string name="rate_operator_title">מפעיל תעריף</string>
+    <string name="rate_operator_rating_sent">הדירוג נשלח</string>
+    <string name="rate_operator_rating_empty">לא סופק דירוג</string>
+
+    <string name="file_chooser_title">בחר קובץ להעלאה</string>
+    <string name="file_chooser_not_found">כדי להוריד קובץ, התקן מנהל קבצים</string>
+    <string name="file_selection_failed">בחירת הקובץ נכשלה</string>
+    <string name="file_upload_failed_size">העלאת הקובץ נכשלה: חרג מגודל הקובץ המרבי</string>
+    <string name="file_upload_failed_type">העלאת הקובץ נכשלה: סוג הקובץ אינו מותר על ידי השרת</string>
+    <string name="file_upload_connection_timeout">חרגת הזמן הקצוב להעלאת קבצים</string>
+    <string name="file_upload_failed_name">העלאת הקובץ נכשלה: שגיאה בשם הקובץ</string>
+    <string name="file_upload_failed_unknown">העלאת הקובץ נכשלה: שגיאה לא ידועה</string>
+    <string name="file_upload_failed_unauthorized">העלאת הקובץ נכשלה: המבקר אינו מורשה</string>
+    <string name="file_upload_failed_empty">העלאת הקובץ נכשלה: קובץ ריק</string>
+    <string name="file_detected_malicious">אירעה שגיאה במהלך העברת הקובץ</string>
+    <string name="file_upload_message_text">מעלה קובץ…</string>
+    <string name="file_send">קובץ שנשלח:\n</string>
+
+    <string name="error_user_banned_header">אתה חסום על ידי המפעיל</string>
+    <string name="error_user_banned_desc">אינך יכול להשתמש בצ\'אט כי נאסרת על ידי המפעיל</string>
+    <string name="error_account_blocked_header">חשבון Webim חסום</string>
+    <string name="error_account_blocked_desc">אינך יכול להשתמש בצ\'אט מכיוון שחשבון ה-webim של הארגון שאליו אתה מנסה ליצור קשר חסום. אנא נסה שוב מאוחר יותר.</string>
+    <string name="error_unknown_header">שגיאה לא ידועה</string>
+    <string name="error_unknown_desc">אינך יכול להשתמש בצ\'אט מכיוון שהתרחשה שגיאה לא ידועה. המפתחים שלנו כבר קיבלו הודעה על בעיה זו ויתקנו אותה בהקדם האפשרי. פרטים: %s</string>
+    <string name="validation_error">שגיאה</string>
+
+    <string name="typing">כותב…</string>
+
+    <string name="options">אפשרויות</string>
+    <string name="save_image">לשמור תמונה?</string>
+    <string name="saving_file">הורדת הקובץ %1$s החלה</string>
+    <string name="sending_file">שולח קובץ:</string>
+    <string name="file_transfer_by_operator">העברת קבצים</string>
+    <string name="def_image_name">image_%1$d.jpg</string>
+    <string name="saved_file">קובץ %1$s נשמר</string>
+    <string name="saving_failed">שליחת הקובץ נכשלה</string>
+
+    <string name="send_file">שלח קובץ</string>
+    <string name="rate_operator">מפעיל תעריף</string>
+    <string name="close_chat">סגור צ\'אט</string>
+
+    <string name="no_operator">ללא אופרטור</string>
+    <string name="operator_typing">כותב</string>
+    <string name="operator_name">%1$s</string>
+    <string name="reply">השב</string>
+    <string name="copy">העתק</string>
+    <string name="edit_item">ערוך</string>
+    <string name="delete">מחק</string>
+    <string name="download">הורד קובץ</string>
+    <string name="failed_send_empty_message">לא ניתן לשלוח הודעה ריקה</string>
+    <string name="wait_sync_toast">ממתין לסנכרון עם השרת</string>
+    <string name="no_internet_toast">אין חיבור לאינטרנט</string>
+    <string name="weak_internet_toast">חיבור אינטרנט חלש</string>
+    <string name="operation_denied_toast">הפעולה נדחתה</string>
+
+    <string name="copied_message">טקסט ההודעה הועתק</string>
+    <string name="copy_failed">העתקת ההודעה נכשלה</string>
+    <string name="quote_is_pending">הצעת המחיר בטעינה</string>
+    <string name="quote_is_not_found">הצעת מחיר לא זמינה</string>
+    <string name="message_edited">ערוך</string>
+    <string name="message_deleted_toast">ההודעה נמחקה</string>
+
+    <string name="empty_reply_text"> </string>
+    <string name="reply_message_with_image">"תמונה"</string>
+    <string name="default_text">דוגמה לטקסט</string>
+    <string name="default_time">10:12</string>
+    <string name="default_date">12 בנובמבר</string>
+    <string name="channel_id">com.webimapp.android.demo.client.fcm</string>
+    <string name="channel_name">הודעת Webim</string>
+    <string name="visitor_sender_name">אתה</string>
+    <string name="editing_title">עריכה</string>
+
+    <string name="survey_finish_message">תודה על ההשתתפות בסקר!</string>
+    <string name="survey_rate_title">אופרטור תעריף</string>
+    <string name="survey_send_answer">שלח</string>
+    <string name="survey_edit_text_hint">הזן טקסט תגובה</string>
+    <string name="reply_thumbnail" translatable="false">תמונה מצוטטת</string>
+    <string name="dialog_ok">בסדר</string>
+    <string name="dialog_cancel">בטל</string>
+
+    <string name="settings_account_field_hint">הזן את כתובת האתר המלאה של השרת או את שם החשבון המתארח בשרת *.webim.ru\nלדוגמה, עבור שרת demo.webim.ru עליך להזין הדגמה</string>
+
+    <string name="cannot_open_file">לא הצליח למצוא יישומים לפתיחת הקובץ</string>
+    <string name="content_desc_scroll_chat">גלול צ\'אט</string>
+    <string name="share_file_title">שתף קובץ</string>
+    <string name="chat_is_empty">עדיין אין הודעות</string>
+    <string name="error_user_hash_invalid_desc">אינך יכול להשתמש בצ\'אט כי הועברו שדות מותאמים אישית שגויים או שה-hash חושב שגוי</string>
+    <string name="error_user_hash_invalid_header">Hash מחושב שגוי</string>
+</resources>

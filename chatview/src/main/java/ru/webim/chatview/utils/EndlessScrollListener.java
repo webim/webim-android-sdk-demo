@@ -14,6 +14,7 @@ public abstract class EndlessScrollListener extends RecyclerView.OnScrollListene
     private boolean loading = false;
     private FloatingActionButton downButton = null;
     private RecyclerView.Adapter<?> adapter = null;
+    private boolean chatWasScrolledToEnd = true;
 
     public EndlessScrollListener() {
         this(DEFAULT_THRESHOLD);
@@ -28,6 +29,14 @@ public abstract class EndlessScrollListener extends RecyclerView.OnScrollListene
         if (adapter == null || dy == 0) return;
         LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
         if (layoutManager == null) return;
+
+        int firstVisiblePosition = layoutManager.findFirstVisibleItemPosition();
+        if (firstVisiblePosition == 0 && !chatWasScrolledToEnd) {
+            chatWasScrolledToEnd = true;
+            onChatWasScrolledToEnd();
+        } else {
+            chatWasScrolledToEnd = false;
+        }
 
         if (downButton != null) {
             if (layoutManager.findFirstVisibleItemPosition() >= visibleThreshold) {
@@ -58,4 +67,6 @@ public abstract class EndlessScrollListener extends RecyclerView.OnScrollListene
     }
 
     public abstract void onLoadMore(int totalItemsCount);
+
+    public abstract void onChatWasScrolledToEnd();
 }

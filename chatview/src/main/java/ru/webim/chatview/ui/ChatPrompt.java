@@ -21,6 +21,7 @@ import android.view.animation.LinearInterpolator;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatTextView;
+import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,7 +61,7 @@ public class ChatPrompt extends AppCompatTextView implements MessageTracker.Mess
 
         connectionListener = new ConnectionListener();
         IntentFilter intentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-        getContext().registerReceiver(connectionListener, intentFilter);
+        ContextCompat.registerReceiver(getContext(), connectionListener, intentFilter, ContextCompat.RECEIVER_NOT_EXPORTED);
     }
 
     @Override

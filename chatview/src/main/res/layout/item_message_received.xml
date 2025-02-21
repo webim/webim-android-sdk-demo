@@ -186,6 +186,7 @@
                 android:id="@+id/sender_name"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:maxLines="1"
                 android:text="@string/default_text"
                 android:textColor="?attr/chv_received_sender_name"
                 android:textSize="@dimen/text_size_small" />

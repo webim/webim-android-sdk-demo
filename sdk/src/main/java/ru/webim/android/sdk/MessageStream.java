@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.List;
 
 import ru.webim.android.sdk.impl.MessageReaction;
+import ru.webim.android.sdk.impl.items.AccountConfigItem;
 import ru.webim.android.sdk.impl.items.LocationSettingsItem;
 import ru.webim.android.sdk.impl.items.SuggestionItem;
 
@@ -45,6 +46,12 @@ public interface MessageStream {
      */
     @NonNull
     LocationSettings getLocationSettings();
+
+    /**
+     * @return current AccountConfigItem of the MessageStream.
+     */
+    @Nullable
+    AccountConfigItem getAccountConfig();
 
     /**
      * @return previous rating of the operator or 0 if the operator was not rated before
@@ -354,6 +361,19 @@ public interface MessageStream {
      */
     @NonNull
     Message.Id sendMessage(@NonNull String message, boolean isHintQuestion);
+
+    /**
+     * Resend a text message, that has sending status SENDING or FAILED. Note that the new
+     * message will be created.
+     * When calling this method, if there is an active {@link MessageTracker} (see
+     * @param message object with send status SENDING or FAILED
+     * @return new id of the message
+     * @throws IllegalStateException if the WebimSession was destroyed
+     * @throws RuntimeException if the method was called not from the thread the WebimSession was
+     * created in
+     */
+    @NonNull
+    Message.Id resendMessage(@NonNull Message message, @Nullable ResendMessageCallback callback);
 
     /**
      * Sends a message with file description.
@@ -772,8 +792,26 @@ public interface MessageStream {
      * @throws RuntimeException if the method was called not from the thread the WebimSession was
      * created in
      */
-    void sendDialogToEmailAddress(@NonNull String email,
-                                  @NonNull SendDialogToEmailAddressCallback sendDialogToEmailAddressCallback);
+    void sendDialogToEmailAddress(
+        @NonNull String email,
+        @NonNull SendDialogToEmailAddressCallback sendDialogToEmailAddressCallback
+    );
+
+    /**
+     * Adds listener for rating operator action
+     * @param listener listener that is called when the conditions for displaying the rating bar are met
+     */
+    void addRateOperatorListener(@NonNull RateOperatorListener listener);
+
+    /**
+     * @see MessageStream#addRateOperatorListener(RateOperatorListener)
+     */
+    interface RateOperatorListener {
+        /**
+         * Called when it when needed to show rating operator bar
+         */
+        void onRateOperator();
+    }
 
     /**
      * Sets listener for greeting message
@@ -1319,6 +1357,10 @@ public interface MessageStream {
              */
             MAX_FILES_COUNT_PER_CHAT_EXCEEDED,
             /**
+             * Sent file was detected as malicious
+             */
+            MALICIOUS_FILE_DETECTED,
+            /**
              * The message has exceeded the maximum number of files.
              */
             MAX_FILES_COUNT_PER_MESSAGE,
@@ -1401,6 +1443,18 @@ public interface MessageStream {
         }
     }
 
+    interface ResendMessageCallback {
+        /**
+         * Called if message was resent successfully.
+         */
+        void onSuccess();
+
+        /**
+         * Called if message resend request failed.
+         */
+        void onFailure();
+    }
+
     /**
      * @see MessageStream#rateOperator(Operator.Id, int, RateOperatorCallback)
      */
@@ -1433,7 +1487,11 @@ public interface MessageStream {
             /**
              * Note length is more than 2000 characters.
              */
-            NOTE_IS_TOO_LONG
+            NOTE_IS_TOO_LONG,
+            /**
+             * When operator rating is disable on server side. See your account config.
+             */
+            OPERATOR_RATING_DISABLE_ON_SERVER
         }
     }
 

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="first_screen_text1">ברוכים הבאים לאפליקציית ההדגמה עבור. nWebim SDK App!</string>
+    <string name="first_screen_text2">הקש על הלחצן למטה כדי להתחיל בצ\'אט.</string>
+    <string name="first_screen_text3">היכנס כסוכן כדי לענות לצ\'אט זה בכתובת: https://demo.webim.ru</string>
+    <string name="first_screen_text4">כניסה: o@webim.ru</string>
+    <string name="first_screen_text5">סיסמה: password</string>
+    <string name="first_screen_text6">קוד המקור של אפליקציה זו ניתן למצוא ב:</string>
+    <string name="first_screen_text7">https://github.com/webim/webim-android-sdk-demo</string>
+
+    <string name="image_logo_content_description">לוגו</string>
+    <string name="button_text_start_chat">התחל צ\'אט</string>
+    <string name="button_text_settings">הגדרות</string>
+    <string name="action_close_chat">סגור צ\'אט</string>
+    <string name="cancel">בטל</string>
+    <string name="yes">כן</string>
+    <string name="alert_close_chat">לסגור את הצ\'אט?</string>
+    <string name="choose_department">בחר מחלקה</string>
+    <string name="empty_chat_text">הזן את ההודעה כדי להתחיל בצ\'אט עם הסוכן</string>
+    <string name="error_user_banned_header">אתה חסום על ידי הסוכן</string>
+    <string name="error_user_banned_desc">אינך יכול להשתמש בצ\'אט, מכיוון שהם נאסרו על ידי הסוכן</string>
+    <string name="error_account_blocked_header">חשבון Webim חסום</string>
+    <string name="error_account_blocked_desc">אינך יכול להשתמש בצ\'אט מכיוון שחשבון ה-webim של הארגון שאליו אתה מנסה ליצור קשר חסום. אנא נסה שוב מאוחר יותר.</string>
+    <string name="error_unknown_header">שגיאה לא ידועה</string>
+    <string name="error_unknown_desc">אינך יכול להשתמש בצ\'אט מכיוון שאירעה שגיאה לא ידועה. המפתחים שלנו כבר קיבלו הודעה על בעיה זו ויפתרו אותה בקרוב. פרטים %s</string>
+    <string name="validation_error">שגיאה</string>
+
+    <string name="push_contact_information">הסוכן ביקש פרטים ליצירת קשר.</string>
+    <string name="push_operator_accepted">הסוכן %1$s הצטרף לדיאלוג.</string>
+    <string name="push_operator_file">%1$s שלח קובץ %2$s</string>
+    <string name="push_operator_message">%1$s: %2$s</string>
+    <string name="push_rate_operator">מפעיל תעריף</string>
+
+    <string name="prefs_notifications_summary">אפשר הודעות דחיפה של FCM עבור הודעות חדשות מהסוכן</string>
+    <string name="prefs_notifications_title">הודעות</string>
+    <string name="prefs_file_logger_title">לבודקים</string>
+    <string name="prefs_file_logger_summary">כתוב יומנים בקובץ</string>
+    <string name="prefs_account_title">שם החשבון</string>
+    <string name="prefs_account_summary">שם חשבון Webim או כתובת שרת מלאה (לדוגמה, \"demo\" или \"https://demo.webim.ru\")</string>
+    <string name="prefs_location_summary">המיקום שיקבל את הערעור (לדוגמה, \"נייד\")</string>
+    <string name="prefs_location_title">מיקום</string>
+    <string name="prefs_privacy">פרטיות</string>
+    <string name="prefs_version">גרסת האפליקציה: %1$s\nגרסת SDK: %2$s</string>
+
+    <string name="options">אפשרויות</string>
+    <string name="save_image">לשמור תמונה?</string>
+    <string name="reset_visitor_title">עדכן את פרטי המשתמש</string>
+    <string name="reset_visitor_toast">נתוני המשתמש נוקו</string>
+    <string name="sending_file">"שולח קובץ: "</string>
+    <string name="def_image_name">image_%1$d.jpg</string>
+    <string name="saved_file">קובץ %1$s נשמר</string>
+    <string name="saving_failed">העלאת הקובץ נכשלה</string>
+
+    <string name="no_operator">ללא סוכן</string>
+    <string name="operator_typing">הקלדה</string>
+    <string name="operator_name">%1$s</string>
+
+    <string name="survey_finish_message">תודה על ההשתתפות בסקר!</string>
+    <string name="survey_rate_title">אופרטור תעריף</string>
+    <string name="survey_send_answer">שלח</string>
+    <string name="survey_edit_text_hint">הקלד טקסט הערה</string>
+    <string name="dialog_ok">בסדר</string>
+    <string name="dialog_cancel">בטל</string>
+
+    <string name="settings_account_field_hint">הזן את כתובת האתר המלאה של השרת או את שם החשבון, המתארח בשרת *.webim.ru\nלדוגמה, עבור השרת demo.webim.ru עליך להקליד \"demo\"</string >
+    <string name="file_upload_connection_timeout">חרגת הזמן הקצוב להעלאת קבצים</string>
+    <string name="cannot_open_file">לא ניתן למצוא אפליקציה לפתיחת הקובץ</string>
+</resources>

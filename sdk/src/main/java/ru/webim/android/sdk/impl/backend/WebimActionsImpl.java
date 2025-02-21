@@ -28,7 +28,7 @@ import ru.webim.android.sdk.impl.items.responses.HistoryBeforeResponse;
 import ru.webim.android.sdk.impl.items.responses.HistorySinceResponse;
 import ru.webim.android.sdk.impl.items.responses.LocationStatusResponse;
 import ru.webim.android.sdk.impl.items.responses.SearchResponse;
-import ru.webim.android.sdk.impl.items.responses.ServerSettingsResponse;
+import ru.webim.android.sdk.impl.items.responses.ServerConfigsResponse;
 import ru.webim.android.sdk.impl.items.responses.UploadResponse;
 
 public class WebimActionsImpl implements WebimActions {
@@ -371,15 +371,15 @@ public class WebimActionsImpl implements WebimActions {
     }
 
     @Override
-    public void getAccountConfig(@NonNull String location, @NonNull DefaultCallback<ServerSettingsResponse> callback) {
-        enqueueRequestLoop(new ActionRequestLoop.WebimRequest<ServerSettingsResponse>(true) {
+    public void getAccountConfig(@NonNull String location, @NonNull DefaultCallback<ServerConfigsResponse> callback) {
+        enqueueRequestLoop(new ActionRequestLoop.WebimRequest<ServerConfigsResponse>(true) {
             @Override
-            public Call<ServerSettingsResponse> makeRequest(AuthData authData) {
+            public Call<ServerConfigsResponse> makeRequest(AuthData authData) {
                 return webim.getAccountConfig(location);
             }
 
             @Override
-            public void runCallback(ServerSettingsResponse response) {
+            public void runCallback(ServerConfigsResponse response) {
                 callback.onSuccess(response);
             }
         });

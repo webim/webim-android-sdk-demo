@@ -9,13 +9,13 @@ import ru.webim.android.sdk.impl.items.delta.DeltaItem;
 
 final public class DeltaResponse extends ErrorResponse {
     @SerializedName("revision")
-    private Long revision;
+    private String revision;
     @SerializedName("fullUpdate")
     private DeltaFullUpdate fullUpdate;
     @SerializedName("deltaList")
     private List<DeltaItem<?>> deltaList;
 
-    public Long getRevision() {
+    public String getRevision() {
         return revision;
     }
 

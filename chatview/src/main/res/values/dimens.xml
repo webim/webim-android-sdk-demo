@@ -17,7 +17,8 @@
     <dimen name="badge_padding">9dp</dimen>
 
     <!-- Dimension for alert dialog -->
-    <dimen name="alert_dialog_marginLeft">16dp</dimen>
+    <dimen name="alert_dialog_marginLeft">6dp</dimen>
+    <dimen name="alert_dialog_list_marginLeft">10dp</dimen>
     <dimen name="alert_dialog_relative_marginTop">8dp</dimen>
     <dimen name="alert_dialog_relative_marginEnd">35dp</dimen>
     <dimen name="alert_dialog_relative_marginBottom">8dp</dimen>

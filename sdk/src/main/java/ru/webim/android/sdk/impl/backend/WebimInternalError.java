@@ -11,6 +11,8 @@ public class WebimInternalError {
 	public static final String FILE_SIZE_EXCEEDED = "max_file_size_exceeded";
 	public static final String FILE_SIZE_TOO_SMALL = "file_size_too_small";
 	public static final String FILE_TYPE_NOT_ALLOWED = "not_allowed_file_type";
+	public static final String MALICIOUS_FILE_DETECTED = "malicious_file_detected";
+
 	public static final String NOT_ALLOWED_MIME_TYPE = "not_allowed_mime_type";
 	public static final String NO_PREVIOUS_CHATS = "no_previous_chats";
 	public static final String NO_STICKER_ID = "no-sticker-id";

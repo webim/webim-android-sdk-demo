@@ -31,6 +31,8 @@ public interface HistoryStorage {
                    int limit,
                    @NonNull MessageTracker.GetMessagesCallback callback);
 
+    void getSending(@NonNull MessageTracker.GetMessagesCallback callback);
+
     void clearHistory();
 
     ReadBeforeTimestampListener getReadBeforeTimestampListener();

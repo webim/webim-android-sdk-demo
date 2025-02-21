@@ -76,7 +76,7 @@ public class ChatEditBar extends LinearLayout {
         @Override
         public void provideFileUri(Uri data) {
             if (data != null) {
-                fileHelper.sendFileWithDescriptor(data);
+                fileHelper.sendFileWithNewTemp(data);
             }
         }
     };
@@ -256,7 +256,10 @@ public class ChatEditBar extends LinearLayout {
         Animation animationRotateShow = AnimationUtils.loadAnimation(getContext(), R.anim.rotate_show);
         Animation animationRotateHide = AnimationUtils.loadAnimation(getContext(), R.anim.rotate_hide);
         chatMenuDialog.setOnShowListener(dialog -> {
-            chatMenuDialog.enableItem(R.id.relLay_rate_operator, stream.getCurrentOperator() != null);
+            chatMenuDialog.enableItem(
+                R.id.relLay_rate_operator,
+                stream.getCurrentOperator() != null && stream.getAccountConfig() != null && stream.getAccountConfig().isRateOperator()
+            );
             chatMenuButton.startAnimation(animationRotateShow);
         });
         chatMenuDialog.setOnDismissListener(dialog -> chatMenuButton.startAnimation(animationRotateHide));
@@ -280,9 +283,13 @@ public class ChatEditBar extends LinearLayout {
         if (operator != null) {
             final Operator.Id operatorId = operator.getId();
             int rating = stream.getLastOperatorRating(operatorId);
-            ratingBar.setOnRatingBarChangeListener((ratingBar, rating1, fromUser) -> ratingButton.setEnabled(rating1 != 0));
             ratingBar.setRating(rating);
-            ratingButton.setEnabled(rating != 0);
+            boolean isRatingAllowed = stream.getAccountConfig() != null && stream.getAccountConfig().isRateOperator();
+            ratingBar.setOnRatingBarChangeListener((ratingBar, rating1, fromUser) -> {
+                if (isRatingAllowed) ratingButton.setEnabled(rating1 != 0);
+            });
+
+            ratingButton.setEnabled(rating != 0 && isRatingAllowed);
             ratingButton.setOnClickListener(v -> {
                 if (ratingBar.getRating() != 0) {
                     ratingDialog.dismiss();
@@ -413,12 +420,6 @@ public class ChatEditBar extends LinearLayout {
 
         stream.setChatStateListener((oldState, newState) -> {
             switch (newState) {
-                case CLOSED_BY_OPERATOR:
-                case CLOSED_BY_VISITOR:
-                    if (shouldRateOperator()) {
-                        showRatingDialog();
-                    }
-                    break;
                 case NONE:
                     if (ratingDialog.isShowing()) {
                         ratingDialog.dismiss();
@@ -430,11 +431,7 @@ public class ChatEditBar extends LinearLayout {
                 chatMenuDialog.enableItem(R.id.relLay_rate_operator, stream.getCurrentOperator() != null);
             }
         });
-    }
-
-    private boolean shouldRateOperator() {
-        Operator operator = stream.getCurrentOperator();
-        return operator != null && stream.getLastOperatorRating(operator.getId()) == 0;
+        stream.addRateOperatorListener(this::showRatingDialog);
     }
 
     public MessageStream getStream() {

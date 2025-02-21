@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="first_screen_text1">Ласкаво просимо до демонстраційної програми для. Webim SDK App!</string>
+    <string name="first_screen_text2">Натисніть кнопку нижче перед початком чату.</string>
+    <string name="first_screen_text3">Зателефонуйте як агент до повідомлення цього чату: https://demo.webim.ru</string>
+    <string name="first_screen_text4">Логін: o@webim.ru</string>
+    <string name="first_screen_text5">Пароль: пароль</string>
+    <string name="first_screen_text6">Вихідний код цієї програми можна знайти за адресою:</string>
+    <string name="first_screen_text7">https://github.com/webim/webim-android-sdk-demo</string>
+
+    <string name="image_logo_content_description">Логотип</string>
+    <string name="button_text_start_chat">Почати чат</string>
+    <string name="button_text_settings">Налаштування</string>
+    <string name="action_close_chat">Закрити чат</string>
+    <string name="cancel">Скасувати</string>
+    <string name="yes">Так</string>
+    <string name="alert_close_chat">Закрити чат?</string>
+    <string name="choose_department">Виберіть відділ</string>
+    <string name="empty_chat_text">Введіть повідомлення, щоб почати спілкуватися з агентом</string>
+    <string name="error_user_banned_header">Вас забанив агент</string>
+    <string name="error_user_banned_desc">Ви не можете використовувати чат, тому що вони були забанені агентом</string>
+    <string name="error_account_blocked_header">Обліковий запис Webim заблоковано</string>
+    <string name="error_account_blocked_desc">Ви не можете використовувати те, що веб-аккауном організації є, щоб зберегти контакт, який блокується. Спробуйте пізніше.</string>
+    <string name="error_unknown_header">Невідома помилка</string>
+    <string name="error_unknown_desc">Ви не можете використовувати розмову, тому що невідома помилка виявлена. Деталі %s</string>
+    <string name="validation_error">Помилка</string>
+
+    <string name="push_contact_information">агент має контактні дані запиту.</string>
+    <string name="push_operator_accepted">агент %1$s має приєднатися до діалогу.</string>
+    <string name="push_operator_file">%1$s надіслав файл %2$s</string>
+    <string name="push_operator_message">%1$s: %2$s</string>
+    <string name="push_rate_operator">Оператор ставок</string>
+
+    <string name="prefs_notifications_summary">Увімкнути push-сповіщення FCM для нових повідомлень від агента</string>
+    <string name="prefs_notifications_title">Сповіщення</string>
+    <string name="prefs_file_logger_title">Для тестувальників</string>
+    <string name="prefs_file_logger_summary">Записати журнали у файл</string>
+    <string name="prefs_account_title">Назва облікового запису</string>
+    <string name="prefs_account_summary">Назва облікового запису Webim або повна адреса сервера (наприклад, "demo" або "https://demo.webim.ru")</string>
+    <string name="prefs_location_summary">Місцезнаходження, куди буде подано апеляцію (наприклад, «мобільний»)</string>
+    <string name="prefs_location_title">Розташування</string>
+    <string name="prefs_privacy">Конфіденційність</string>
+    <string name="prefs_version">Версія програми: %1$s\nВерсія SDK: %2$s</string>
+
+    <string name="options">Параметри</string>
+    <string name="save_image">Зберегти зображення?</string>
+    <string name="def_image_name">image_%1$d.jpg</string>
+    <string name="saved_file">Файл %1$s збережено</string>
+    <string name="saving_failed">Не вдалося завантажити файл</string>
+
+    <string name="no_operator">без агента</string>
+    <string name="operator_typing">введення</string>
+    <string name="operator_name">%1$s</string>
+
+    <string name="survey_finish_message">Затишно для такої частини в опитуванні!</string>
+    <string name="survey_rate_title">Оператор ставок</string>
+    <string name="survey_send_answer">Надіслати</string>
+    <string name="survey_edit_text_hint">Введіть текст коментаря</string>
+    <string name="dialog_ok">добре</string>
+    <string name="dialog_cancel">скасувати</string>
+
+    <string name="settings_account_field_hint">Введіть повну URL-адресу сервера або назву облікового запису, розміщеного на сервері *.webim.ru\nДля прикладу, для сервера demo.webim.ru потрібно до типу \"demo\"</string >
+    <string name="file_upload_connection_timeout">Перевищено час очікування завантаження файлу</string>
+    <string name="cannot_open_file">Не вдається знайти програму для відкриття файлу</string>
+    <string name="reset_visitor_title">Оновити дані користувача</string>
+    <string name="reset_visitor_toast">Дані користувача очищені</string>
+</resources>

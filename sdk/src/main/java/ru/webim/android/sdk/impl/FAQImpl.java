@@ -12,9 +12,11 @@ import ru.webim.android.sdk.FAQItem;
 import ru.webim.android.sdk.FAQSearchItem;
 import ru.webim.android.sdk.FAQStructure;
 import ru.webim.android.sdk.NotFatalErrorHandler;
+import ru.webim.android.sdk.Webim;
 import ru.webim.android.sdk.impl.backend.FAQClient;
 import ru.webim.android.sdk.impl.backend.FAQClientBuilder;
 import ru.webim.android.sdk.impl.backend.InternalErrorListener;
+import ru.webim.android.sdk.impl.backend.WebimInternalLog;
 import ru.webim.android.sdk.impl.items.FAQItemItem;
 
 import java.util.ArrayList;
@@ -323,7 +325,10 @@ public class FAQImpl implements FAQ {
                         "Created on: " + thread + ", current thread: " + Thread.currentThread());
             }
             if (destroyer.isDestroyed()) {
-                throw new IllegalStateException("Can't use destroyed session");
+                WebimInternalLog.getInstance().log(
+                    "WebimSession is already destroyed",
+                    Webim.SessionBuilder.WebimLogVerbosityLevel.ERROR
+                );
             }
         }
     }

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="first_screen_text1">مرحبًا بك في التطبيق التجريبي لـ. nWebim SDK App!</string>
+    <string name="first_screen_text2">اضغط على الزر أدناه لبدء الدردشة.</string>
+    <string name="first_screen_text3">قم بتسجيل الدخول كوكيل للرد على هذه الدردشة على: https://demo.webim.ru</string>
+    <string name="first_screen_text4">تسجيل الدخول: o@webim.ru</string>
+    <string name="first_screen_text5">كلمة المرور: password</string>
+    <string name="first_screen_text6">يمكن العثور على كود المصدر لهذا التطبيق على:</string>
+    <string name="first_screen_text7">https://github.com/webim/webim-android-sdk-demo</string>
+
+    <string name="image_logo_content_description">شعار</string>
+    <string name="button_text_start_chat">ابدأ الدردشة</string>
+    <string name="button_text_settings">إعدادات</string>
+    <string name="action_close_chat">إغلاق الدردشة</string>
+    <string name="cancel">يلغي</string>
+    <string name="yes">نعم</string>
+    <string name="alert_close_chat">هل تريد إغلاق الدردشة؟</string>
+    <string name="choose_department">اختر القسم</string>
+    <string name="empty_chat_text">أدخل الرسالة لبدء الدردشة مع الوكيل</string>
+    <string name="error_user_banned_header">لقد تم حظرك من قبل الوكيل</string>
+    <string name="error_user_banned_desc">لا يمكنك استخدام الدردشة، لأنه تم حظرها من قبل الوكيل</string>
+    <string name="error_account_blocked_header">تم حظر حساب Webim</string>
+    <string name="error_account_blocked_desc">لا يمكنك استخدام الدردشة لأن حساب webim الخاص بالمؤسسة التي تحاول الاتصال بها محظور. الرجاء معاودة المحاولة في وقت لاحق.</string>
+    <string name="error_unknown_header">خطأ غير معروف</string>
+    <string name="error_unknown_desc">لا يمكنك استخدام الدردشة بسبب حدوث خطأ غير معروف. لقد تم بالفعل إخطار المطورين لدينا بهذه المشكلة وسوف يقومون بإصلاحها قريبًا. التفاصيل %s</string>
+    <string name="validation_error">خطأ</string>
+
+    <string name="push_contact_information">لقد طلب الوكيل تفاصيل الاتصال.</string>
+    <string name="push_operator_accepted">لقد انضم الوكيل %1$s إلى الحوار.</string>
+    <string name="push_operator_file">أرسل %1$s ملفًا %2$s</string>
+    <string name="push_operator_message">%1$s: %2$s</string>
+    <string name="push_rate_operator">عامل المعدل</string>
+
+    <string name="prefs_notifications_summary">تمكين إشعارات FCM للرسائل الجديدة من الوكيل</string>
+    <string name="prefs_notifications_title">إشعارات</string>
+    <string name="prefs_file_logger_title">للمختبرين</string>
+    <string name="prefs_file_logger_summary">كتابة السجلات في الملف</string>
+    <string name="prefs_account_title">إسم الحساب</string>
+    <string name="prefs_account_summary">اسم حساب Webim أو عنوان الخادم الكامل (على سبيل المثال، \"demo\" أو \"https://demo.webim.ru\")</string>
+    <string name="prefs_location_summary">الموقع الذي سيتلقى طلب إعادة النظر (على سبيل المثال، \"الجوال\")</string>
+    <string name="prefs_location_title">موقع</string>
+    <string name="prefs_privacy">خصوصية</string>
+    <string name="prefs_version">إصدار التطبيق: %1$s\nإصدار SDK: %2$s</string>
+
+    <string name="options">خيارات</string>
+    <string name="save_image">احفظ الصورة؟</string>
+    <string name="def_image_name">image_%1$d.jpg</string>
+    <string name="saved_file">تم حفظ الملف %1$s</string>
+    <string name="saving_failed">فشل تحميل الملف</string>
+
+    <string name="no_operator">بدون وكيل</string>
+    <string name="operator_typing">الكتابة</string>
+    <string name="operator_name">%1$s</string>
+
+    <string name="survey_finish_message">شكرا للمشاركة في الاستطلاع!</string>
+    <string name="survey_rate_title">عامل المعدل</string>
+    <string name="survey_send_answer">يرسل</string>
+    <string name="survey_edit_text_hint">اكتب نص التعليق</string>
+    <string name="dialog_ok">نعم</string>
+    <string name="dialog_cancel">يلغي</string>
+
+    <string name="settings_account_field_hint">أدخل عنوان URL الكامل للخادم أو اسم الحساب، المستضاف على الخادم *.webim.ru\nعلى سبيل المثال، بالنسبة للخادم demo.webim.ru، يلزمك كتابة \"demo\"</string>
+    <string name="file_upload_connection_timeout">تم تجاوز مهلة تحميل الملف</string>
+    <string name="cannot_open_file">لا يمكن العثور على تطبيق لفتح الملف</string>
+    <string name="reset_visitor_title">تحديث تفاصيل المستخدم</string>
+    <string name="reset_visitor_toast">تم مسح بيانات المستخدم</string>
+</resources>

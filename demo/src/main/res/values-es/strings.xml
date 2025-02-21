@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="first_screen_text1">¡Bienvenido a la aplicación de demostración para. Webim SDK App!</string>
+    <string name="first_screen_text2">Toque el botón de abajo para comenzar a chatear.</string>
+    <string name="first_screen_text3">Inicie sesión como agente para responder este chat en: https://demo.webim.ru</string>
+    <string name="first_screen_text4">Iniciar sesión: o@webim.ru</string>
+    <string name="first_screen_text5">Contraseña: password</string>
+    <string name="first_screen_text6">El código fuente de esta aplicación se puede encontrar en:</string>
+    <string name="first_screen_text7">https://github.com/webim/webim-android-sdk-demo</string>
+
+    <string name="image_logo_content_description">Logo</string>
+    <string name="button_text_start_chat">Comenzar chat</string>
+    <string name="button_text_settings">Ajustes</string>
+    <string name="action_close_chat">Cerrar chat</string>
+    <string name="cancel">Cancelar</string>
+    <string name="yes">Sí</string>
+    <string name="alert_close_chat">¿Cerrar el chat?</string>
+    <string name="choose_department">Elige departamento</string>
+    <string name="empty_chat_text">Ingrese el mensaje para comenzar a chatear con el agente</string>
+    <string name="error_user_banned_header">Estás prohibido por el agente.</string>
+    <string name="error_user_banned_desc">No puedes usar el chat porque fueron baneados por el agente.</string>
+    <string name="error_account_blocked_header">Cuenta webim bloqueada</string>
+    <string name="error_account_blocked_desc">No puede utilizar el chat porque la cuenta webim de la organización con la que intenta contactar está bloqueada. Por favor, inténtelo de nuevo más tarde.</string>
+    <string name="error_unknown_header">Error desconocido</string>
+    <string name="error_unknown_desc">No puedes usar el chat porque ocurrió un error desconocido. Nuestros desarrolladores ya han sido notificados sobre este problema y lo solucionarán pronto. Detalles %s</string>
+    <string name="validation_error">Error</string>
+
+    <string name="push_contact_information">El agente ha solicitado datos de contacto.</string>
+    <string name="push_operator_accepted">El agente %1$s se ha unido al diálogo.</string>
+    <string name="push_operator_file">%1$s envió un archivo %2$s</string>
+    <string name="push_operator_message">%1$s: %2$s</string>
+    <string name="push_rate_operator">Operador de tarifas</string>
+
+    <string name="prefs_notifications_summary">Habilite las notificaciones push de FCM para nuevos mensajes del agente</string>
+    <string name="prefs_notifications_title">Notificaciones</string>
+    <string name="prefs_file_logger_title">Para probadores</string>
+    <string name="prefs_file_logger_summary">Escribir registros en el archivo</string>
+    <string name="prefs_account_title">Nombre de la cuenta</string>
+    <string name="prefs_account_summary">Nombre de la cuenta de Webim o dirección completa del servidor (por ejemplo, \"demo\" o \"https://demo.webim.ru\")</string>
+    <string name="prefs_location_summary">La ubicación que recibirá la apelación (por ejemplo, \"móvil\")</string>
+    <string name="prefs_location_title">Ubicación</string>
+    <string name="prefs_privacy">Política de privacidad</string>
+    <string name="prefs_version">Versión de la aplicación: %1$s\nVersión del SDK: %2$s</string>
+
+    <string name="options">Opciones</string>
+    <string name="save_image">¿Guardar imagen?</string>
+    <string name="def_image_name">imagen_%1$d.jpg</string>
+    <string name="saved_file">Archivo %1$s guardado</string>
+    <string name="saving_failed">No se pudo cargar el archivo</string>
+
+    <string name="no_operator">sin agente</string>
+    <string name="operator_typing">mecanografía</string>
+    <string name="operator_name">%1$s</string>
+
+    <string name="survey_finish_message">¡Gracias por participar en la encuesta!</string>
+    <string name="survey_rate_title">Operador de tarifas</string>
+    <string name="survey_send_answer">Enviar</string>
+    <string name="survey_edit_text_hint">Escriba el texto del comentario</string>
+    <string name="dialog_ok">OK</string>
+    <string name="dialog_cancel">Cancelar</string>
+
+    <string name="settings_account_field_hint">Ingrese la URL completa del servidor o el nombre de la cuenta, alojado en el servidor *.webim.ru\nPor ejemplo, para el servidor demo.webim.ru debe escribir \"demo\"</string>
+    <string name="file_upload_connection_timeout">Se superó el tiempo de espera de carga de archivos</string>
+    <string name="cannot_open_file">No puedo encontrar una aplicación para abrir el archivo</string>
+    <string name="reset_visitor_title">Actualizar datos de usuario</string>
+    <string name="reset_visitor_toast">Datos de usuario borrados</string>
+</resources>

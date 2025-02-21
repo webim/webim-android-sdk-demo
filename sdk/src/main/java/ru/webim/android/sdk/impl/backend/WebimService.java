@@ -16,7 +16,7 @@ import retrofit2.http.Query;
 import retrofit2.http.Url;
 import ru.webim.android.sdk.impl.items.requests.AutocompleteRequest;
 import ru.webim.android.sdk.impl.items.responses.AutocompleteResponse;
-import ru.webim.android.sdk.impl.items.responses.ServerSettingsResponse;
+import ru.webim.android.sdk.impl.items.responses.ServerConfigsResponse;
 import ru.webim.android.sdk.impl.items.responses.DefaultResponse;
 import ru.webim.android.sdk.impl.items.responses.DeltaResponse;
 import ru.webim.android.sdk.impl.items.responses.HistoryBeforeResponse;
@@ -108,7 +108,7 @@ public interface WebimService {
 
     @GET(URL_SUFFIX_DELTA)
     Call<DeltaResponse> getDelta(
-            @Query(PARAMETER_SINCE) long since,
+            @Query(PARAMETER_SINCE) String since,
             @Query(PARAMETER_PAGE_ID) String pageId,
             @Query(PARAMETER_AUTHORIZATION_TOKEN) String authorizationToken,
             @Query(PARAMETER_TIMESTAMP) long timestamp
@@ -341,7 +341,7 @@ public interface WebimService {
     );
 
     @GET(URL_SUFFIX_GET_CONFIG + "{locationName}")
-    Call<ServerSettingsResponse> getAccountConfig(
+    Call<ServerConfigsResponse> getAccountConfig(
         @Path("locationName") String location
     );
 

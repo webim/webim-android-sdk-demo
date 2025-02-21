@@ -14,17 +14,21 @@ import java.util.Set;
 public interface MessageHolder {
     MessageTracker newMessageTracker(@NonNull MessageListener messageListener);
 
-    void receiveHistoryUpdate(List<? extends MessageImpl> messages,
-                              Set<String> deleted,
-                              Runnable callback);
+    void receiveHistoryUpdate(
+        List<? extends MessageImpl> messages,
+        Set<String> deleted,
+        Runnable callback
+    );
 
     void setReachedEndOfRemoteHistory(boolean reachedEndOfHistory);
 
     void onFirstFullUpdateReceived();
 
-    void onChatReceive(@Nullable ChatItem oldChat,
-                       @Nullable ChatItem newChat,
-                       List<? extends MessageImpl> newMessages);
+    void onChatReceive(
+        @Nullable ChatItem oldChat,
+        @Nullable ChatItem newChat,
+        List<? extends MessageImpl> newMessages
+    );
 
     void onMessageAdded(@NonNull MessageImpl msg);
 
@@ -32,12 +36,12 @@ public interface MessageHolder {
 
     void onMessageDeleted(@NonNull String idInCurrentChat);
 
-    void onSendingMessage(@NonNull MessageSending message);
+    void onSendingMessage(@NonNull MessageSending message, boolean resend);
 
     @Nullable
     String onChangingMessage(@NonNull Message.Id id, @Nullable String text);
 
-    void onMessageSendingCancelled(@NonNull Message.Id id);
+    void onMessageSendingFailed(@NonNull MessageSending messageSending);
 
     void onMessageChangingCancelled(@NonNull Message.Id id, @NonNull String text);
 

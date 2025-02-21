@@ -2,7 +2,7 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="@color/sending_msg_bubble"/>
+            <solid android:color="?attr/chv_accent_color"/>
             <corners
                 android:bottomLeftRadius="0dp"
                 android:bottomRightRadius="0dp"
@@ -13,7 +13,7 @@
     </item>
     <item android:left="3dp">
         <shape android:shape="rectangle">
-            <solid android:color="@color/white" />
+            <solid android:color="?attr/chv_bar_background" />
             <corners
                 android:bottomLeftRadius="0dp"
                 android:bottomRightRadius="0dp"

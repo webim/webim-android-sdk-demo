@@ -1,5 +1,6 @@
 package ru.webim.android.sdk.impl;
 
+import static java.util.Collections.emptySet;
 import static java.util.Collections.unmodifiableList;
 
 import androidx.annotation.NonNull;
@@ -8,7 +9,6 @@ import androidx.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -28,7 +28,6 @@ public class MessageHolderImpl implements MessageHolder {
     private final RemoteHistoryProvider historyProvider;
     private final HistoryStorage historyStorage;
     private final List<MessageImpl> currentMessages = new ArrayList<>();
-    private final List<MessageSending> sendingMessages = new ArrayList<>();
     private boolean isReachedEndOfLocalHistory = false;
     private boolean isReachedEndOfRemoteHistory;
     private boolean firstChatReceived;
@@ -57,31 +56,8 @@ public class MessageHolderImpl implements MessageHolder {
         historyStorage.receiveHistoryUpdate(
             messages,
             deleted,
-            new HistoryStorage.UpdateHistoryCallback() {
-                @Override
-                public void onHistoryAdded(@Nullable String beforeServerSideId, @NonNull MessageImpl historyMessage) {
-                    if (messageTracker != null) {
-                        messageTracker.addNewOrMergeMessage(historyMessage, true);
-                    }
-                }
-
-                @Override
-                public void onHistoryChanged(@NonNull MessageImpl historyMessage) {
-                    if (messageTracker != null) {
-                        messageTracker.addNewOrMergeMessage(historyMessage, true);
-                    }
-                }
-
-                @Override
-                public void onHistoryDeleted(String serverSideId) {
-                    onMessageDeleted(serverSideId);
-                }
-
-                @Override
-                public void endOfBatch() {
-                    callback.run();
-                }
-            });
+            new UpdateHistoryCallbackImpl(callback)
+        );
     }
 
     public void setReachedEndOfRemoteHistory(boolean reachedEndOfRemoteHistory) {
@@ -346,7 +322,7 @@ public class MessageHolderImpl implements MessageHolder {
     public void onMessageDeleted(@NonNull String messageId) {
         for (int i = previousChatLastMessageIndex; i < currentMessages.size(); i++) {
             MessageImpl oldMessage = currentMessages.get(i);
-            if (oldMessage.getServerSideId().equals(messageId)) {
+            if (messageId.equals(oldMessage.getServerSideId())) {
                 currentMessages.remove(i);
                 if (messageTracker != null) {
                     messageTracker.onCurrentMessageDeleted(i, oldMessage);
@@ -357,10 +333,13 @@ public class MessageHolderImpl implements MessageHolder {
     }
 
     @Override
-    public void onSendingMessage(@NonNull MessageSending message) {
-        sendingMessages.add(message);
-        if (messageTracker != null) {
-            messageTracker.messageListener.messageAdded(null, message);
+    public void onSendingMessage(@NonNull MessageSending message, boolean resend) {
+        if (!resend) {
+            historyStorage.receiveHistoryUpdate(
+                Collections.singletonList(message),
+                emptySet(),
+                new UpdateHistoryCallbackImpl()
+            );
         }
     }
 
@@ -380,31 +359,33 @@ public class MessageHolderImpl implements MessageHolder {
             }
 
             MessageImpl newMsg = new MessageImpl(
-                    message.serverUrl,
-                    message.clientSideId,
-                    message.sessionId,
-                    message.operatorId,
-                    message.avatarUrl,
-                    message.senderName,
-                    message.type,
-                    text == null ? message.text : text,
-                    message.timeMicros,
-                    message.getServerSideId(),
-                    message.getData(),
-                    message.savedInHistory,
-                    message.getAttachment(),
-                    message.isReadByOperator(),
-                    message.canBeEdited(),
-                    message.canBeReplied(),
-                    message.isEdited(),
-                    message.getQuote(),
-                    message.getKeyboard(),
-                    message.getKeyboardRequest(),
-                    message.getSticker(),
-                    message.getReaction(),
-                    message.canVisitorReact(),
-                    message.canVisitorChangeReaction());
-            newMsg.sendStatus = Message.SendStatus.SENDING;
+                message.serverUrl,
+                message.clientSideId,
+                message.sessionId,
+                message.operatorId,
+                message.avatarUrl,
+                message.senderName,
+                message.type,
+                text == null ? message.text : text,
+                message.timeMicros,
+                message.getServerSideId(),
+                message.getData(),
+                message.savedInHistory,
+                message.getAttachment(),
+                message.isReadByOperator(),
+                message.canBeEdited(),
+                message.canBeReplied(),
+                message.isEdited(),
+                message.getQuote(),
+                message.getKeyboard(),
+                message.getKeyboardRequest(),
+                message.getSticker(),
+                message.getReaction(),
+                message.canVisitorReact(),
+                message.canVisitorChangeReaction(),
+                message.getGroupData(),
+                Message.SendStatus.SENDING
+            );
             messageTracker.messageListener.messageChanged(message, newMsg);
             return message.text;
         }
@@ -412,17 +393,29 @@ public class MessageHolderImpl implements MessageHolder {
     }
 
     @Override
-    public void onMessageSendingCancelled(@NonNull Message.Id id) {
-        for (Iterator<MessageSending> iterator = sendingMessages.iterator(); iterator.hasNext(); ) {
-            MessageSending msg = iterator.next();
-            if (msg.getClientSideId().equals(id)) {
-                iterator.remove();
-                if (messageTracker != null) {
-                    messageTracker.messageListener.messageRemoved(msg);
-                }
-                break;
-            }
+    public void onMessageSendingFailed(@NonNull MessageSending messageSending) {
+        Message.Attachment attachment = messageSending.getAttachment();
+        if (attachment != null) {
+            attachment = InternalUtils.failedAttachment(attachment);
         }
+
+        MessageFailed messageFailed = new MessageFailed(
+            messageSending.serverUrl,
+            messageSending.clientSideId,
+            messageSending.senderName,
+            messageSending.type,
+            messageSending.text,
+            messageSending.timeMicros,
+            messageSending.getQuote(),
+            messageSending.getSticker(),
+            attachment
+        );
+
+        historyStorage.receiveHistoryUpdate(
+            Collections.singletonList(messageFailed),
+            emptySet(),
+            new UpdateHistoryCallbackImpl()
+        );
     }
 
     @Override
@@ -440,31 +433,33 @@ public class MessageHolderImpl implements MessageHolder {
             }
 
             MessageImpl newMsg = new MessageImpl(
-                    message.serverUrl,
-                    message.clientSideId,
-                    message.sessionId,
-                    message.operatorId,
-                    message.avatarUrl,
-                    message.senderName,
-                    message.type,
-                    text,
-                    message.timeMicros,
-                    message.getServerSideId(),
-                    message.getData(),
-                    message.savedInHistory,
-                    message.getAttachment(),
-                    message.isReadByOperator(),
-                    message.canBeEdited(),
-                    message.canBeReplied(),
-                    message.isEdited(),
-                    message.getQuote(),
-                    message.getKeyboard(),
-                    message.getKeyboardRequest(),
-                    message.getSticker(),
-                    message.getReaction(),
-                    message.canVisitorReact(),
-                    message.canVisitorChangeReaction());
-            newMsg.sendStatus = Message.SendStatus.SENT;
+                message.serverUrl,
+                message.clientSideId,
+                message.sessionId,
+                message.operatorId,
+                message.avatarUrl,
+                message.senderName,
+                message.type,
+                text,
+                message.timeMicros,
+                message.getServerSideId(),
+                message.getData(),
+                message.savedInHistory,
+                message.getAttachment(),
+                message.isReadByOperator(),
+                message.canBeEdited(),
+                message.canBeReplied(),
+                message.isEdited(),
+                message.getQuote(),
+                message.getKeyboard(),
+                message.getKeyboardRequest(),
+                message.getSticker(),
+                message.getReaction(),
+                message.canVisitorReact(),
+                message.canVisitorChangeReaction(),
+                message.getGroupData(),
+                Message.SendStatus.SENT
+            );
             messageTracker.messageListener.messageChanged(message, newMsg);
         }
     }
@@ -601,8 +596,10 @@ public class MessageHolderImpl implements MessageHolder {
             this.messagesSyncedListener = messagesSyncedListener;
         }
 
-        private void uncheckedGetNextMessages(int limit,
-                                              @NonNull final GetMessagesCallback callback) {
+        private void uncheckedGetNextMessages(
+            int limit,
+            @NonNull final GetMessagesCallback callback
+        ) {
             GetMessagesCallback callback2 = new GetMessagesCallbackWrapper(limit, callback);
             if (headMessage == null) {
                 getLatestMessages(limit, callback2);
@@ -650,8 +647,6 @@ public class MessageHolderImpl implements MessageHolder {
 
             if (!isDestroyed) {
                 isDestroyed = true;
-
-                sendingMessages.clear();
 
                 if (messageTracker == this) {
                     messageTracker = null;
@@ -743,7 +738,7 @@ public class MessageHolderImpl implements MessageHolder {
 
         private void addNewOrMergeMessage(final MessageImpl newMessage, boolean isFromHistory) {
             int currentIndex;
-            boolean addToEnd = true;
+            int insertIndex = -1;
             for (currentIndex = 0; currentIndex < currentMessages.size(); currentIndex++) {
                 MessageImpl message = currentMessages.get(currentIndex);
                 if (newMessage.equals(message)) {
@@ -762,56 +757,41 @@ public class MessageHolderImpl implements MessageHolder {
                     }
                     return;
                 }
-                if (message.compareTo(newMessage) > 0) {
-                    addToEnd = false;
-                    break;
+                if (shouldInsertInMiddle(newMessage, message, insertIndex)) {
+                    insertIndex = currentIndex;
                 }
             }
 
             // New message will be added
-            MessageSending messageToSend = findMessageSendingMirror(newMessage);
-            if (messageToSend != null) {
-                sendingMessages.remove(messageToSend);
+            if (previousChatLastMessageIndex > currentIndex) {
+                previousChatLastMessageIndex++;
+            }
+            if (insertIndex < 0) {
                 currentMessages.add(newMessage);
-                onCurrentMessageChanged(messageToSend, newMessage);
+                onCurrentMessageAdded(null, newMessage);
             } else {
-                if (previousChatLastMessageIndex > currentIndex) {
-                    previousChatLastMessageIndex++;
-                }
-                if (addToEnd) {
-                    currentMessages.add(newMessage);
-                    onCurrentMessageAdded(findEarliestSendingMessage(), newMessage);
-                } else {
-                    MessageImpl beforeMessage = currentMessages.get(currentIndex);
-                    currentMessages.add(currentIndex, newMessage);
-                    onCurrentMessageAdded(beforeMessage, newMessage);
-                }
+                MessageImpl beforeMessage = currentMessages.get(insertIndex);
+                currentMessages.add(insertIndex, newMessage);
+                onCurrentMessageAdded(beforeMessage, newMessage);
             }
         }
 
-        @Nullable
-        private MessageSending findEarliestSendingMessage() {
-            MessageSending earliest = null;
-            for (MessageSending sendingMessage : sendingMessages) {
-                if (sendingMessage.compareTo(earliest) > 0) {
-                    earliest = sendingMessage;
-                }
-            }
-            return earliest;
-        }
-
-        @Nullable
-        private MessageSending findMessageSendingMirror(MessageImpl newMessage) {
-            for (MessageSending sendingMessage : sendingMessages) {
-                if (sendingMessage.equals(newMessage)) {
-                    return sendingMessage;
-                }
-            }
-            return null;
+        private boolean shouldInsertInMiddle(MessageImpl newMessage, MessageImpl message, int insertIndex) {
+            return
+                // If index inserts are already found, skip the condition
+                insertIndex == -1 &&
+                // If the NEW one is sending and the NEXT one is not sending, skip and push after
+                (message.isSending() || !newMessage.isSending()) &&
+                (
+                    // If the NEXT one is sending, but there is no NEW one, push before
+                    message.compareTo(newMessage) > 0 ||
+                    // If the NEXT one is sending, but there is no NEW one, push before
+                    (message.isSending() && !newMessage.isSending())
+                );
         }
 
         void onCurrentMessageAdded(MessageImpl before, MessageImpl msg) {
-            if (headMessage != null && msg.compareTo(headMessage) >= 0) {
+            if (msg.isSendingOrFailed() || headMessage != null && msg.compareTo(headMessage) >= 0) {
                 String beforeText = "null";
                 if (before != null) {
                     beforeText = before.getText();
@@ -825,7 +805,7 @@ public class MessageHolderImpl implements MessageHolder {
         }
 
         void onCurrentMessageChanged(MessageImpl from, MessageImpl to) {
-            if (headMessage != null && to.compareTo(headMessage) >= 0) {
+            if (to.isSendingOrFailed() || headMessage != null && to.compareTo(headMessage) >= 0) {
                 WebimInternalLog.getInstance().log("Changed \"" + from.getText() + "\" to: \"" + to.getText() + "\"",
                         Webim.SessionBuilder.WebimLogVerbosityLevel.VERBOSE,
                         WebimLogEntity.MESSAGES
@@ -835,7 +815,7 @@ public class MessageHolderImpl implements MessageHolder {
         }
 
         void onCurrentMessageDeleted(int nextMessageIndex, MessageImpl msg) {
-            if (headMessage != null && msg.compareTo(headMessage) >= 0) {
+            if (msg.isSendingOrFailed() || headMessage != null && msg.compareTo(headMessage) >= 0) {
                 messageListener.messageRemoved(msg);
 
                 if (headMessage == msg) {
@@ -928,6 +908,57 @@ public class MessageHolderImpl implements MessageHolder {
                         }
                         oldMessageIndex++;
                     }
+                }
+            }
+        }
+    }
+
+    private class UpdateHistoryCallbackImpl implements HistoryStorage.UpdateHistoryCallback {
+        private final Runnable callback;
+
+        public UpdateHistoryCallbackImpl() {
+            this(null);
+        }
+
+        public UpdateHistoryCallbackImpl(Runnable callback) {
+            this.callback = callback;
+        }
+
+        @Override
+        public void onHistoryAdded(@Nullable String beforeServerSideId, @NonNull MessageImpl historyMessage) {
+            if (messageTracker != null) {
+                messageTracker.addNewOrMergeMessage(historyMessage, true);
+            }
+        }
+
+        @Override
+        public void onHistoryChanged(@NonNull MessageImpl historyMessage) {
+            if (messageTracker != null) {
+                messageTracker.addNewOrMergeMessage(historyMessage, true);
+            }
+        }
+
+        @Override
+        public void onHistoryDeleted(String clientSideId) {
+            removeLocalMessage(clientSideId);
+        }
+
+        @Override
+        public void endOfBatch() {
+            if (callback != null) {
+                callback.run();
+            }
+        }
+
+        private void removeLocalMessage(String clientSideId) {
+            for (int i = previousChatLastMessageIndex; i < currentMessages.size(); i++) {
+                MessageImpl oldMessage = currentMessages.get(i);
+                if (clientSideId.equals(oldMessage.getClientSideId().toString())) {
+                    currentMessages.remove(i);
+                    if (messageTracker != null) {
+                        messageTracker.onCurrentMessageDeleted(i, oldMessage);
+                    }
+                    break;
                 }
             }
         }

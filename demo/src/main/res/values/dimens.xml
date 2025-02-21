@@ -15,14 +15,6 @@
     <dimen name="badge_text_size">10sp</dimen>
     <dimen name="badge_padding">9dp</dimen>
 
-    <!-- Dimension for alert dialog -->
-    <dimen name="alert_dialog_marginLeft">16dp</dimen>
-    <dimen name="alert_dialog_relative_marginTop">8dp</dimen>
-    <dimen name="alert_dialog_relative_marginEnd">35dp</dimen>
-    <dimen name="alert_dialog_relative_marginBottom">8dp</dimen>
-    <dimen name="alert_dialog_image_margin">7dp</dimen>
-    <dimen name="alert_dialog_image_padding">1dp</dimen>
-
     <dimen name="message_time_marginTop">4dp</dimen>
 
     <dimen name="item_massage_main_margin">10dp</dimen>

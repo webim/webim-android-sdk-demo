@@ -3,6 +3,12 @@ package ru.webim.android.sdk.impl.backend;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.io.FileNotFoundException;
+import java.io.InterruptedIOException;
+import java.util.List;
+import java.util.concurrent.Executor;
+
+import retrofit2.Call;
 import ru.webim.android.sdk.BuildConfig;
 import ru.webim.android.sdk.ProvidedAuthorizationTokenStateListener;
 import ru.webim.android.sdk.Webim;
@@ -13,13 +19,7 @@ import ru.webim.android.sdk.impl.backend.callbacks.DeltaCallback;
 import ru.webim.android.sdk.impl.items.delta.DeltaFullUpdate;
 import ru.webim.android.sdk.impl.items.delta.DeltaItem;
 import ru.webim.android.sdk.impl.items.responses.DeltaResponse;
-
-import java.io.FileNotFoundException;
-import java.io.InterruptedIOException;
-import java.util.List;
-import java.util.concurrent.Executor;
-
-import retrofit2.Call;
+import ru.webim.android.sdk.impl.items.responses.ServerConfigsResponse;
 
 public class DeltaRequestLoop extends AbstractRequestLoop {
     public static final String INCORRECT_SERVER_ANSWER = "Incorrect server answer";
@@ -43,24 +43,29 @@ public class DeltaRequestLoop extends AbstractRequestLoop {
     private @Nullable String visitorJson;
     private @Nullable String sessionId;
     private @Nullable WebimSession.SessionCallback sessionCallback;
-    private long since = 0;
+    private final @NonNull ServerConfigsCallback serverConfigsCallback;
+    private String since = DEFAULT_SINCE;
+    private boolean accountConfigCalled = false;
+    private final static String DEFAULT_SINCE = "0";
 
-    public DeltaRequestLoop(@NonNull DeltaCallback callback,
-                            @Nullable SessionParamsListener sessionParamsListener,
-                            @NonNull Executor callbackExecutor,
-                            @NonNull InternalErrorListener errorListener,
-                            @NonNull WebimService webim,
-                            @NonNull String platform,
-                            @NonNull String title,
-                            @NonNull String location,
-                            @Nullable String appVersion,
-                            @Nullable String visitorFieldsJson,
-                            @Nullable ProvidedAuthorizationTokenStateListener
-                                    providedAuthorizationTokenStateListener,
-                            @Nullable String providedAuthorizationToken,
-                            @NonNull String deviceId,
-                            @Nullable String prechatFields,
-                            @Nullable WebimSession.SessionCallback sessionCallback) {
+    public DeltaRequestLoop(
+        @NonNull DeltaCallback callback,
+        @Nullable SessionParamsListener sessionParamsListener,
+        @NonNull Executor callbackExecutor,
+        @NonNull InternalErrorListener errorListener,
+        @NonNull WebimService webim,
+        @NonNull String platform,
+        @NonNull String title,
+        @NonNull String location,
+        @Nullable String appVersion,
+        @Nullable String visitorFieldsJson,
+        @Nullable ProvidedAuthorizationTokenStateListener providedAuthorizationTokenStateListener,
+        @Nullable String providedAuthorizationToken,
+        @NonNull String deviceId,
+        @Nullable String prechatFields,
+        @Nullable WebimSession.SessionCallback sessionCallback,
+        @NonNull ServerConfigsCallback serverConfigsCallback
+    ) {
         super(callbackExecutor, errorListener);
         this.callback = callback;
         this.sessionParamsListener = sessionParamsListener;
@@ -75,45 +80,49 @@ public class DeltaRequestLoop extends AbstractRequestLoop {
         this.deviceId = deviceId;
         this.prechatFields = prechatFields;
         this.sessionCallback = sessionCallback;
+        this.serverConfigsCallback = serverConfigsCallback;
     }
 
-    public DeltaRequestLoop(@NonNull DeltaCallback callback,
-                            @Nullable SessionParamsListener sessionParamsListener,
-                            @NonNull Executor callbackExecutor,
-                            @NonNull InternalErrorListener errorListener,
-                            @NonNull WebimService webim,
-                            @NonNull String platform,
-                            @NonNull String title,
-                            @NonNull String location,
-                            @NonNull String appVersion,
-                            @Nullable String visitorFieldsJson,
-                            @Nullable ProvidedAuthorizationTokenStateListener
-                                    providedAuthorizationTokenStateListener,
-                            @Nullable String providedAuthorizationToken,
-                            @NonNull String deviceId,
-                            @Nullable String prechatFields,
-                            @Nullable Webim.PushSystem pushSystem,
-                            @Nullable String pushToken,
-                            @Nullable String visitorJson,
-                            @Nullable String sessionId,
-                            @Nullable AuthData authData,
-                            @Nullable WebimSession.SessionCallback sessionCallback) {
+    public DeltaRequestLoop(
+        @NonNull DeltaCallback callback,
+        @Nullable SessionParamsListener sessionParamsListener,
+        @NonNull Executor callbackExecutor,
+        @NonNull InternalErrorListener errorListener,
+        @NonNull WebimService webim,
+        @NonNull String platform,
+        @NonNull String title,
+        @NonNull String location,
+        @NonNull String appVersion,
+        @Nullable String visitorFieldsJson,
+        @Nullable ProvidedAuthorizationTokenStateListener providedAuthorizationTokenStateListener,
+        @Nullable String providedAuthorizationToken,
+        @NonNull String deviceId,
+        @Nullable String prechatFields,
+        @Nullable Webim.PushSystem pushSystem,
+        @Nullable String pushToken,
+        @Nullable String visitorJson,
+        @Nullable String sessionId,
+        @Nullable AuthData authData,
+        @Nullable WebimSession.SessionCallback sessionCallback,
+        @NonNull ServerConfigsCallback serverConfigsCallback
+    ) {
         this(
-                callback,
-                sessionParamsListener,
-                callbackExecutor,
-                errorListener,
-                webim,
-                platform,
-                title,
-                location,
-                appVersion,
-                visitorFieldsJson,
-                providedAuthorizationTokenStateListener,
-                providedAuthorizationToken,
-                deviceId,
-                prechatFields,
-                sessionCallback
+            callback,
+            sessionParamsListener,
+            callbackExecutor,
+            errorListener,
+            webim,
+            platform,
+            title,
+            location,
+            appVersion,
+            visitorFieldsJson,
+            providedAuthorizationTokenStateListener,
+            providedAuthorizationToken,
+            deviceId,
+            prechatFields,
+            sessionCallback,
+            serverConfigsCallback
         );
 
         this.pushSystem = pushSystem;
@@ -136,7 +145,7 @@ public class DeltaRequestLoop extends AbstractRequestLoop {
         this.location = location;
 
         authData = null;
-        since = 0;
+        since = DEFAULT_SINCE;
 
         new Thread(this::runIteration).start();
     }
@@ -150,7 +159,7 @@ public class DeltaRequestLoop extends AbstractRequestLoop {
                 } catch (final AbortByWebimErrorException exception) {
                     if (WebimInternalError.REINIT_REQUIRED.equals(exception.getError())) {
                         authData = null;
-                        since = 0;
+                        since = DEFAULT_SINCE;
                     } else if (WebimInternalError.PROVIDED_AUTHORIZATION_TOKEN_NOT_FOUND
                             .equals(exception.getError())) {
                         handleProvidedAuthorizationTokenError();
@@ -173,8 +182,12 @@ public class DeltaRequestLoop extends AbstractRequestLoop {
         try {
             while (true) {
                 try {
-                    if ((authData != null) && (since != 0)) {
-                        requestDelta();
+                    if ((authData != null) && (!since.equals(DEFAULT_SINCE))) {
+                        if (!accountConfigCalled) {
+                            requestAccountConfig();
+                        } else {
+                            requestDelta();
+                        }
                     } else {
                         requestInit();
                     }
@@ -196,21 +209,21 @@ public class DeltaRequestLoop extends AbstractRequestLoop {
                 callbackExecutor.execute(() -> {
                     if (sessionCallback != null) {
                         sessionCallback.onFailure(new WebimErrorImpl<>(
-                                WebimSession.SessionCallback.SessionError.REQUEST_ERROR,
-                                null)
-                        );
+                            WebimSession.SessionCallback.SessionError.REQUEST_ERROR,
+                            null
+                        ));
                     }
                     errorListener.onError(
-                            request.request().url().toString(),
-                            INCORRECT_SERVER_ANSWER,
-                            200
+                        request.request().url().toString(),
+                        INCORRECT_SERVER_ANSWER,
+                        200
                     );
                 });
 
                 return;
             }
 
-            Long revision = delta.getRevision();
+            String revision = delta.getRevision();
             if (revision != null) {
                 since = delta.getRevision();
             }
@@ -222,15 +235,12 @@ public class DeltaRequestLoop extends AbstractRequestLoop {
             });
             processFullUpdate(delta.getFullUpdate());
         } catch (Exception exception) {
-            callbackExecutor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    if (sessionCallback != null) {
-                        sessionCallback.onFailure(new WebimErrorImpl<>(
-                                WebimSession.SessionCallback.SessionError.REQUEST_ERROR,
-                                null)
-                        );
-                    }
+            callbackExecutor.execute(() -> {
+                if (sessionCallback != null) {
+                    sessionCallback.onFailure(new WebimErrorImpl<>(
+                            WebimSession.SessionCallback.SessionError.REQUEST_ERROR,
+                            null)
+                    );
                 }
             });
             throw exception;
@@ -265,11 +275,28 @@ public class DeltaRequestLoop extends AbstractRequestLoop {
         }
     }
 
+    private void requestAccountConfig() throws InterruptedIOException, FileNotFoundException {
+        try {
+            Call<ServerConfigsResponse> accountConfigRequest = webim.getAccountConfig(location);
+            ServerConfigsResponse response = performRequest(accountConfigRequest);
+            if (response != null) {
+                serverConfigsCallback.onServerConfigs(response.getAccountConfig(), response.getLocationSettings());
+            } else {
+                serverConfigsCallback.onServerConfigs(null, null);
+            }
+        } catch (final AbortByWebimErrorException exception) {
+            serverConfigsCallback.onServerConfigs(null, null);
+            throw exception;
+        } finally {
+            accountConfigCalled = true;
+        }
+    }
+
     private Call<DeltaResponse> makeInitRequest() {
         return webim.getLogin(
                 BuildConfig.VERSION_NAME,
                 "init",
-                (pushSystem == Webim.PushSystem.FCM) ? "fcm" : "gcm",
+                pushSystem.getPushName(),
                 pushToken,
                 platform,
                 visitorFieldsJson,
@@ -359,7 +386,7 @@ public class DeltaRequestLoop extends AbstractRequestLoop {
 
     private void sleepBetweenInitializationAttempts() {
         authData = null;
-        since = 0;
+        since = DEFAULT_SINCE;
 
         try {
             Thread.sleep(1000); // 1 s

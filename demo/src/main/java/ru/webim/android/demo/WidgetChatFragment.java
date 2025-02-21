@@ -14,7 +14,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
@@ -22,11 +21,13 @@ import com.bumptech.glide.Glide;
 import java.util.ArrayList;
 
 import ru.webim.android.sdk.Operator;
+import ru.webim.android.sdk.Webim;
 import ru.webim.android.sdk.WebimSession;
 import ru.webim.chatview.ui.ChatView;
 import ru.webim.chatview.utils.FileHelper;
 
 public class WidgetChatFragment extends Fragment {
+    private Webim.SessionBuilder sessionBuilder;
     private WebimSession session;
     private ChatView chatView;
 
@@ -36,6 +37,9 @@ public class WidgetChatFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_widget_chat, container, false);
 
         chatView = rootView.findViewById(R.id.chatView);
+        sessionBuilder.setErrorHandler(chatView);
+        session = sessionBuilder.build();
+
         chatView.setSession(session);
 
         setPreChatActions();
@@ -44,11 +48,11 @@ public class WidgetChatFragment extends Fragment {
         return rootView;
     }
 
-    public void setWebimSession(WebimSession session) {
-        if (this.session != null) {
+    public void setWebimSessionBuilder(Webim.SessionBuilder session) {
+        if (this.sessionBuilder != null) {
             throw new IllegalStateException("Webim session is already set");
         }
-        this.session = session;
+        this.sessionBuilder = session;
     }
 
     private void setPreChatActions() {

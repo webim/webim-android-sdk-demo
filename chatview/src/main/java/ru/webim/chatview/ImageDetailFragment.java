@@ -122,27 +122,20 @@ public class ImageDetailFragment extends DialogFragment {
     }
 
     private void downloadImage() {
-        if (ActivityCompat.checkSelfPermission(requireContext(), android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(
-                requireActivity(),
-                new String[] { android.Manifest.permission.WRITE_EXTERNAL_STORAGE },
-                1);
+        String imageName = getString(R.string.def_image_name, System.currentTimeMillis());
+        showMessage(getString(R.string.saving_file, imageName));
+
+        DownloadManager manager = (DownloadManager) requireActivity().getSystemService(Context.DOWNLOAD_SERVICE);
+        if (manager != null) {
+            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(imageUrl));
+            request.setTitle(imageName);
+            request.allowScanningByMediaScanner();
+            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, imageName);
+
+            manager.enqueue(request);
         } else {
-            String imgName = getString(R.string.def_image_name, System.currentTimeMillis());
-            showMessage(getString(R.string.saving_file, imgName));
-
-            DownloadManager manager = (DownloadManager) requireActivity().getSystemService(Context.DOWNLOAD_SERVICE);
-            if (manager != null) {
-                DownloadManager.Request request = new DownloadManager.Request(Uri.parse(imageUrl));
-                request.setTitle(imgName);
-                request.allowScanningByMediaScanner();
-                request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-                request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, imgName);
-
-                manager.enqueue(request);
-            } else {
-                showMessage(getString(R.string.saving_failed));
-            }
+            showMessage(getString(R.string.saving_failed));
         }
     }
 

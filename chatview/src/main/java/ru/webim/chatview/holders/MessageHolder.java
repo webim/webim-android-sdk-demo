@@ -45,7 +45,7 @@ public class MessageHolder extends RecyclerView.ViewHolder {
     protected TextView quoteSenderName;
     protected TextView quoteText;
     protected ViewGroup messageBody;
-    private final Pattern pattern = Pattern.compile("\\b(https://|http://)?([-a-zA-Z0-9а-яА-ЯёЁ_@#]+\\.)+[a-zA-Zа-яА-ЯёЁ]+(/[-a-zA-Z0-9а-яА-ЯёЁ_@%#+.!:]+)*(\\.[-a-zA-Z_]+)?(/?\\?[-a-zA-Z0-9а-яА-ЯёЁ_@%#=&+.!:]+)?/?");
+    private final Pattern urlPattern = Pattern.compile("\\b(https://|http://)?([-a-zA-Z0-9а-яА-ЯёЁ_@#]+\\.)+[a-zA-Zа-яА-ЯёЁ]{2,}(/[-a-zA-Z0-9а-яА-ЯёЁ_@%#+.!:]+)*(\\.[-a-zA-Z_]+)?(/?\\?[-a-zA-Z0-9а-яА-ЯёЁ_@%#=&+.!:]+)?/?");
 
     public MessageHolder(View itemView, ChatHolderActions holderActions) {
         super(itemView);
@@ -165,7 +165,7 @@ public class MessageHolder extends RecyclerView.ViewHolder {
     }
 
     private CharSequence handleHyperlinksTemplate(CharSequence originalString) {
-        Pattern templatePattern = Pattern.compile("(\\[(\\S+)\\]\\((\\S+://\\S+)\\))");
+        Pattern templatePattern = Pattern.compile("\\[(\\S+)\\]\\((\\S+://\\S+)\\)");
         Matcher matcher = templatePattern.matcher(originalString);
 
         if (!matcher.find()) {
@@ -177,20 +177,20 @@ public class MessageHolder extends RecyclerView.ViewHolder {
             int start = matcher.start();
             int end = matcher.end();
 
-            int startLink = matcher.start(1);
-            int endLink = matcher.end(1);
-            if ((startLink | endLink) == -1) {
-                continue;
-            }
-
-            int startTemplate = matcher.start(2);
-            int endTemplate = matcher.end(2);
+            int startTemplate = matcher.start(1);
+            int endTemplate = matcher.end(1);
             if ((startTemplate | endTemplate) == -1) {
                 continue;
             }
 
-            String urlString = originalString.toString().substring(startLink, endLink);
+            int startLink = matcher.start(2);
+            int endLink = matcher.end(2);
+            if ((startLink | endLink) == -1) {
+                continue;
+            }
+
             String templateString = originalString.toString().substring(startTemplate, endTemplate);
+            String urlString = originalString.toString().substring(startLink, endLink);
 
             spannableBuilder.replace(start, end, makeHyperlinkClickable(templateString, urlString));
         } while (matcher.find());
@@ -199,7 +199,7 @@ public class MessageHolder extends RecyclerView.ViewHolder {
     }
 
     private CharSequence handleHyperlinks(CharSequence originalString) {
-        Matcher matcher = pattern.matcher(originalString);
+        Matcher matcher = urlPattern.matcher(originalString);
 
         if (!matcher.find()) {
             return originalString;

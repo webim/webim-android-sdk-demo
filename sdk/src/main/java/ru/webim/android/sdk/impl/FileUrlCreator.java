@@ -2,6 +2,7 @@ package ru.webim.android.sdk.impl;
 
 import androidx.annotation.NonNull;
 
+import ru.webim.android.sdk.Supplier;
 import ru.webim.android.sdk.impl.backend.WebimClient;
 
 import java.net.URLEncoder;
@@ -15,6 +16,7 @@ import okhttp3.HttpUrl;
 class FileUrlCreator {
     private final WebimClient client;
     private final String serverUrl;
+    private Supplier<Boolean> safeUrlProvider;
     private static final Long ATTACHMENT_URL_EXPIRES_PERIOD = 5L * 60L; // 5 minutes
 
     public FileUrlCreator(WebimClient webimClient, String serverUrl) {
@@ -22,24 +24,29 @@ class FileUrlCreator {
         this.serverUrl = serverUrl;
     }
 
+    public void setSafeUrlProvider(Supplier<Boolean> safeUrlProvider) {
+        this.safeUrlProvider = safeUrlProvider;
+    }
+
     public String createFileUrl(@NonNull String fileName, @NonNull String guid, boolean thumbnail) {
         try {
             String fileUrl = HttpUrl.parse(serverUrl).toString().replaceFirst("/*$", "/")
                 + "l/v/m/download/"
                 + guid + "/"
-                + URLEncoder.encode(fileName, "utf-8") + "?";
-            if (client.getAuthData() != null) {
+                + URLEncoder.encode(fileName, "utf-8");
+            Boolean safeUrlEnabled = safeUrlProvider.get();
+            if (safeUrlEnabled != null && safeUrlEnabled && client.getAuthData() != null) {
                 String pageId = client.getAuthData().getPageId();
                 long expires = currentTimeSeconds() + ATTACHMENT_URL_EXPIRES_PERIOD;
                 String data = guid + expires;
                 String key = client.getAuthData().getAuthToken();
                 String hash = sha256(data, key);
-                fileUrl += "page-id=" + pageId + "&expires=" + expires + "&hash=" + hash;
+                fileUrl += "?page-id=" + pageId + "&expires=" + expires + "&hash=" + hash;
                 if (thumbnail) {
                     fileUrl += "&thumb=android";
                 }
-                return fileUrl;
             }
+            return fileUrl;
         } catch (Exception e) {
             e.printStackTrace();
         }

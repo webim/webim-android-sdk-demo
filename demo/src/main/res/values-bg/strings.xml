@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="first_screen_text1">Добре дошли в демо приложението за. Webim SDK App!</string>
+    <string name="first_screen_text2">Докоснете бутона по-долу, за да започнете чат.</string>
+    <string name="first_screen_text3">Влезте като агент, за да отговорите на този чат на: https://demo.webim.ru</string>
+    <string name="first_screen_text4">Вход: o@webim.ru</string>
+    <string name="first_screen_text5">Парола: password</string>
+    <string name="first_screen_text6">Изходният код на това приложение може да бъде намерен на:</string>
+    <string name="first_screen_text7">https://github.com/webim/webim-android-sdk-demo</string>
+
+    <string name="image_logo_content_description">Лого</string>
+    <string name="button_text_start_chat">Започнете чат</string>
+    <string name="button_text_settings">Настройки</string>
+    <string name="action_close_chat">Затваряне на чата</string>
+    <string name="cancel">Отказ</string>
+    <string name="yes">да</string>
+    <string name="alert_close_chat">Затваряне на чата?</string>
+    <string name="choose_department">Изберете отдел</string>
+    <string name="empty_chat_text">Въведете съобщението, за да започнете чат с агента</string>
+    <string name="error_user_banned_header">Вие сте забранени от агента</string>
+    <string name="error_user_banned_desc">Не можете да използвате чат, защото те бяха забранени от агента</string>
+    <string name="error_account_blocked_header">Акаунтът в Webim е блокиран</string>
+    <string name="error_account_blocked_desc">Не можете да използвате чат, защото акаунтът в webim на организацията, с която се опитвате да се свържете, е блокиран. Моля, опитайте отново по-късно.</string>
+    <string name="error_unknown_header">Неизвестна грешка</string>
+    <string name="error_unknown_desc">Не можете да използвате чат, защото е възникнала неизвестна грешка. Нашите разработчици вече са уведомени за този проблем и скоро ще го поправят. Подробности %s</string>
+    <string name="validation_error">Грешка</string>
+
+    <string name="push_contact_information">Агентът е поискал данни за контакт.</string>
+    <string name="push_operator_accepted">Агентът %1$s се присъедини към диалога.</string>
+    <string name="push_operator_file">%1$s изпрати файл %2$s</string>
+    <string name="push_operator_message">%1$s: %2$s</string>
+    <string name="push_rate_operator">Оценете оператор</string>
+
+    <string name="prefs_notifications_summary">Активирайте FCM насочени известия за нови съобщения от агента</string>
+    <string name="prefs_notifications_title">Известия</string>
+    <string name="prefs_file_logger_title">За тестери</string>
+    <string name="prefs_file_logger_summary">Запишете регистрационни файлове във файл</string>
+    <string name="prefs_account_title">Име на акаунта</string>
+    <string name="prefs_account_summary">Име на акаунт в Webim или пълен адрес на сървър (например \"demo\" или \"https://demo.webim.ru\")</string>
+    <string name="prefs_location_summary">Местоположението, което ще получи обжалването (например \"мобилен\")</string>
+    <string name="prefs_location_title">Местоположение</string>
+    <string name="prefs_privacy">Политика за поверителност</string>
+    <string name="prefs_version">Версия на приложението: %1$s\nВерсия на SDK: %2$s</string>
+
+    <string name="options">Настроики</string>
+    <string name="save_image">Запазването на изображението?</string>
+    <string name="def_image_name">изображение_%1$d.jpg</string>
+    <string name="saved_file">Файлът %1$s е запазен</string>
+    <string name="saving_failed">Неуспешно качване на файл</string>
+
+    <string name="no_operator">без агент</string>
+    <string name="operator_typing">писане</string>
+    <string name="operator_name">%1$s</string>
+
+    <string name="survey_finish_message">Благодаря за участието в анкетата!</string>
+    <string name="survey_rate_title">Оценете оператор</string>
+    <string name="survey_send_answer">Изпратете</string>
+    <string name="survey_edit_text_hint">Въведете текст на коментара</string>
+    <string name="dialog_ok">Добре</string>
+    <string name="dialog_cancel">анулиране</string>
+
+    <string name="settings_account_field_hint">Въведете пълния URL адрес на сървъра или името на акаунта, хостван на сървъра *.webim.ru\nНапример за сървъра demo.webim.ru трябва да въведете \"demo\"</string>
+    <string name="file_upload_connection_timeout">Времето за изчакване за качване на файл е превишено</string>
+    <string name="cannot_open_file">Не може да се намери приложение за отваряне на файла</string>
+    <string name="reset_visitor_title">Актуализирайте потребителските данни</string>
+    <string name="reset_visitor_toast">Потребителските данни са изчистени</string>
+</resources>

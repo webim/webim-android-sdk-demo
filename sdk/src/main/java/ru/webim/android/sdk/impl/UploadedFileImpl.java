@@ -5,8 +5,6 @@ import androidx.annotation.Nullable;
 
 import ru.webim.android.sdk.UploadedFile;
 
-import org.jetbrains.annotations.NotNull;
-
 public class UploadedFileImpl implements UploadedFile {
 
     private long size;
@@ -100,7 +98,7 @@ public class UploadedFileImpl implements UploadedFile {
             return height;
         }
 
-        @NotNull
+        @NonNull
         @Override
         public String toString() {
             return "{\"size\":{" +

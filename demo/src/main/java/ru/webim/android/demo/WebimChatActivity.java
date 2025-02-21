@@ -10,15 +10,10 @@ import androidx.preference.PreferenceManager;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-import com.google.firebase.crashlytics.FirebaseCrashlytics;
-
 import ru.webim.android.demo.util.WebimSessionDirector;
-import ru.webim.android.sdk.FatalErrorHandler;
 import ru.webim.android.sdk.Webim;
-import ru.webim.android.sdk.WebimError;
-import ru.webim.android.sdk.WebimSession;
 
-public class WebimChatActivity extends AppCompatActivity implements FatalErrorHandler {
+public class WebimChatActivity extends AppCompatActivity {
     public static final String EXTRA_SHOW_RATING_BAR_ON_STARTUP = "extra_show_rating_bar_on_startup";
     private static boolean active;
     private WidgetChatFragment fragment;
@@ -29,12 +24,21 @@ public class WebimChatActivity extends AppCompatActivity implements FatalErrorHa
 
         setContentView(R.layout.activity_webim_chat);
 
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        int authUser = sharedPreferences.getInt(SettingsFragment.KEY_AUTH_VISITOR, SettingsFragment.DEFAULT_VISITOR);
+        if (authUser != SettingsFragment.DEFAULT_VISITOR) {
+            createSessionWithAuthVisitor();
+        } else {
+            createSessionWithAnonymousVisitor();
+        }
+    }
+
+    private void createSessionWithAuthVisitor() {
         WebimSessionDirector
-            .createSessionBuilderWithAnonymousVisitor(this, new WebimSessionDirector.OnSessionBuilderCreatedListener() {
+            .createSessionBuilderWithAuth2Visitor(this, new WebimSessionDirector.OnSessionBuilderCreatedListener() {
                 @Override
                 public void onSessionBuilderCreated(Webim.SessionBuilder sessionBuilder) {
-                    WebimSession session = sessionBuilder.setErrorHandler(WebimChatActivity.this).build();
-                    initFragment(session);
+                    initFragment(sessionBuilder);
                 }
 
                 @Override
@@ -44,14 +48,29 @@ public class WebimChatActivity extends AppCompatActivity implements FatalErrorHa
             });
     }
 
-    private void initFragment(WebimSession webimSession) {
+    private void createSessionWithAnonymousVisitor() {
+        WebimSessionDirector
+            .createSessionBuilderWithAnonymousVisitor(this, Webim.PushSystem.FCM, new WebimSessionDirector.OnSessionBuilderCreatedListener() {
+                @Override
+                public void onSessionBuilderCreated(Webim.SessionBuilder sessionBuilder) {
+                    initFragment(sessionBuilder);
+                }
+
+                @Override
+                public void onError(WebimSessionDirector.SessionBuilderError error) {
+                    Toast.makeText(WebimChatActivity.this, error.toString(), Toast.LENGTH_SHORT).show();
+                }
+            });
+    }
+
+    private void initFragment(Webim.SessionBuilder sessionBuilder) {
         String fragmentByTag = WidgetChatFragment.class.getSimpleName();
         WidgetChatFragment currentFragment = (WidgetChatFragment) getSupportFragmentManager().findFragmentByTag(fragmentByTag);
 
         if (currentFragment == null) {
             SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
             currentFragment = new WidgetChatFragment();
-            currentFragment.setWebimSession(webimSession);
+            currentFragment.setWebimSessionBuilder(sessionBuilder);
 
             getSupportFragmentManager()
                 .beginTransaction()
@@ -64,35 +83,6 @@ public class WebimChatActivity extends AppCompatActivity implements FatalErrorHa
     @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-    }
-
-    @Override
-    public void onError(@NonNull WebimError<FatalErrorType> error) {
-        switch (error.getErrorType()) {
-            case ACCOUNT_BLOCKED:
-                showError(R.string.error_account_blocked_header,
-                        R.string.error_account_blocked_desc);
-                break;
-            case VISITOR_BANNED:
-                showError(R.string.error_user_banned_header, R.string.error_user_banned_desc);
-                break;
-            default:
-                if (!BuildConfig.DEBUG) {
-                    FirebaseCrashlytics.getInstance().recordException(
-                        new Throwable("Handled unknown webim error: " + error.getErrorString()));
-                }
-                showError(R.string.error_unknown_header,
-                    R.string.error_unknown_desc, error.getErrorString());
-                break;
-        }
-    }
-
-    private void showError(int errorHeaderId, int errorDescId, String... args) {
-        getSupportFragmentManager()
-                .beginTransaction()
-                .replace(R.id.webimChatContainer,
-                        ErrorFragment.newInstance(errorHeaderId, errorDescId, args))
-                .commit();
     }
 
     @Override

@@ -3,11 +3,14 @@ package ru.webim.android.sdk.impl;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.google.gson.annotations.Expose;
+
 import java.util.List;
 import java.util.Objects;
 
 import ru.webim.android.sdk.Message;
 import ru.webim.android.sdk.Operator;
+import ru.webim.android.sdk.impl.items.MessageGroup;
 
 public class MessageImpl implements Message, TimeMicrosHolder, Comparable<MessageImpl> {
 
@@ -23,12 +26,13 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
     protected final @NonNull Type type;
     protected @NonNull String text;
 
-    protected @NonNull SendStatus sendStatus = SendStatus.SENT;
+    protected final @NonNull SendStatus sendStatus;
 
     private final @Nullable Attachment attachment;
-    private final @Nullable String rawText;
+    protected final @Nullable String rawText;
 
-    private String serverSideId;
+    @Nullable
+    private final String serverSideId;
     protected boolean savedInHistory;
     private boolean readByOperator;
     private boolean canBeEdited;
@@ -36,6 +40,7 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
     private boolean edited;
     private boolean canVisitorReact;
     private boolean canVisitorChangeReaction;
+    private @Nullable MessageGroup.GroupData groupData;
     private @Nullable MessageReaction reaction;
     private @Nullable Quote quote;
     private @Nullable Sticker sticker;
@@ -50,7 +55,7 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
             @NonNull Type type,
             @NonNull String text,
             long timeMicros,
-            String serverSideId,
+            @Nullable String serverSideId,
             @Nullable String rawText,
             boolean savedInHistory,
             @Nullable Attachment attachment,
@@ -64,7 +69,9 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
             @Nullable Sticker sticker,
             @Nullable MessageReaction reaction,
             boolean canVisitorReact,
-            boolean canVisitorChangeReaction
+            boolean canVisitorChangeReaction,
+            @Nullable MessageGroup.GroupData groupData,
+            SendStatus sendStatus
     ) {
         serverUrl.getClass(); // NPE
         clientSideId.getClass(); // NPE
@@ -96,6 +103,8 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
         this.reaction = reaction;
         this.canVisitorReact = canVisitorReact;
         this.canVisitorChangeReaction = canVisitorChangeReaction;
+        this.groupData = groupData;
+        this.sendStatus = sendStatus;
     }
 
     @Override
@@ -137,6 +146,12 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
     @Override
     public boolean canVisitorChangeReaction() {
         return canVisitorChangeReaction;
+    }
+
+    @Nullable
+    @Override
+    public MessageGroup.GroupData getGroupData() {
+        return groupData;
     }
 
     @Override
@@ -196,7 +211,7 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
         return sessionId;
     }
 
-    @NonNull
+    @Nullable
     @Override
     public String getServerSideId() {
         return serverSideId;
@@ -274,7 +289,6 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
     public boolean isContentEquals(MessageImpl message) {
         return
             clientSideId.toString().equals(message.clientSideId.toString())
-                && serverSideId.equals(message.serverSideId)
                 && InternalUtils.equals(operatorId == null
                     ? null
                     : operatorId.toString(),
@@ -302,7 +316,6 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
     public boolean isContentEqualsForHistoryMessage(MessageImpl history) {
         return
                 clientSideId.toString().equals(history.clientSideId.toString())
-                && serverSideId.equals(history.serverSideId)
                 && savedInHistory == history.savedInHistory
                 && text.equals(history.text)
                 && edited == history.edited
@@ -311,6 +324,14 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
     }
 
     public MessageImpl mergeWithHistoryMessage(MessageImpl history) {
+        if (history.getSendStatus() == SendStatus.FAILED) {
+            return mergeWithHistoryFailedMessage(history);
+        }
+        return mergeWithHistoryMessageInternal(history);
+    }
+
+    @NonNull
+    private MessageImpl mergeWithHistoryMessageInternal(MessageImpl history) {
         return new MessageImpl(
             serverUrl,
             clientSideId,
@@ -335,8 +356,32 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
             sticker,
             reaction,
             canVisitorReact,
-            canVisitorChangeReaction
+            canVisitorChangeReaction,
+            groupData,
+            sendStatus
         );
+    }
+
+    public MessageImpl mergeWithHistoryFailedMessage(MessageImpl history) {
+        return new MessageFailed(
+            serverUrl,
+            clientSideId,
+            senderName,
+            type,
+            history.text,
+            timeMicros,
+            history.getQuote(),
+            history.getSticker(),
+            history.getAttachment()
+        );
+    }
+
+    boolean isSendingOrFailed() {
+        return this instanceof MessageSending || this instanceof MessageFailed;
+    }
+
+    boolean isSending() {
+        return this instanceof MessageSending;
     }
 
     @Override
@@ -383,12 +428,14 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
         private @NonNull List<FileInfo> filesInfo;
         private @NonNull AttachmentState state;
 
-        public AttachmentImpl(int downloadProgress,
-                              @Nullable String errorMessage,
-                              @Nullable String errorType,
-                              @NonNull FileInfo fileInfo,
-                              @NonNull List<FileInfo> filesInfo,
-                              @NonNull AttachmentState state) {
+        public AttachmentImpl(
+            int downloadProgress,
+            @Nullable String errorMessage,
+            @Nullable String errorType,
+            @NonNull FileInfo fileInfo,
+            @NonNull List<FileInfo> filesInfo,
+            @NonNull AttachmentState state
+        ) {
             this.downloadProgress = downloadProgress;
             this.errorMessage = errorMessage;
             this.errorType = errorType;
@@ -445,21 +492,27 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
     }
 
     public static class FileInfoImpl implements Message.FileInfo {
-        private final @Nullable String contentType;
-        private final @NonNull String filename;
-        private final @Nullable ImageInfo imageInfo;
-        private final long size;
-        private final @Nullable String url;
-        private final @Nullable String guid;
-        private final @NonNull FileUrlCreator fileUrlCreator;
+        private @Nullable String contentType;
+        private @NonNull String filename;
+        private @Nullable ImageInfo imageInfo;
+        private long size;
+        private @Nullable String url;
+        private @Nullable String guid;
+        private @Nullable String localPath;
 
-        public FileInfoImpl(@Nullable String contentType,
-                            @NonNull String filename,
-                            @Nullable ImageInfo imageInfo,
-                            long size,
-                            @Nullable String url,
-                            @Nullable String guid,
-                            @NonNull FileUrlCreator fileUrlCreator) {
+        @Expose
+        private transient FileUrlCreator fileUrlCreator;
+
+        public FileInfoImpl(
+            @Nullable String contentType,
+            @NonNull String filename,
+            @Nullable ImageInfo imageInfo,
+            long size,
+            @Nullable String url,
+            @Nullable String guid,
+            @Nullable String localPath,
+            FileUrlCreator fileUrlCreator
+        ) {
 
             this.contentType = contentType;
             this.filename = filename;
@@ -467,6 +520,7 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
             this.size = size;
             this.url = url;
             this.guid = guid;
+            this.localPath = localPath;
             this.fileUrlCreator = fileUrlCreator;
         }
 
@@ -501,13 +555,18 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
         @Nullable
         @Override
         public String getUrl() {
-            if (guid != null) {
-                String currentUrl = fileUrlCreator.createFileUrl(filename, guid, false);
-                if (currentUrl != null) {
-                    return currentUrl;
+            if (fileUrlCreator != null && guid != null) {
+                String fileUrl = fileUrlCreator.createFileUrl(filename, guid, false);
+                if (fileUrl != null) {
+                    return fileUrl;
                 }
             }
             return url;
+        }
+
+        @Nullable
+        public String getLocalPath() {
+            return localPath;
         }
 
         @Override
@@ -515,22 +574,24 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             FileInfoImpl fileInfo = (FileInfoImpl) o;
-            return size == fileInfo.size && Objects.equals(contentType, fileInfo.contentType) && filename.equals(fileInfo.filename) && Objects.equals(imageInfo, fileInfo.imageInfo) && Objects.equals(url, fileInfo.url) && Objects.equals(guid, fileInfo.guid) && fileUrlCreator.equals(fileInfo.fileUrlCreator);
+            return size == fileInfo.size && Objects.equals(contentType, fileInfo.contentType) && filename.equals(fileInfo.filename) && Objects.equals(imageInfo, fileInfo.imageInfo) && Objects.equals(guid, fileInfo.guid);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(contentType, filename, imageInfo, size, url, guid, fileUrlCreator);
+            return Objects.hash(contentType, filename, imageInfo, size, guid);
         }
     }
 
     public static class ImageInfoImpl implements ImageInfo {
-        private final @NonNull String thumbUrl;
-        private final int width;
-        private final int height;
-        private final @NonNull String guid;
-        private final @NonNull String filename;
-        private final @NonNull FileUrlCreator fileUrlCreator;
+        private @NonNull String thumbUrl;
+        private int width;
+        private int height;
+        private @NonNull String guid;
+        private @NonNull String filename;
+
+        @Expose
+        private transient FileUrlCreator fileUrlCreator;
 
         public ImageInfoImpl(
             @NonNull String thumbUrl,
@@ -551,10 +612,10 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
         @NonNull
         @Override
         public String getThumbUrl() {
-            if (guid != null) {
-                String currentUrl = fileUrlCreator.createFileUrl(filename, guid, true);
-                if (currentUrl != null) {
-                    return currentUrl;
+            if (fileUrlCreator != null) {
+                String thumbnailUrl = fileUrlCreator.createFileUrl(filename, guid, true);
+                if (thumbnailUrl != null) {
+                    return thumbnailUrl;
                 }
             }
             return thumbUrl;
@@ -568,6 +629,19 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
         @Override
         public int getHeight() {
             return height;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ImageInfoImpl imageInfo = (ImageInfoImpl) o;
+            return width == imageInfo.width && height == imageInfo.height && Objects.equals(guid, imageInfo.guid) && Objects.equals(filename, imageInfo.filename);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(width, height, guid, filename);
         }
     }
 
@@ -588,7 +662,7 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
         @Nullable
         private final FileInfo attachment;
         @Nullable
-        private final String authorId;
+        private final String quotedMessageId;
         @Nullable
         private final String id;
         @Nullable
@@ -604,7 +678,7 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
 
         public QuoteImpl(
                 @Nullable FileInfo attachment,
-                @Nullable String authorId,
+                @Nullable String serverSideId,
                 @Nullable String id,
                 @Nullable Type type,
                 @Nullable String senderName,
@@ -612,7 +686,7 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
                 @Nullable String text,
                 long timeSeconds) {
             this.attachment = attachment;
-            this.authorId = authorId;
+            this.quotedMessageId = serverSideId;
             this.id = id;
             this.type = type;
             this.senderName = senderName;
@@ -629,8 +703,8 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
 
         @Nullable
         @Override
-        public String getAuthorId() {
-            return authorId;
+        public String getQuotedMessageId() {
+            return quotedMessageId;
         }
 
         @Nullable

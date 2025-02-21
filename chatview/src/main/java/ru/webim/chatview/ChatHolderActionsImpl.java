@@ -53,23 +53,28 @@ public class ChatHolderActionsImpl implements MessageHolder.ChatHolderActions {
     public void onLinkClicked(String url, Message message) {
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setData(Uri.parse(url));
-        context.startActivity(intent);
+
+        try {
+            context.startActivity(intent);
+        } catch (ActivityNotFoundException exception) {
+            Log.e("Webim", exception.getMessage());
+        }
     }
 
     @Override
     public void onMessageUpdated(Message message, int adapterPosition) {
-        String messageId = message.getServerSideId();
+        String messageId = message.getClientSideId().toString();
         if (contextDialog != null &&
             contextDialog.isShowing() &&
             contextDialog instanceof ContextMenuDialog &&
-            messageId != null &&
             messageId.equals(contextMessageId)) {
 
             Message.Type type = message.getType();
             ContextMenuDialog contextMenuDialog = (ContextMenuDialog) contextDialog;
             contextMenuDialog.hideItems();
             boolean isFile = message.getType() == FILE_FROM_VISITOR || message.getType() == FILE_FROM_OPERATOR;
-            contextMenuDialog.showItem(R.id.relLayoutReply, message.canBeReplied());
+            boolean repliedEnabled = stream.getAccountConfig() != null && stream.getAccountConfig().isQuotingEnable();
+            contextMenuDialog.showItem(R.id.relLayoutReply, message.canBeReplied() && repliedEnabled);
             contextMenuDialog.showItem(R.id.relLayoutCopy, !isFile);
 
             switch (type) {
@@ -89,8 +94,9 @@ public class ChatHolderActionsImpl implements MessageHolder.ChatHolderActions {
                     contextMenuDialog.showItem(R.id.relLayoutDownload, false);
                     break;
                 case FILE_FROM_VISITOR:
+                    boolean canBeDeleted = message.getSendStatus() != Message.SendStatus.SENT || message.canBeEdited();
+                    contextMenuDialog.showItem(R.id.relLayoutDelete, canBeDeleted);
                     contextMenuDialog.showItem(R.id.relLayoutEdit, false);
-                    contextMenuDialog.showItem(R.id.relLayoutDelete, message.canBeEdited());
                     contextMenuDialog.showItem(R.id.relLayoutDownload, false);
                     break;
             }
@@ -136,7 +142,7 @@ public class ChatHolderActionsImpl implements MessageHolder.ChatHolderActions {
         dynamicDialog.show(visible);
 
         contextDialog = dynamicDialog;
-        contextMessageId = message.getServerSideId();
+        contextMessageId = message.getClientSideId().toString();
         onMessageUpdated(message, adapterPosition);
     }
 
@@ -171,7 +177,7 @@ public class ChatHolderActionsImpl implements MessageHolder.ChatHolderActions {
             DownloadManager.Request downloadRequest = new DownloadManager.Request(Uri.parse(fileInfo.getUrl()));
             downloadRequest.setTitle(filename);
             downloadRequest.allowScanningByMediaScanner();
-            downloadRequest.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
+            downloadRequest.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
             downloadRequest.setDestinationUri(uri);
             manager.enqueue(downloadRequest);
         } else {
@@ -184,6 +190,11 @@ public class ChatHolderActionsImpl implements MessageHolder.ChatHolderActions {
         String packageName = context.getApplicationContext().getPackageName();
         Uri uri = FileProvider.getUriForFile(context, packageName + ".provider", file);
         String mime = fileInfo.getContentType();
+
+        if (mime != null && mime.contains("/")) {
+            int dividerIndex = mime.indexOf('/');
+            mime = mime.substring(0, dividerIndex) + "/*";
+        }
 
         Intent intent = new Intent();
         intent.setAction(Intent.ACTION_VIEW);

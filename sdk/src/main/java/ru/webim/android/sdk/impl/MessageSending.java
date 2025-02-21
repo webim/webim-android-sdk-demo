@@ -12,36 +12,35 @@ public class MessageSending extends MessageImpl {
                           long timeMicros,
                           @Nullable Quote quote,
                           @Nullable Sticker sticker,
-                          @Nullable Attachment attachment) {
-        super(serverUrl,
-                id,
-                null,
-                null,
-                null,
-                senderName,
-                type,
-                text,
-                timeMicros,
-                null,
-                null,
-                false,
-                null,
-                false,
-                false,
-                false,
-                false,
-                quote,
-                null,
-                null,
-                sticker,
-                null,
-                false,
-                false);
-    }
-
-    @NonNull
-    @Override
-    public SendStatus getSendStatus() {
-        return SendStatus.SENDING;
+                          @Nullable Attachment attachment
+    ) {
+        super(
+            serverUrl,
+            id,
+            null,
+            null,
+            null,
+            senderName,
+            type,
+            text,
+            timeMicros,
+            null,
+            null,
+            false,
+            attachment,
+            false,
+            false,
+            false,
+            false,
+            quote,
+            null,
+            null,
+            sticker,
+            null,
+            false,
+            false,
+            null,
+            SendStatus.SENDING
+        );
     }
 }

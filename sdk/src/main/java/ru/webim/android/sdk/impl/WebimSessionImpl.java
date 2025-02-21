@@ -14,6 +14,8 @@ import androidx.security.crypto.MasterKeys;
 
 import com.google.gson.JsonParser;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -22,6 +24,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executor;
@@ -34,25 +37,31 @@ import ru.webim.android.sdk.FatalErrorHandler;
 import ru.webim.android.sdk.FatalErrorHandler.FatalErrorType;
 import ru.webim.android.sdk.Message;
 import ru.webim.android.sdk.MessageStream;
+import ru.webim.android.sdk.MessageTracker;
 import ru.webim.android.sdk.NotFatalErrorHandler;
 import ru.webim.android.sdk.ProvidedAuthorizationTokenStateListener;
+import ru.webim.android.sdk.Supplier;
 import ru.webim.android.sdk.Webim;
 import ru.webim.android.sdk.WebimError;
+import ru.webim.android.sdk.WebimLogEntity;
 import ru.webim.android.sdk.WebimSession;
 import ru.webim.android.sdk.impl.backend.AuthData;
-import ru.webim.android.sdk.impl.backend.callbacks.DefaultCallback;
-import ru.webim.android.sdk.impl.backend.callbacks.DeltaCallback;
 import ru.webim.android.sdk.impl.backend.DeltaRequestLoop;
 import ru.webim.android.sdk.impl.backend.InternalErrorListener;
+import ru.webim.android.sdk.impl.backend.ServerConfigsCallback;
 import ru.webim.android.sdk.impl.backend.SessionParamsListener;
 import ru.webim.android.sdk.impl.backend.WebimActions;
 import ru.webim.android.sdk.impl.backend.WebimClient;
 import ru.webim.android.sdk.impl.backend.WebimClientBuilder;
 import ru.webim.android.sdk.impl.backend.WebimInternalError;
 import ru.webim.android.sdk.impl.backend.WebimInternalLog;
+import ru.webim.android.sdk.impl.backend.callbacks.DefaultCallback;
+import ru.webim.android.sdk.impl.backend.callbacks.DeltaCallback;
+import ru.webim.android.sdk.impl.items.AccountConfigItem;
 import ru.webim.android.sdk.impl.items.ChatItem;
 import ru.webim.android.sdk.impl.items.DepartmentItem;
 import ru.webim.android.sdk.impl.items.HistoryRevisionItem;
+import ru.webim.android.sdk.impl.items.LocationSettingsItem;
 import ru.webim.android.sdk.impl.items.MessageItem;
 import ru.webim.android.sdk.impl.items.OnlineStatusItem;
 import ru.webim.android.sdk.impl.items.OperatorItem;
@@ -81,6 +90,8 @@ public class WebimSessionImpl implements WebimSession {
     private static final String PREFS_KEY_SESSION_ID = "session_id";
     private static final String PREFS_KEY_VISITOR = "visitor";
     private static final String PREFS_KEY_VISITOR_EXT = "visitor_ext";
+    private static final String PREFS_KEY_ACCOUNT_CONFIG = "account_config";
+    private static final String PREFS_KEY_LOCATION_CONFIG = "location_config";
     private static final String PREFS_KEY_NON_ENCRYPTED_PREFERENCES_REMOVED = "non_safety_preferences_removed";
     private static final String SHARED_PREFS_NAME = BuildConfig.LIBRARY_PACKAGE_NAME + ".visitor.";
     private static final String SHARED_PREFS_NAME_DEPRECATED = "com.webimapp.android.sdk.visitor.";
@@ -97,6 +108,8 @@ public class WebimSessionImpl implements WebimSession {
     private final LocationStatusPoller locationStatusPoller;
     @NonNull
     private final MessageStreamImpl stream;
+    @NonNull
+    private final SendingMessagesResender sendingMessagesResender;
     private boolean clientStarted;
 
     private WebimSessionImpl(
@@ -105,13 +118,15 @@ public class WebimSessionImpl implements WebimSession {
         @NonNull WebimClient client,
         @NonNull HistoryPoller historyPoller,
         @NonNull MessageStreamImpl stream,
-        @Nullable LocationStatusPoller locationStatusPoller) {
+        @Nullable LocationStatusPoller locationStatusPoller,
+        @NonNull SendingMessagesResender sendingMessagesResender) {
         this.accessChecker = accessChecker;
         this.destroyer = destroyer;
         this.client = client;
         this.historyPoller = historyPoller;
         this.stream = stream;
         this.locationStatusPoller = locationStatusPoller;
+        this.sendingMessagesResender = sendingMessagesResender;
     }
 
     private void checkAccess() {
@@ -140,6 +155,7 @@ public class WebimSessionImpl implements WebimSession {
         checkAccess();
         client.pause();
         historyPoller.pause();
+        sendingMessagesResender.cancelTask();
         if (locationStatusPoller != null) {
             locationStatusPoller.pause();
         }
@@ -198,6 +214,11 @@ public class WebimSessionImpl implements WebimSession {
         client.setPushToken(emptyPushToken, tokenCallback);
     }
 
+    @Override
+    public void setRequestHeaders(@NonNull Map<String, String> headers) {
+        client.setRequestHeaders(headers);
+    }
+
     @NonNull
     public static WebimSessionImpl newInstance(
             @NonNull Context context,
@@ -222,7 +243,9 @@ public class WebimSessionImpl implements WebimSession {
             @NonNull String multivisitorSection,
             @Nullable SessionCallback sessionCallback,
             long requestLocationFrequency,
-            @Nullable MessageParsingErrorHandler messageParsingErrorHandler
+            @Nullable MessageParsingErrorHandler messageParsingErrorHandler,
+            @Nullable Map<String, String> requestHeader,
+            @NotNull List<String> extraDomains
     ) {
         context.getClass(); // NPE
         accountName.getClass(); // NPE
@@ -265,16 +288,22 @@ public class WebimSessionImpl implements WebimSession {
         DeltaCallbackImpl deltaCallback = new DeltaCallbackImpl(
             currentChatMessageMapper,
             historyMessageMapper,
-            preferences);
+            preferences
+        );
+
+        ServerConfigsCallbackImpl serverConfigsCallback = new ServerConfigsCallbackImpl();
+
+        DestroyIfNotErrorListener errorListener = new DestroyIfNotErrorListener(sessionDestroyer, new ErrorHandlerToInternalAdapter(errorHandler), notFatalErrorHandler);
 
         final WebimClient client = new WebimClientBuilder()
             .setBaseUrl(serverUrl)
             .setLocation(location).setAppVersion(appVersion)
             .setVisitorFieldsJson((visitorFields == null) ? null : visitorFields.getJson())
             .setDeltaCallback(deltaCallback)
+            .setServerConfigsCallback(serverConfigsCallback)
+            .setExtraDomains(extraDomains)
             .setSessionParamsListener(new SessionParamsListenerImpl(preferences))
-            .setErrorListener(new DestroyIfNotErrorListener(sessionDestroyer,
-                    new ErrorHandlerToInternalAdapter(errorHandler), notFatalErrorHandler))
+            .setErrorListener(errorListener)
             .setVisitorJson(preferences.getString(PREFS_KEY_VISITOR, null))
             .setProvidedAuthorizationListener(providedAuthorizationTokenStateListener)
             .setProvidedAuthorizationToken(providedAuthorizationToken)
@@ -284,13 +313,15 @@ public class WebimSessionImpl implements WebimSession {
                     handler))
             .setPlatform(PLATFORM)
             .setTitle((title != null) ? title : TITLE)
-            .setPushToken(pushSystem,
-                    pushSystem != Webim.PushSystem.NONE ? pushToken : null)
+            .setPushToken(pushSystem, pushSystem != Webim.PushSystem.NONE ? pushToken : null)
             .setDeviceId(getDeviceId(context, multivisitorSection))
             .setPrechatFields(prechatFields)
+            .setRequestHeader(requestHeader)
             .setSslSocketFactoryAndTrustManager(sslSocketFactory, trustManager)
             .setSessionCallback(sessionCallback)
             .build();
+
+        errorListener.setHostSwitchRunnable(client::switchHost);
 
         FileUrlCreator fileUrlCreator = new FileUrlCreator(client, serverUrl);
 
@@ -340,6 +371,9 @@ public class WebimSessionImpl implements WebimSession {
                 historyMeta.isHistoryEnded()
         );
 
+        AccountConfigItem cachedAccountConfigItem = resolveCachedConfigItem(preferences, PREFS_KEY_ACCOUNT_CONFIG, AccountConfigItem.class);
+        LocationSettingsItem cachedLocationConfigItem = resolveCachedConfigItem(preferences, PREFS_KEY_LOCATION_CONFIG, LocationSettingsItem.class);
+
         MessageStreamImpl stream = new MessageStreamImpl(
                 serverUrl,
                 currentChatMessageMapper,
@@ -351,7 +385,9 @@ public class WebimSessionImpl implements WebimSession {
                 messageHolder,
                 new MessageComposingHandlerImpl(handler, actions),
                 new LocationSettingsHolder(preferences),
-                location
+                location,
+                cachedAccountConfigItem,
+                cachedLocationConfigItem
         );
 
         final HistoryPoller hPoller = new HistoryPoller(sessionDestroyer,
@@ -378,13 +414,10 @@ public class WebimSessionImpl implements WebimSession {
         if (requestLocationFrequency > 0) {
             locationStatusPoller = new LocationStatusPoller(actions, handler, stream, location, requestLocationFrequency);
             LocationStatusPoller finalLocationPoller = locationStatusPoller;
-            sessionDestroyer.addDestroyAction(new Runnable() {
-                @Override
-                public void run() {
-                    finalLocationPoller.pause();
-                }
-            });
+            sessionDestroyer.addDestroyAction(finalLocationPoller::pause);
         }
+
+        SendingMessagesResender sendingMessagesResender = new SendingMessagesResender(historyStorage, stream);
 
         WebimSessionImpl session = new WebimSessionImpl(
             accessChecker,
@@ -392,15 +425,40 @@ public class WebimSessionImpl implements WebimSession {
             client,
             hPoller,
             stream,
-            locationStatusPoller
+            locationStatusPoller,
+            sendingMessagesResender
         );
 
-        deltaCallback.setStream(stream, messageHolder, session, hPoller);
+        deltaCallback.setStream(stream, messageHolder, session, hPoller, sendingMessagesResender);
+        serverConfigsCallback.setStream(stream, preferences);
+
+        Supplier<Boolean> safeUrlProvider = () -> stream.getAccountConfig() != null && stream.getAccountConfig().isCheckVisitorAuth();
+        fileUrlCreator.setSafeUrlProvider(safeUrlProvider);
 
         WebimInternalLog.getInstance().log("Specified Webim server – " + serverUrl,
                 Webim.SessionBuilder.WebimLogVerbosityLevel.DEBUG);
 
         return session;
+    }
+
+    private static <T> T resolveCachedConfigItem(SharedPreferences preferences, String prefKey, Class<T> clazz) {
+        String rawAccountConfig = preferences.getString(prefKey, null);
+        if (rawAccountConfig == null || rawAccountConfig.isEmpty()) {
+            return null;
+        }
+
+        try {
+            return InternalUtils.fromJson(rawAccountConfig, clazz);
+        } catch (Throwable throwable) {
+            preferences.edit().remove(prefKey).apply();
+
+            WebimInternalLog.getInstance().log(
+                "Can't read cached " + prefKey + " " + throwable.getMessage(),
+                Webim.SessionBuilder.WebimLogVerbosityLevel.ERROR,
+                WebimLogEntity.DATABASE
+            );
+            return null;
+        }
     }
 
     private static SharedPreferences getSharedPreferences(@NonNull Context context, @Nullable ProvidedVisitorFields visitorFields, @Nullable FatalErrorHandler errorHandler) {
@@ -489,8 +547,10 @@ public class WebimSessionImpl implements WebimSession {
         return guid;
     }
 
-    private static void clearVisitorData(@NonNull Context context,
-                                         @NonNull SharedPreferences preferences) {
+    private static void clearVisitorData(
+        @NonNull Context context,
+        @NonNull SharedPreferences preferences
+    ) {
         String dbName = preferences.getString(PREFS_KEY_HISTORY_DB_NAME, null);
         if (dbName != null) {
             context.deleteDatabase(dbName);
@@ -498,9 +558,11 @@ public class WebimSessionImpl implements WebimSession {
         preferences.edit().clear().apply();
     }
 
-    private static void checkSavedSession(@NonNull Context context,
-                                          @NonNull SharedPreferences preferences,
-                                          @Nullable ProvidedVisitorFields newVisitorFields) {
+    private static void checkSavedSession(
+        @NonNull Context context,
+        @NonNull SharedPreferences preferences,
+        @Nullable ProvidedVisitorFields newVisitorFields
+    ) {
         String newVisitorFieldsJson = newVisitorFields == null ? null : newVisitorFields.getJson();
         String oldVisitorFieldsJson = preferences.getString(PREFS_KEY_VISITOR_EXT, null);
         if (oldVisitorFieldsJson != null) {
@@ -829,7 +891,7 @@ public class WebimSessionImpl implements WebimSession {
 
         private void requestHistorySince(@Nullable String since,
                                          final HistorySinceCallback callback) {
-            actions.requestHistorySince(since, wrapHistorySinceCallback(since, callback));
+            actions.requestHistorySinceForPoller(since, wrapHistorySinceCallback(since, callback));
         }
 
         private DefaultCallback<HistorySinceResponse> wrapHistorySinceCallback(
@@ -848,7 +910,7 @@ public class WebimSessionImpl implements WebimSession {
                         Set<String> deletes = new HashSet<>();
                         for (MessageItem msg : list) {
                             if (msg.isDeleted()) {
-                                deletes.add(msg.getId());
+                                deletes.add(msg.getClientSideId());
                             } else {
                                 changes.add(msg);
                             }
@@ -860,6 +922,42 @@ public class WebimSessionImpl implements WebimSession {
                                 since == null,
                                 data.getRevision());
                     }
+                }
+            };
+        }
+    }
+
+    private static class SendingMessagesResender {
+        private final HistoryStorage historyStorage;
+        private MessageStream messageStream;
+        private volatile boolean isLoading;
+
+        private MessageTracker.GetMessagesCallback callback;
+
+        private SendingMessagesResender(HistoryStorage historyStorage, MessageStream messageStream) {
+            this.historyStorage = historyStorage;
+            this.messageStream = messageStream;
+        }
+
+        public void checkMessagesForResend() {
+            isLoading = true;
+            createCallback();
+            historyStorage.getSending(callback);
+        }
+
+        public void cancelTask() {
+            isLoading = false;
+            callback = null;
+        }
+
+        private void createCallback() {
+            callback = messages -> {
+                if (!isLoading) {
+                    return;
+                }
+
+                for (Message message : messages) {
+                    messageStream.resendMessage(message, null);
                 }
             };
         }
@@ -923,6 +1021,43 @@ public class WebimSessionImpl implements WebimSession {
                     handler.postDelayed(callback, requestLocationFrequency);
                 }
             });
+        }
+    }
+
+    private static class ServerConfigsCallbackImpl implements ServerConfigsCallback {
+        private MessageStreamImpl messageStream;
+        private SharedPreferences preferences;
+
+        public void setStream(MessageStreamImpl messageStream, SharedPreferences preferences) {
+            this.messageStream = messageStream;
+            this.preferences = preferences;
+        }
+
+        @Override
+        public void onServerConfigs(
+            @NonNull AccountConfigItem accountConfigItem,
+            @NonNull LocationSettingsItem locationSettingsItem
+        ) {
+            cacheConfigItem(PREFS_KEY_ACCOUNT_CONFIG, accountConfigItem);
+            cacheConfigItem(PREFS_KEY_LOCATION_CONFIG, locationSettingsItem);
+            messageStream.onServerConfigsUpdated(accountConfigItem, locationSettingsItem);
+        }
+
+        private void cacheConfigItem(String key, Object item) {
+            try {
+                String rawItem = InternalUtils.toJson(item);
+                if (rawItem != null && !rawItem.isEmpty()) {
+                    preferences.edit()
+                        .putString(key, rawItem)
+                        .apply();
+                }
+            } catch (Throwable throwable) {
+                WebimInternalLog.getInstance().log(
+                    "Cannot update item " + key + " " + throwable.getMessage(),
+                    Webim.SessionBuilder.WebimLogVerbosityLevel.ERROR,
+                    WebimLogEntity.DATABASE
+                );
+            }
         }
     }
 
@@ -990,25 +1125,31 @@ public class WebimSessionImpl implements WebimSession {
         private MessageStreamImpl messageStream;
         private MessageHolder messageHolder;
         private WebimSessionImpl session;
+        private SendingMessagesResender messagesResender;
         private boolean firstFullUpdateReceived;
 
         private DeltaCallbackImpl(
-                @NonNull MessageFactories.Mapper<MessageImpl> currentChatMessageMapper,
-                @NonNull MessageFactories.Mapper<MessageImpl> historyChatMessageMapper,
-                @NonNull SharedPreferences preferences) {
+            @NonNull MessageFactories.Mapper<MessageImpl> currentChatMessageMapper,
+            @NonNull MessageFactories.Mapper<MessageImpl> historyChatMessageMapper,
+            @NonNull SharedPreferences preferences
+        ) {
             this.currentChatMessageMapper = currentChatMessageMapper;
             this.historyChatMessageMapper = historyChatMessageMapper;
             this.preferences = preferences;
         }
 
-        public void setStream(MessageStreamImpl stream,
-                              MessageHolder messageHolder,
-                              WebimSessionImpl session,
-                              HistoryPoller historyPoller) {
+        public void setStream(
+            MessageStreamImpl stream,
+            MessageHolder messageHolder,
+            WebimSessionImpl session,
+            HistoryPoller historyPoller,
+            SendingMessagesResender messagesResender
+        ) {
             this.messageStream = stream;
             this.messageHolder = messageHolder;
             this.session = session;
             this.historyPoller = historyPoller;
+            this.messagesResender = messagesResender;
         }
 
         @Override
@@ -1067,6 +1208,7 @@ public class WebimSessionImpl implements WebimSession {
             if (!firstFullUpdateReceived) {
                 firstFullUpdateReceived = true;
                 messageHolder.onFirstFullUpdateReceived();
+                messagesResender.checkMessagesForResend();
             }
         }
 
@@ -1432,13 +1574,21 @@ public class WebimSessionImpl implements WebimSession {
         private final InternalErrorListener errorListener;
         @Nullable
         private final NotFatalErrorHandler notFatalErrorHandler;
+        @NonNull
+        private Runnable hostSwitchRunnable;
 
-        private DestroyIfNotErrorListener(@Nullable SessionDestroyer destroyer,
-                                          @Nullable InternalErrorListener errorListener,
-                                          @Nullable NotFatalErrorHandler notFatalErrorHandler) {
+        private DestroyIfNotErrorListener(
+            @Nullable SessionDestroyer destroyer,
+            @Nullable InternalErrorListener errorListener,
+            @Nullable NotFatalErrorHandler notFatalErrorHandler
+        ) {
             this.destroyer = destroyer;
             this.errorListener = errorListener;
             this.notFatalErrorHandler = notFatalErrorHandler;
+        }
+
+        public void setHostSwitchRunnable(@NonNull Runnable hostSwitchRunnable) {
+            this.hostSwitchRunnable = hostSwitchRunnable;
         }
 
         @Override
@@ -1455,8 +1605,18 @@ public class WebimSessionImpl implements WebimSession {
 
         @Override
         public void onNotFatalError(@NonNull NotFatalErrorHandler.NotFatalErrorType error) {
+            handleNotFatalError(error);
             if (notFatalErrorHandler != null) {
                 notFatalErrorHandler.onNotFatalError(new WebimErrorImpl<>(error, null));
+            }
+        }
+
+        private void handleNotFatalError(NotFatalErrorHandler.NotFatalErrorType error) {
+            switch (error) {
+                case UNKNOWN_HOST: {
+                    hostSwitchRunnable.run();
+                    break;
+                }
             }
         }
     }
@@ -1578,7 +1738,10 @@ public class WebimSessionImpl implements WebimSession {
                         "Created on: " + thread + ", current thread: " + Thread.currentThread());
             }
             if (destroyer.isDestroyed()) {
-                throw new IllegalStateException("Can't use destroyed session");
+                WebimInternalLog.getInstance().log(
+                    "WebimSession is already destroyed",
+                    Webim.SessionBuilder.WebimLogVerbosityLevel.ERROR
+                );
             }
         }
     }

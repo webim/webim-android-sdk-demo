@@ -43,8 +43,12 @@ public abstract class AbstractRequestLoop {
     private final Lock pauseLock = new ReentrantLock();
     private final Condition pauseCond = pauseLock.newCondition();
 
-    public AbstractRequestLoop(@NonNull Executor callbackExecutor,
-                               @NonNull InternalErrorListener errorListener) {
+    private final static int UNKNOWN_HOST_ERROR_CODE = 404;
+
+    public AbstractRequestLoop(
+        @NonNull Executor callbackExecutor,
+        @NonNull InternalErrorListener errorListener
+    ) {
         this.callbackExecutor = callbackExecutor;
         this.errorListener = errorListener;
     }
@@ -194,17 +198,18 @@ public abstract class AbstractRequestLoop {
                 WebimInternalLog.getInstance().log(exception.toString(),
                         Webim.SessionBuilder.WebimLogVerbosityLevel.DEBUG
                 );
-                callbackExecutor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        errorListener.onNotFatalError(NotFatalErrorHandler.NotFatalErrorType.SOCKET_TIMEOUT_EXPIRED);
-                    }
-                });
+                callbackExecutor.execute(() -> errorListener.onNotFatalError(
+                    NotFatalErrorHandler.NotFatalErrorType.SOCKET_TIMEOUT_EXPIRED)
+                );
                 throw exception;
             } catch (UnknownHostException exception) {
                 WebimInternalLog.getInstance().log(exception.toString(),
                         Webim.SessionBuilder.WebimLogVerbosityLevel.DEBUG
                 );
+                callbackExecutor.execute(() -> errorListener.onNotFatalError(
+                    NotFatalErrorHandler.NotFatalErrorType.UNKNOWN_HOST)
+                );
+                httpCode = UNKNOWN_HOST_ERROR_CODE; // Set Unknown host found error code
             } catch (SSLHandshakeException e) {
                 WebimInternalLog.getInstance().log("Error while executing http request. " + e,
                         Webim.SessionBuilder.WebimLogVerbosityLevel.WARNING);
@@ -250,7 +255,7 @@ public abstract class AbstractRequestLoop {
                             httpCode
                     );
                 }
-                if (httpCode == lastHttpCode) {
+                if (httpCode == lastHttpCode && httpCode != UNKNOWN_HOST_ERROR_CODE) {
                     throw new AbortByWebimErrorException(request, null, httpCode);
                 }
 
@@ -263,12 +268,9 @@ public abstract class AbstractRequestLoop {
             long toSleepMillis = ((errorCounter > 4) ? 10000 : errorCounter * 2000);
             if (elapsedMillis < toSleepMillis) {
                 try {
-                    callbackExecutor.execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            errorListener.onNotFatalError(NotFatalErrorHandler.NotFatalErrorType.NO_NETWORK_CONNECTION);
-                        }
-                    });
+                    callbackExecutor.execute(() -> errorListener.onNotFatalError(
+                        NotFatalErrorHandler.NotFatalErrorType.NO_NETWORK_CONNECTION)
+                    );
                     Thread.sleep(toSleepMillis - elapsedMillis);
                 } catch (InterruptedException ignored) { }
             }
@@ -379,7 +381,7 @@ public abstract class AbstractRequestLoop {
                             .append("=")
                             .append(formBody.encodedValue(i));
                 }
-            } else {
+            } else if (requestBody instanceof MultipartBody) {
                 MultipartBody multipartBody = (MultipartBody) requestBody;
                 for (MultipartBody.Part part : multipartBody.parts()) {
                     Buffer buffer = new Buffer();

@@ -13,12 +13,12 @@ repositories {
 val versionName = project.property("chatviewVersionName").toString()
 
 android {
-    namespace = project.property("flavor-chatview-webim").toString()
-    compileSdk = 33
+    namespace = "ru.webim.chatview"
+    compileSdk = 34
 
     defaultConfig {
         minSdk = 21
-        targetSdk = 33
+        targetSdk = 34
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
@@ -85,7 +85,7 @@ publishing {
                 name.set("Webim Mobile ChatView for Android")
                 description.set("Webim ChatView helps to add functional chat view component with flexibly customizable UI powered by Webim SDK")
                 url.set(siteUrl)
-                packaging = "jar"
+                packaging = "aar"
 
                 licenses {
                     license {

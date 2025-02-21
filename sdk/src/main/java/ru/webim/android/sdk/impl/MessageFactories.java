@@ -10,6 +10,7 @@ import ru.webim.android.sdk.Operator;
 import ru.webim.android.sdk.UploadedFile;
 import ru.webim.android.sdk.impl.items.KeyboardItem;
 import ru.webim.android.sdk.impl.items.KeyboardRequestItem;
+import ru.webim.android.sdk.impl.items.MessageGroup;
 import ru.webim.android.sdk.impl.items.MessageItem;
 import ru.webim.android.sdk.impl.items.OperatorItem;
 import ru.webim.android.sdk.impl.items.StickerItem;
@@ -22,11 +23,13 @@ public final class MessageFactories {
 
     // may return null for incorrect or not supported message
     @Nullable
-    private static MessageImpl fromWMMessage(@NonNull String serverUrl,
-                                             boolean isHistoryMessage,
-                                             @NonNull MessageItem message,
-                                             @NonNull FileUrlCreator fileUrlCreator,
-                                             @Nullable MessageParsingErrorHandler errorHandler) {
+    private static MessageImpl fromWMMessage(
+        @NonNull String serverUrl,
+        boolean isHistoryMessage,
+        @NonNull MessageItem message,
+        @NonNull FileUrlCreator fileUrlCreator,
+        @Nullable MessageParsingErrorHandler errorHandler
+    ) {
         Gson gson = new Gson();
         try {
             MessageItem.WMMessageKind kind = message.getType();
@@ -56,7 +59,7 @@ public final class MessageFactories {
 
             Object json;
             if (kind == MessageItem.WMMessageKind.FILE_FROM_VISITOR || kind == MessageItem.WMMessageKind.FILE_FROM_OPERATOR) {
-                json = message;
+                json = message.getData();
             } else {
                 if (quote != null) {
                     json = message.getQuote();
@@ -68,6 +71,17 @@ public final class MessageFactories {
             String rawText = (json == null)
                 ? null
                 : gson.toJson(json);
+
+
+            MessageGroup.GroupData groupData = null;
+            if (message.getData() != null) {
+                // Resolve group data
+                String rawData = gson.toJson(json);
+                MessageGroup messageGroup = InternalUtils.fromJsonOrNull(rawData, MessageGroup.class);
+                if (messageGroup != null && messageGroup.getGroupData() != null) {
+                    groupData = messageGroup.getGroupData();
+                }
+            }
 
             Message.Keyboard keyboardButton = null;
             if (kind == MessageItem.WMMessageKind.KEYBOARD) {
@@ -114,7 +128,10 @@ public final class MessageFactories {
                 sticker,
                 message.getReaction(),
                 message.getCanVisitorReact(),
-                message.getCanVisitorChangeReaction());
+                message.getCanVisitorChangeReaction(),
+                groupData,
+                Message.SendStatus.SENT
+            );
         } catch (Exception exception) {
             if (errorHandler != null) {
                 errorHandler.onMessageParsingError(message.getId(), gson.toJson(message));
@@ -199,102 +216,130 @@ public final class MessageFactories {
 
         public MessageSending createText(Message.Id id, String text) {
             return new MessageSending(
-                    serverUrl,
-                    id,
-                    "",
-                    Message.Type.VISITOR,
-                    text,
-                    System.currentTimeMillis() * 1000,
-                    null,
-                    null,
-                    null);
+                serverUrl,
+                id,
+                "",
+                Message.Type.VISITOR,
+                text,
+                System.currentTimeMillis() * 1000,
+                null,
+                null,
+                null
+            );
         }
 
-        public MessageSending createTextWithQuote(Message.Id id,
-                                                  String text,
-                                                  Message.Type quoteType,
-                                                  String quoteAuthor,
-                                                  String quoteText) {
-            MessageImpl.QuoteImpl quote = new MessageImpl.QuoteImpl(
-                    null,
-                    null,
-                    null,
-                    quoteType,
-                    quoteAuthor,
-                    Message.Quote.State.PENDING,
-                    quoteText,
-                    0);
+        public MessageSending createTextWithQuote(
+            Message.Id id,
+            String text,
+            Message.Quote quote
+        ) {
             return new MessageSending(
-                    serverUrl,
-                    id,
-                    "",
-                    Message.Type.VISITOR,
-                    text,
-                    System.currentTimeMillis() * 1000,
-                    quote,
-                    null,
-                    null);
+                serverUrl,
+                id,
+                "",
+                Message.Type.VISITOR,
+                text,
+                System.currentTimeMillis() * 1000,
+                quote,
+                null,
+                null
+            );
         }
 
-        public MessageSending createFile(Message.Id id, String fileName) {
+        public MessageSending createFile(Message.Id id, String filename, String mimeType, long size, String localPath) {
+            Message.FileInfo fileInfo = new MessageImpl.FileInfoImpl(
+                mimeType,
+                filename,
+                null,
+                size,
+                null,
+                null,
+                localPath,
+                fileUrlCreator
+            );
+            List<Message.FileInfo> fileInfos = new ArrayList<>();
+            fileInfos.add(fileInfo);
+
+            Message.Attachment attachment = new MessageImpl.AttachmentImpl(
+                0,
+                null,
+                null,
+                fileInfo,
+                fileInfos,
+                Message.Attachment.AttachmentState.UPLOAD
+            );
+
             return new MessageSending(
-                    serverUrl,
-                    id,
-                    "",
-                    Message.Type.FILE_FROM_VISITOR,
-                    fileName,
-                    System.currentTimeMillis() * 1000,
-                    null,
-                    null,
-                    null);
+                serverUrl,
+                id,
+                "",
+                Message.Type.FILE_FROM_VISITOR,
+                filename,
+                System.currentTimeMillis() * 1000,
+                null,
+                null,
+                attachment
+            );
         }
 
         public MessageSending createSticker(Message.Id id, int stickerId) {
             MessageImpl.Sticker sticker = new MessageImpl.StickerImpl(stickerId);
             return new MessageSending(
-                    serverUrl,
-                    id,
-                    "",
-                    Message.Type.STICKER_VISITOR,
-                    "",
-                    System.currentTimeMillis() * 1000,
-                    null,
-                    sticker,
-                    null);
+                serverUrl,
+                id,
+                "",
+                Message.Type.STICKER_VISITOR,
+                "",
+                System.currentTimeMillis() * 1000,
+                null,
+                sticker,
+                null
+            );
         }
 
-        public MessageSending createAttachment(Message.Id id, List<UploadedFile> uploadedFiles) {
+        public List<Message.FileInfo> uploadFilesToFilesInfo(List<UploadedFile> uploadedFiles) {
             List<Message.FileInfo> filesInfo = new ArrayList<>();
             for (UploadedFile uploadedFile : uploadedFiles) {
                 Message.FileInfo fileInfo = new MessageImpl.FileInfoImpl(
-                        uploadedFile.getContentType(),
-                        uploadedFile.getFileName(),
-                        null,
-                        uploadedFile.getSize(),
-                        null,
-                        uploadedFile.getGuid(),
-                        fileUrlCreator
+                    uploadedFile.getContentType(),
+                    uploadedFile.getFileName(),
+                    null,
+                    uploadedFile.getSize(),
+                    fileUrlCreator.createFileUrl(uploadedFile.getFileName(), uploadedFile.getGuid(), false),
+                    null,
+                    uploadedFile.getGuid(),
+                    fileUrlCreator
                 );
                 filesInfo.add(fileInfo);
             }
+            return filesInfo;
+        }
+
+        public MessageSending createAttachment(Message.Id id, List<Message.FileInfo> filesInfo) {
+            if (filesInfo.isEmpty()) {
+                throw new IllegalArgumentException("Files infos can't be empty");
+            }
+
             MessageImpl.AttachmentImpl attachment = new  MessageImpl.AttachmentImpl(
-                    100,
-                    "",
-                    "",
-                    filesInfo.get(0),
-                    filesInfo,
-                    Message.Attachment.AttachmentState.READY);
+                0,
+                null,
+                null,
+                filesInfo.get(0),
+                filesInfo,
+                Message.Attachment.AttachmentState.UPLOAD
+            );
 
             return new MessageSending(
-                    serverUrl,
-                    id,
-                    "",
-                    Message.Type.FILE_FROM_VISITOR,
-                    "",
-                    System.currentTimeMillis() * 1000,
-                    null,
-                    null,
-                    attachment);
+                serverUrl,
+                id,
+                "",
+                Message.Type.FILE_FROM_VISITOR,
+                "",
+                System.currentTimeMillis() * 1000,
+                null,
+                null,
+                attachment
+            );
         }
     }
 

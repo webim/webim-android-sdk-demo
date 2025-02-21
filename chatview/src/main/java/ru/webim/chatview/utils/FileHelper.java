@@ -82,7 +82,6 @@ public class FileHelper {
         session = null;
     }
 
-
     private void sendFileDescriptorInternal(Uri uri, String mode) {
         ContentResolver contentResolver = context.getContentResolver();
         try {
@@ -181,7 +180,7 @@ public class FileHelper {
 
                 @Override
                 public void onFailure(@NonNull Message.Id id, @NonNull WebimError<SendFileError> error) {
-                    finalFile.delete();
+                    // File should be deleted from sdk when will be send
                     handleFileError(error);
                 }
             };
@@ -220,6 +219,9 @@ public class FileHelper {
                     break;
                 case FILE_IS_EMPTY:
                     message = context.getString(R.string.file_upload_failed_empty);
+                    break;
+                case MALICIOUS_FILE_DETECTED:
+                    message = context.getString(R.string.file_detected_malicious);
                     break;
                 case UPLOADED_FILE_NOT_FOUND:
                 default:

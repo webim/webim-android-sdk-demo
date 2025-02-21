@@ -23,8 +23,10 @@ public class ActionRequestLoop extends AbstractRequestLoop {
     @Nullable
     private WebimRequest<?> lastRequest;
 
-    public ActionRequestLoop(@NonNull Executor callbackExecutor,
-                             @NonNull InternalErrorListener errorListener) {
+    public ActionRequestLoop(
+        @NonNull Executor callbackExecutor,
+        @Nullable InternalErrorListener errorListener
+    ) {
         super(callbackExecutor, errorListener);
     }
 

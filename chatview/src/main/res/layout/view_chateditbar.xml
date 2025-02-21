@@ -32,7 +32,7 @@
                 android:layout_gravity="center_vertical"
                 android:layout_weight="0.05"
                 android:background="@null"
-                android:contentDescription="@string/edit"
+                android:contentDescription="@string/edit_item"
                 android:gravity="bottom"
                 android:padding="5dp"
                 android:scaleType="center"

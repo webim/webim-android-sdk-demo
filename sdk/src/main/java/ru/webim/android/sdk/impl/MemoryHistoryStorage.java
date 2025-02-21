@@ -132,6 +132,19 @@ public class MemoryHistoryStorage implements HistoryStorage {
     }
 
     @Override
+    public void getSending(@NonNull MessageTracker.GetMessagesCallback callback) {
+        List<MessageImpl> messages = new ArrayList<>();
+        for (int i = historyMessages.size() - 1; i >= 0; i--) {
+            MessageImpl message = historyMessages.get(i);
+            if (message.getSendStatus() == Message.SendStatus.SENDING) {
+                messages.add(message);
+            }
+        }
+        Collections.reverse(messages);
+        callback.receive(messages);
+    }
+
+    @Override
     public void clearHistory() {
         historyMessages.clear();
     }

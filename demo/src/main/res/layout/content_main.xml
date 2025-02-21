@@ -7,9 +7,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorBackgroundActivityMain"
-    android:paddingLeft="20dp"
+    android:paddingStart="20dp"
     android:paddingTop="16dp"
-    android:paddingRight="20dp"
+    android:paddingEnd="20dp"
     android:paddingBottom="16dp"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="ru.webim.android.demo.MainActivity"
@@ -70,24 +70,12 @@
                 android:textSize="@dimen/text_size_normal" />
 
             <TextView
-                android:id="@+id/textView4"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:autoLink="web"
-                android:lineSpacingMultiplier="1.35"
-                android:linksClickable="true"
-                android:text="@string/first_screen_text4"
-                android:textColor="@color/white"
-                android:textIsSelectable="true"
-                android:textSize="@dimen/text_size_normal" />
-
-            <TextView
                 android:id="@+id/textView5"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="13dp"
                 android:lineSpacingMultiplier="1.35"
-                android:text="@string/first_screen_text5"
+                android:text="@string/first_screen_text4"
                 android:textColor="@color/white"
                 android:textIsSelectable="true"
                 android:textSize="@dimen/text_size_normal" />
@@ -97,7 +85,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:lineSpacingMultiplier="1.35"
-                android:text="@string/first_screen_text6"
+                android:text="@string/first_screen_text5"
                 android:textColor="@color/white"
                 android:textIsSelectable="true"
                 android:textSize="@dimen/text_size_normal" />
@@ -108,7 +96,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="26dp"
                 android:lineSpacingMultiplier="1.35"
-                android:text="@string/first_screen_text7"
+                android:text="@string/first_screen_text6"
                 android:textColor="@color/white"
                 android:textSize="@dimen/text_size_normal" />
 
@@ -121,7 +109,7 @@
                 android:linksClickable="true"
                 android:maxLines="1"
                 android:singleLine="true"
-                android:text="@string/first_screen_text8"
+                android:text="@string/first_screen_text7"
                 android:textColor="@color/white"
                 android:textSize="@dimen/text_size_normal" />
 
@@ -143,9 +131,9 @@
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="14dp"
+                android:layout_marginStart="14dp"
                 android:layout_marginTop="14dp"
-                android:layout_marginRight="14dp">
+                android:layout_marginEnd="14dp">
 
                 <Button
                     android:id="@+id/buttonStartChat"
@@ -184,8 +172,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/relLayStartChat"
-            android:layout_marginLeft="14dp"
-            android:layout_marginRight="14dp"
+            android:layout_marginStart="14dp"
+            android:layout_marginEnd="14dp"
             android:text="@string/button_text_settings"
             android:theme="@style/AppTheme.ButtonPurple" />
 

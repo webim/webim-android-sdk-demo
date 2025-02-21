@@ -297,9 +297,9 @@ class MessageHolderImplTest {
         val sending2 = sendingMessage(2)
         val sending4 = sendingMessage(4)
 
-        holder.onSendingMessage(sending1)
-        holder.onSendingMessage(sending2)
-        holder.onSendingMessage(sending4)
+        holder.onSendingMessage(sending1, oldClientSideId == null)
+        holder.onSendingMessage(sending2, oldClientSideId == null)
+        holder.onSendingMessage(sending4, oldClientSideId == null)
 
         val message1 = message(1)
         val message2 = message(2)
@@ -355,7 +355,8 @@ class MessageHolderImplTest {
         null,
         null,
         false,
-        false
+        false,
+        Message.SendStatus.SENT
     )
 
     private fun sendingMessage(index: Int) = MessageSending(

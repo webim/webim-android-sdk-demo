@@ -310,7 +310,21 @@
             app:layout_constraintTop_toTopOf="@+id/text_message_time"
             app:srcCompat="@drawable/ic_double_tick"
             app:tint="?attr/chv_accent_color"
-            tools:ignore="ContentDescription" />
+            android:contentDescription="Message sent" />
+
+        <ImageView
+            android:id="@+id/error"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginEnd="4dp"
+            android:scaleType="centerInside"
+            app:layout_constraintBottom_toBottomOf="@+id/text_message_time"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/text_message_time"
+            app:layout_constraintTop_toTopOf="@+id/text_message_time"
+            app:srcCompat="@drawable/ic_error_download_file"
+            android:contentDescription="Failed to send message" />
 
         <ProgressBar
             android:id="@+id/sending_msg"

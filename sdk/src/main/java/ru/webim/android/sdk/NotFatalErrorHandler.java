@@ -22,6 +22,11 @@ public interface NotFatalErrorHandler {
         /**
          * This error occurs when server is not available or another reason for SocketTimeoutException.
          */
-        SOCKET_TIMEOUT_EXPIRED
+        SOCKET_TIMEOUT_EXPIRED,
+
+        /**
+         * This error occurs when host unavailable with UnknownHostException.
+         */
+        UNKNOWN_HOST
     }
 }

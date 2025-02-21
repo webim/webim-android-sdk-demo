@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity implements MainFragment.Main
     protected void onStart() {
         super.onStart();
 
-        WebimSessionDirector.createSessionBuilderWithAnonymousVisitor(this, new WebimSessionDirector.OnSessionBuilderCreatedListener() {
+        WebimSessionDirector.createSessionBuilderWithAnonymousVisitor(this, Webim.PushSystem.FCM, new WebimSessionDirector.OnSessionBuilderCreatedListener() {
                 @Override
                 public void onSessionBuilderCreated(Webim.SessionBuilder sessionBuilder) {
                     WebimSession session = sessionBuilder.build();

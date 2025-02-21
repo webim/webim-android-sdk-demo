@@ -10,7 +10,7 @@ import ru.webim.android.sdk.impl.backend.callbacks.SendOrDeleteMessageInternalCa
 import ru.webim.android.sdk.impl.backend.callbacks.SurveyFinishCallback;
 import ru.webim.android.sdk.impl.backend.callbacks.SurveyQuestionCallback;
 import ru.webim.android.sdk.impl.items.requests.AutocompleteRequest;
-import ru.webim.android.sdk.impl.items.responses.ServerSettingsResponse;
+import ru.webim.android.sdk.impl.items.responses.ServerConfigsResponse;
 import ru.webim.android.sdk.impl.items.responses.DefaultResponse;
 import ru.webim.android.sdk.impl.items.responses.HistoryBeforeResponse;
 import ru.webim.android.sdk.impl.items.responses.HistorySinceResponse;
@@ -53,7 +53,7 @@ public interface WebimActions {
 
     void clearChatHistory(@NonNull DefaultCallback<DefaultResponse> callback);
 
-    void getAccountConfig(@NonNull String location, @NonNull DefaultCallback<ServerSettingsResponse> callback);
+    void getAccountConfig(@NonNull String location, @NonNull DefaultCallback<ServerConfigsResponse> callback);
 
     void autocomplete(
         @NonNull String url,

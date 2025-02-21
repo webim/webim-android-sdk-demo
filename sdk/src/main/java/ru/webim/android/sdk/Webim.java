@@ -22,7 +22,10 @@ import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
@@ -126,16 +129,32 @@ public final class Webim {
         /**
          * Do not use any push system
          */
-        NONE,
+        NONE("none"),
         /**
          * Use Firebase Cloud Messaging as push system
          */
-        FCM,
+        FCM("fcm"),
+        /**
+         * Use Huawei Push Kit as push system
+         */
+        HPK("hpk"),
         /**
          * Use Google Cloud Messaging as push system
          */
         @Deprecated
-        GCM,
+        GCM("gcm");
+
+        @NonNull
+        private final String pushName;
+
+        PushSystem(@NonNull String pushName) {
+            this.pushName = pushName;
+        }
+
+        @NonNull
+        public String getPushName() {
+            return pushName;
+        }
     }
 
     /**
@@ -178,6 +197,14 @@ public final class Webim {
         @Nullable
         private String prechatFields;
         private long requestFrequency;
+        private List<String> extraDomains = Arrays.asList(
+            "webim2.ru",
+            "webim.chat"
+        );
+
+
+        @Nullable
+        private Map<String, String> requestHeader;
 
         @Nullable
         private SSLSocketFactory sslSocketFactory;
@@ -257,6 +284,16 @@ public final class Webim {
          */
         public SessionBuilder setOnlineStatusRequestFrequencyInMillis(long requestFrequency) {
             this.requestFrequency = requestFrequency;
+            return this;
+        }
+
+        /**
+         * Set spare domains in case the main domain is not available
+         * @param extraDomains - list of extra domains
+         * @return this builder object
+         */
+        public SessionBuilder setExtraDomains(List<String> extraDomains) {
+            this.extraDomains = extraDomains;
             return this;
         }
 
@@ -556,6 +593,16 @@ public final class Webim {
         }
 
         /**
+         * Adds header to network requests
+         *
+         * @return this builder object
+         */
+        public SessionBuilder setRequestHeader(Map<String, String> requestHeader) {
+            this.requestHeader = requestHeader;
+            return this;
+        }
+
+        /**
          * Builds new {@link WebimSession} object. This method must be called from the thread
          * {@link android.os.Looper}
          * (for instance, from the main thread of the application), and all the follow-up work with
@@ -648,7 +695,9 @@ public final class Webim {
                     multivisitorSection,
                     sessionCallback,
                     requestFrequency,
-                    messageParsingErrorHandler
+                    messageParsingErrorHandler,
+                    requestHeader,
+                    extraDomains
             );
         }
 

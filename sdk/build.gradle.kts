@@ -8,10 +8,10 @@ plugins {
 val versionName = project.property("sdkVersionName").toString()
 
 android {
-    compileSdk = 33
+    compileSdk = 34
     defaultConfig {
         minSdk = 21
-        targetSdk = 33
+        targetSdk = 34
         buildConfigField("String", "VERSION_NAME", "\"$versionName\"")
         testInstrumentationRunner = "android.support.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("proguard-rules.pro")
@@ -42,8 +42,8 @@ dependencies {
     api("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.10")
     implementation("net.zetetic:android-database-sqlcipher:4.4.3@aar")
-    implementation("androidx.sqlite:sqlite:2.2.0")
-    implementation("androidx.security:security-crypto:1.1.0-alpha04")
+    implementation("androidx.sqlite:sqlite:2.3.1")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.7.10")
     testImplementation("junit:junit:4.13.2")
@@ -71,7 +71,7 @@ publishing {
                 name.set("Webim Mobile SDK for Android")
                 description.set("Webim Mobile SDK enables Android developers to implement chats into their mobile apps for communications between users and agents.")
                 url.set(siteUrl)
-                packaging = "jar"
+                packaging = "aar"
 
                 licenses {
                     license {
