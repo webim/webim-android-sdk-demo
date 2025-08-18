@@ -1,20 +1,22 @@
 package ru.webim.android.sdk.impl;
 
 import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteConstraintException;
+import android.database.sqlite.SQLiteException;
 import android.os.Handler;
 
 import androidx.annotation.NonNull;
 
 import com.google.gson.reflect.TypeToken;
 
-import net.sqlcipher.Cursor;
-import net.sqlcipher.SQLException;
-import net.sqlcipher.database.SQLiteConstraintException;
-import net.sqlcipher.database.SQLiteDatabase;
-import net.sqlcipher.database.SQLiteDatabaseHook;
-import net.sqlcipher.database.SQLiteException;
-import net.sqlcipher.database.SQLiteOpenHelper;
-import net.sqlcipher.database.SQLiteStatement;
+import net.zetetic.database.DatabaseErrorHandler;
+import net.zetetic.database.sqlcipher.SQLiteConnection;
+import net.zetetic.database.sqlcipher.SQLiteDatabase;
+import net.zetetic.database.sqlcipher.SQLiteDatabaseHook;
+import net.zetetic.database.sqlcipher.SQLiteOpenHelper;
+import net.zetetic.database.sqlcipher.SQLiteStatement;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -74,7 +76,8 @@ public class SQLiteHistoryStorage implements HistoryStorage {
             "WHERE client_side_id=?";
     private static final String GET_SENDING_MESSAGES_QUERY = "SELECT * FROM history " +
         "WHERE status='SENDING' ORDER BY ts";
-    private static final int VERSION = 14;
+    private static final int VERSION = 15;
+    private static final int MIGRATION_VERSION = 15;
 
     private final MyDBHelper dbHelper;
     private final Handler handler;
@@ -84,7 +87,6 @@ public class SQLiteHistoryStorage implements HistoryStorage {
     private long firstKnownTs = -1;
     private FileUrlCreator fileUrlCreator;
     private long readBeforeTimestamp;
-    private String databasePassword;
     private ReadBeforeTimestampListener readBeforeTimestampListener
             = new ReadBeforeTimestampListener() {
         @Override
@@ -96,29 +98,30 @@ public class SQLiteHistoryStorage implements HistoryStorage {
     };
     private final WebimInternalLog logger = WebimInternalLog.getInstance();
 
-    public SQLiteHistoryStorage(Context context,
-                                Handler handler,
-                                String dbName,
-                                String serverUrl,
-                                boolean isReachedEndOfRemoteHistory,
-                                FileUrlCreator fileUrlCreator,
-                                long readBeforeTimestamp,
-                                String databasePassword) {
-        this.dbHelper = new MyDBHelper(context, dbName);
+    public SQLiteHistoryStorage(
+        Context context,
+        Handler handler,
+        String dbName,
+        String serverUrl,
+        boolean isReachedEndOfRemoteHistory,
+        FileUrlCreator fileUrlCreator,
+        long readBeforeTimestamp,
+        String databasePassword
+    ) {
+        this.dbHelper = new MyDBHelper(context, dbName, databasePassword);
         this.handler = handler;
         this.serverUrl = serverUrl;
         this.isReachedEndOfRemoteHistory = isReachedEndOfRemoteHistory;
         this.fileUrlCreator = fileUrlCreator;
         this.readBeforeTimestamp = readBeforeTimestamp;
-        this.databasePassword = databasePassword;
 
-        SQLiteDatabase.loadLibs(context);
+        System.loadLibrary("sqlcipher");
     }
 
     private void prepare() throws SQLiteException {
         if (!prepared) {
             prepared = true;
-            SQLiteDatabase db = dbHelper.getWritableDatabase(databasePassword);
+            SQLiteDatabase db = dbHelper.getWritableDatabase();
             Cursor c = db.rawQuery(
                 "SELECT ts FROM HISTORY ORDER BY ts ASC LIMIT 1",
                 new String[0]);
@@ -151,7 +154,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
             SQLiteDatabase db;
             try {
                 prepare();
-                db = dbHelper.getWritableDatabase(databasePassword);
+                db = dbHelper.getWritableDatabase();
             } catch (SQLiteException exception) {
                 logger.log(
                     "Unable open database. " + exception,
@@ -321,6 +324,9 @@ public class SQLiteHistoryStorage implements HistoryStorage {
         if (type == Message.Type.FILE_FROM_OPERATOR || type == Message.Type.FILE_FROM_VISITOR) {
             try {
                 attachment = InternalUtils.fromJson(rawText, MessageImpl.AttachmentImpl.class);
+                if (attachment != null) {
+                    provideUrlCreatorToAttach(attachment);
+                }
             } catch (Exception e) {
                 WebimInternalLog.getInstance().log(
                     "Failed to parse file params for message: " + serverSideId + ", text: " + text + ". " + e,
@@ -416,6 +422,20 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                 return createSentMessage(cursor, clientSideId, serverSideId, timestamp, avatar, type, text, rawText, canBeReplied, reaction, attachment, quote, keyboardButton, keyboardRequest, sticker, isRead, groupData, sendStatus);
             }
         }
+    }
+
+    private void provideUrlCreatorToAttach(@NonNull Message.Attachment attachment) {
+        Message.FileInfo fileInfo = attachment.getFileInfo();
+        if (!(fileInfo instanceof MessageImpl.FileInfoImpl)) {
+            return;
+        }
+        ((MessageImpl.FileInfoImpl) fileInfo).setFileUrlCreator(fileUrlCreator);
+
+        Message.ImageInfo imageInfo = fileInfo.getImageInfo();
+        if (!(imageInfo instanceof MessageImpl.ImageInfoImpl)) {
+            return;
+        }
+        ((MessageImpl.ImageInfoImpl) imageInfo).setFileUrlCreator(fileUrlCreator);
     }
 
     @NonNull
@@ -517,7 +537,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
             SQLiteDatabase db;
             try {
                 prepare();
-                db = dbHelper.getWritableDatabase(databasePassword);
+                db = dbHelper.getWritableDatabase();
             } catch (SQLiteException exception) {
                 logger.log(
                     "Unable open database. " + exception,
@@ -558,7 +578,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                           @NonNull final MessageTracker.GetMessagesCallback callback) {
         executor.execute(() -> {
             List<Message> list = new ArrayList<>();
-            try(SQLiteDatabase db = dbHelper.getWritableDatabase(databasePassword);
+            try (SQLiteDatabase db = dbHelper.getWritableDatabase();
                 Cursor c = db.rawQuery(
                     "SELECT * FROM history ORDER BY ts DESC LIMIT ?",
                     new String[]{Integer.toString(limit)})
@@ -576,7 +596,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
     public void getFull(@NonNull final MessageTracker.GetMessagesCallback callback) {
         executor.execute(() -> {
             List<Message> messageList = new ArrayList<>();
-            try (SQLiteDatabase db = dbHelper.getWritableDatabase(databasePassword);
+            try (SQLiteDatabase db = dbHelper.getWritableDatabase();
                  Cursor cursor = db.rawQuery("SELECT * FROM history ORDER BY ts ASC", new String[]{})) {
                 while (cursor.moveToNext()) {
                     messageList.add(createMessage(cursor));
@@ -594,7 +614,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
             @Override
             public void run() {
                 List<Message> list = new ArrayList<>();
-                try (SQLiteDatabase db = dbHelper.getWritableDatabase(databasePassword);
+                try (SQLiteDatabase db = dbHelper.getWritableDatabase();
                      Cursor c = db.rawQuery(
                          "SELECT * FROM history WHERE ts < ? ORDER BY ts DESC LIMIT ?",
                          new String[]{Long.toString(beforeTimestamp), Integer.toString(limit)})
@@ -613,7 +633,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
     public void getSending(@NonNull MessageTracker.GetMessagesCallback callback) {
         executor.execute(() -> {
             List<Message> list = new ArrayList<>();
-            try (SQLiteDatabase db = dbHelper.getWritableDatabase(databasePassword);
+            try (SQLiteDatabase db = dbHelper.getWritableDatabase();
                  Cursor cursor = db.rawQuery(
                      GET_SENDING_MESSAGES_QUERY,
                      new String[] {}
@@ -630,7 +650,7 @@ public class SQLiteHistoryStorage implements HistoryStorage {
     @Override
     public void clearHistory() {
         executor.execute(() -> {
-            try (SQLiteDatabase db = dbHelper.getWritableDatabase(databasePassword)) {
+            try (SQLiteDatabase db = dbHelper.getWritableDatabase()) {
                 db.execSQL("delete from history");
             } catch (SQLException exception) {
                 WebimInternalLog.getInstance().log(
@@ -666,19 +686,25 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                 + "    status VARCHAR(32)"
                 + "); CREATE UNIQUE INDEX history_ts ON history (ts)";
         private static final SQLiteDatabaseHook mHook = new SQLiteDatabaseHook() {
-            public void preKey(SQLiteDatabase database) {
+            @Override
+            public void preKey(SQLiteConnection connection) {
             }
 
-            public void postKey(SQLiteDatabase database) {
-                database.rawExecSQL("PRAGMA cipher_compatibility=3;");
-                database.rawExecSQL("PRAGMA kdf_iter=1000;");
-                database.rawExecSQL("PRAGMA cipher_default_kdf_iter=1000;");
-                database.rawExecSQL("PRAGMA cipher_page_size = 4096;");
+            @Override
+            public void postKey(SQLiteConnection connection) {
+                // connection.execute("PRAGMA cipher_compatibility=3;", null, null);
+                connection.execute("PRAGMA kdf_iter=1000;", null, null);
+                connection.execute("PRAGMA cipher_default_kdf_iter=1000;", null, null);
+                connection.execute("PRAGMA cipher_page_size = 4096;", null, null);
             }
         };
+        private static final DatabaseErrorHandler databaseErrorHandler = (dbObj, exception) -> {
+            String message = exception.getMessage();
+            WebimInternalLog.getInstance().log(message != null ? message : "Sqlite Error: " + exception.getClass().getSimpleName(), Webim.SessionBuilder.WebimLogVerbosityLevel.ERROR, WebimLogEntity.DATABASE);
+        };
 
-        public MyDBHelper(Context context, String dbName) {
-            super(context, dbName, null, VERSION, mHook);
+        public MyDBHelper(Context context, String dbName, String databasePassword) {
+            super(context, dbName, databasePassword, null, VERSION, MIGRATION_VERSION, databaseErrorHandler, mHook, false);
         }
 
         @Override

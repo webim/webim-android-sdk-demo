@@ -24,6 +24,7 @@ import ru.webim.android.sdk.impl.items.SuggestionItem;
 import ru.webim.android.sdk.impl.items.requests.AutocompleteRequest;
 import ru.webim.android.sdk.impl.items.responses.AutocompleteResponse;
 import ru.webim.android.sdk.impl.items.responses.DefaultResponse;
+import ru.webim.android.sdk.impl.items.responses.ErrorResponse;
 import ru.webim.android.sdk.impl.items.responses.HistoryBeforeResponse;
 import ru.webim.android.sdk.impl.items.responses.HistorySinceResponse;
 import ru.webim.android.sdk.impl.items.responses.LocationStatusResponse;
@@ -54,6 +55,7 @@ public class WebimActionsImpl implements WebimActions {
     private static final String ACTION_SURVEY_ANSWER = "survey.answer";
     private static final String ACTION_SURVEY_CANCEL = "survey.cancel";
     private static final String ACTION_GEOLOCATION = "geo_response";
+    private static final String ACTION_SEND_RESOLUTION_SURVEY = "chat.resolution_survey_select";
     private static final String CHARACTERS_TO_ENCODE = "\n!#$&'()*+,/:;=?@[] \"%-.<>\\^_`{|}~";
     @NonNull
     private final ActionRequestLoop requestLoop;
@@ -417,25 +419,29 @@ public class WebimActionsImpl implements WebimActions {
     }
 
     @Override
-    public void startChat(@NonNull final String clientSideId,
-                          @Nullable final String departmentKey,
-                          @Nullable final String firstQuestion,
-                          @Nullable final String customFields,
-                          @NonNull DefaultCallback<DefaultResponse> callback) {
+    public void startChat(
+        @NonNull final String clientSideId,
+        @Nullable final String departmentKey,
+        @Nullable final String firstQuestion,
+        @Nullable final String customFields,
+        boolean forceStartChat,
+        @NonNull DefaultCallback<DefaultResponse> callback
+    ) {
         clientSideId.getClass(); // NPE
 
         enqueueRequestLoop(new ActionRequestLoop.WebimRequest<DefaultResponse>(true) {
             @Override
             public Call<DefaultResponse> makeRequest(AuthData authData) {
                 return webim.startChat(
-                        ACTION_CHAT_START,
-                        true,
-                        clientSideId,
-                        authData.getPageId(),
-                        authData.getAuthToken(),
-                        departmentKey,
-                        firstQuestion,
-                        customFields
+                    ACTION_CHAT_START,
+                    true,
+                    forceStartChat,
+                    clientSideId,
+                    authData.getPageId(),
+                    authData.getAuthToken(),
+                    departmentKey,
+                    firstQuestion,
+                    customFields
                 );
             }
 
@@ -588,6 +594,7 @@ public class WebimActionsImpl implements WebimActions {
     public void rateOperator
             (@Nullable final String operatorId,
              @Nullable final String note,
+             @Nullable final String threadId,
              final int rate,
              @Nullable final MessageStream.RateOperatorCallback rateOperatorCallback) {
         enqueueRequestLoop(new ActionRequestLoop.WebimRequest<DefaultResponse>(
@@ -599,6 +606,7 @@ public class WebimActionsImpl implements WebimActions {
                         ACTION_OPERATOR_RATE,
                         operatorId,
                         note,
+                        threadId,
                         rate,
                         authData.getPageId(),
                         authData.getAuthToken());
@@ -896,6 +904,69 @@ public class WebimActionsImpl implements WebimActions {
             @Override
             public void runCallback(LocationStatusResponse response) {
                 callback.onSuccess(response);
+            }
+        });
+    }
+
+    @Override
+    public void sendResolutionSurvey(@Nullable String id, int answer, String chatId, @Nullable MessageStream.SendResolutionSurveyCallback callback) {
+        enqueueRequestLoop(new ActionRequestLoop.WebimRequest<ErrorResponse>(callback != null) {
+            @Override
+            public Call<ErrorResponse> makeRequest(AuthData authData) {
+                return webim.sendResolutionSurvey(
+                    ACTION_SEND_RESOLUTION_SURVEY,
+                    authData.getPageId(),
+                    authData.getAuthToken(),
+                    id,
+                    answer,
+                    chatId
+                );
+            }
+
+            @Override
+            public boolean isHandleError(@NonNull String error) {
+                return true;
+            }
+
+            @Override
+            public void handleError(@NonNull String error) {
+                MessageStream.SendResolutionSurveyCallback.SendResolutionError sendResolutionSurveyError;
+                switch (error) {
+                    case WebimInternalError.RATE_DISABLED:
+                        sendResolutionSurveyError = MessageStream.SendResolutionSurveyCallback.SendResolutionError.RATE_DISABLED;
+                        break;
+                    case WebimInternalError.NO_CHAT:
+                        sendResolutionSurveyError = MessageStream.SendResolutionSurveyCallback.SendResolutionError.NO_CHAT;
+                        break;
+                    case WebimInternalError.OPERATOR_NOT_IN_CHAT:
+                        sendResolutionSurveyError = MessageStream.SendResolutionSurveyCallback.SendResolutionError.OPERATOR_NOT_IN_CHAT;
+                        break;
+                    case WebimInternalError.RESOLUTION_SURVEY_VALUE_INCORRECT:
+                        sendResolutionSurveyError = MessageStream.SendResolutionSurveyCallback.SendResolutionError.RESOLUTION_SURVEY_VALUE_INCORRECT;
+                        break;
+                    case WebimInternalError.RESOLUTION_RATE_FORM_MISMATCH:
+                        sendResolutionSurveyError = MessageStream.SendResolutionSurveyCallback.SendResolutionError.RATE_FORM_MISMATCH;
+                        break;
+                    case WebimInternalError.RESOLUTION_VISITOR_SEGMENT_MISMATCH:
+                        sendResolutionSurveyError = MessageStream.SendResolutionSurveyCallback.SendResolutionError.VISITOR_SEGMENT_MISMATCH;
+                        break;
+                    case WebimInternalError.RESOLUTION_RATED_ENTITY_MISMATCH:
+                        sendResolutionSurveyError = MessageStream.SendResolutionSurveyCallback.SendResolutionError.RATED_ENTITY_MISMATCH;
+                        break;
+                    default:
+                        sendResolutionSurveyError = MessageStream.SendResolutionSurveyCallback.SendResolutionError.UNKNOWN;
+                }
+
+                if (callback != null) {
+                    callback.onFailed(new WebimErrorImpl<>(sendResolutionSurveyError, error));
+                }
+            }
+
+            @Override
+            public void runCallback(ErrorResponse response) {
+                if (callback != null) {
+                    callback.onSuccess();
+                }
             }
         });
     }

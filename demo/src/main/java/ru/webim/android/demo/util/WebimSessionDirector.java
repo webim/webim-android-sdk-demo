@@ -202,7 +202,7 @@ public class WebimSessionDirector {
         String webimLogTag = "webim_demo_log";
         if (sharedPref.getBoolean(KEY_FILE_LOGGER, false)) {
             try {
-                webimLog = FileLogger.loadLogsToDownloads(context, "Webim", webimLogTag + ".txt");
+                webimLog = FileLogger.getAppSpecificDirLogger(context, "Webim.txt");
             } catch (Throwable throwable) {
                 webimLog = log -> Log.i(webimLogTag, log);
             }

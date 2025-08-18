@@ -14,8 +14,6 @@ import androidx.security.crypto.MasterKeys;
 
 import com.google.gson.JsonParser;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.io.File;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -245,7 +243,7 @@ public class WebimSessionImpl implements WebimSession {
             long requestLocationFrequency,
             @Nullable MessageParsingErrorHandler messageParsingErrorHandler,
             @Nullable Map<String, String> requestHeader,
-            @NotNull List<String> extraDomains
+            @NonNull List<String> extraDomains
     ) {
         context.getClass(); // NPE
         accountName.getClass(); // NPE
@@ -335,23 +333,29 @@ public class WebimSessionImpl implements WebimSession {
         if (storeHistoryLocally) {
             String dbName = preferences.getString(PREFS_KEY_HISTORY_DB_NAME, null);
             String dbPassword = preferences.getString(PREFS_KEY_HISTORY_DB_PASSWORD, null);
+            if (dbName != null && !dbName.contains("v2")) {
+                // remove old database version
+                context.deleteDatabase(dbName);
+                dbName = dbPassword = null;
+            }
             if (dbName == null || dbPassword == null) {
                 preferences.edit()
-                    .putString(PREFS_KEY_HISTORY_DB_NAME, dbName = "webim_" + StringId.generateClientSide() + ".db")
+                    .putString(PREFS_KEY_HISTORY_DB_NAME, dbName = "webim_v2_" + StringId.generateClientSide() + ".db")
                     .putString(PREFS_KEY_HISTORY_DB_PASSWORD, dbPassword = UUID.randomUUID().toString())
                     .apply();
             }
             historyMeta = new PreferencesHistoryMetaInfStorage(preferences);
-            historyStorage = new SQLiteHistoryStorage(context,
-                    handler,
-                    dbName,
-                    serverUrl,
-                    historyMeta.isHistoryEnded(),
-                    fileUrlCreator,
-                    preferences.getLong(PREFS_KEY_READ_BEFORE_TIMESTAMP, -1),
-                    dbPassword);
-            if (preferences.getInt(PREFS_KEY_HISTORY_MAJOR_VERSION, -1)
-                    != historyStorage.getMajorVersion()) {
+            historyStorage = new SQLiteHistoryStorage(
+                context,
+                handler,
+                dbName,
+                serverUrl,
+                historyMeta.isHistoryEnded(),
+                fileUrlCreator,
+                preferences.getLong(PREFS_KEY_READ_BEFORE_TIMESTAMP, -1),
+                dbPassword
+            );
+            if (preferences.getInt(PREFS_KEY_HISTORY_MAJOR_VERSION, -1) != historyStorage.getMajorVersion()) {
                 preferences.edit()
                     .remove(PREFS_KEY_HISTORY_REVISION)
                     .remove(PREFS_KEY_HISTORY_ENDED)
@@ -1229,6 +1233,10 @@ public class WebimSessionImpl implements WebimSession {
                         handleChatDelta(deltaItem);
                         break;
                     }
+                    case CHAT_ID: {
+                        handleChatIdDelta(deltaItem);
+                        break;
+                    }
                     case CHAT_MESSAGE: {
                         handleChatMessageDelta(deltaItem);
                         break;
@@ -1307,6 +1315,17 @@ public class WebimSessionImpl implements WebimSession {
                         historyPoller.insertMessageInDB(message);
                     }
                 }
+            }
+        }
+
+        private void handleChatIdDelta(DeltaItem<?> deltaItem) {
+            DeltaItem.Event deltaEvent = deltaItem.getEvent();
+
+            if (deltaEvent == DeltaItem.Event.DELETE) {
+                messageStream.onChatIdUpdated(null);
+            } else {
+                String chatId = (String) deltaItem.getData();
+                messageStream.onChatIdUpdated(chatId);
             }
         }
 
@@ -1409,11 +1428,13 @@ public class WebimSessionImpl implements WebimSession {
                 currentChat.setReadByVisitor(isRead);
                 if (isRead) {
                     currentChat.setUnreadByVisitorTimestamp(0);
+                    currentChat.setUnreadByVisitorMessageCount(0);
                 }
             }
 
             if (isRead) {
                 messageStream.setUnreadByVisitorTimestamp(0);
+                messageStream.setUnreadByVisitorMessageCount(0);
             }
         }
 
@@ -1468,7 +1489,11 @@ public class WebimSessionImpl implements WebimSession {
             if (currentChat != null) {
                 String operatorId = rating.getOperatorId();
                 if (operatorId != null) {
-                    currentChat.getOperatorIdToRating().put(rating.getOperatorId(), rating);
+                    if (rating.getAnswer() != null) {
+                        currentChat.getOperatorIdToResolutionSurvey().put(rating.getOperatorId(), rating);
+                    } else {
+                        currentChat.getOperatorIdToRating().put(rating.getOperatorId(), rating);
+                    }
                 }
             }
         }

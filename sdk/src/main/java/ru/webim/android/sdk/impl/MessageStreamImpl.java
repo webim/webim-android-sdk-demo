@@ -52,6 +52,7 @@ public class MessageStreamImpl implements MessageStream {
     private final MessageHolder messageHolder;
     private final MessageFactories.SendingFactory sendingMessageFactory;
     private @Nullable ChatItem chat;
+    private @Nullable String chatId;
     private @Nullable Operator currentOperator;
     private String location;
     private List<CurrentOperatorChangeListener> currentOperatorListeners = new ArrayList<>();
@@ -140,6 +141,15 @@ public class MessageStreamImpl implements MessageStream {
         return rating == null ? 0 : internalToRate(rating.getRating());
     }
 
+    @Override
+    public Integer getLastOperatorResolutionSurveyAnswer(Operator.Id operatorId) {
+        RatingItem rating = ((chat == null)
+            ? null
+            : chat.getOperatorIdToResolutionSurvey().get(((StringId) operatorId).getInternal()));
+
+        return rating == null ? null : rating.getAnswer();
+    }
+
     @Nullable
     @Override
     public Date getUnreadByOperatorTimestamp() {
@@ -168,51 +178,61 @@ public class MessageStreamImpl implements MessageStream {
 
     @Override
     public void startChat(ChatStartedCallback chatStartedCallback) {
-        startChatInternally(null, null, null, chatStartedCallback);
+        startChatInternally(null, null, null, false, chatStartedCallback);
     }
 
     @Override
     public void startChat() {
-        startChatInternally(null, null, null, null);
+        startChatInternally(null, null, null, false, null);
+    }
+
+    @Override
+    public void forceStartChat() {
+        startChatInternally(null, null, null, true, null);
     }
 
     @Nullable
     @Override
     public String getChatId() {
-        return chat != null ? chat.getId() : null;
+        return chat != null ? chat.getId() : chatId;
     }
 
     @Override
     public void startChatWithDepartmentKey(@Nullable String departmentKey) {
-        startChatInternally(null, null, departmentKey, null);
+        startChatInternally(null, null, departmentKey, false, null);
+    }
+
+    @Override
+    public void forceStartChatWithDepartmentKey(@Nullable String departmentKey) {
+        startChatInternally(null, null, departmentKey, true, null);
     }
 
     @Override
     public String startChatWithFirstQuestion(@Nullable String firstQuestion) {
-        return startChatInternally(firstQuestion, null, null, null);
+        return startChatInternally(firstQuestion, null, null, false, null);
     }
 
     @Override
     public void startChatWithCustomFields(@Nullable String customFields) {
-        startChatInternally(null, customFields, null, null);
+        startChatInternally(null, customFields, null, false, null);
     }
 
     @Override
     public String startChatWithDepartmentKeyFirstQuestion(@Nullable String departmentKey,
                                                         @Nullable String firstQuestion) {
-        return startChatInternally(firstQuestion, null, departmentKey, null);
+        return startChatInternally(firstQuestion, null, departmentKey, false, null);
     }
 
     @Override
     public String startChatWithCustomFieldsFirstQuestion(@Nullable String customFields,
                                                        @Nullable String firstQuestion) {
-        return startChatInternally(firstQuestion, customFields, null, null);
+        return startChatInternally(firstQuestion, customFields, null, false, null);
     }
 
     @Override
     public String startChatWithCustomFieldsDepartmentKey(@Nullable String customFields,
                                                        @Nullable String departmentKey) {
-        return startChatInternally(null, customFields, departmentKey, null);
+        return startChatInternally(null, customFields, departmentKey, false, null);
     }
 
     @Override
@@ -221,13 +241,14 @@ public class MessageStreamImpl implements MessageStream {
             @Nullable String customFields,
             @Nullable String departmentKey
     ) {
-        return startChatInternally(firstQuestion, customFields, departmentKey, null);
+        return startChatInternally(firstQuestion, customFields, departmentKey, false, null);
     }
 
     private String startChatInternally(
         @Nullable String firstQuestion,
         @Nullable String customFields,
         @Nullable String departmentKey,
+        boolean forceStartChat,
         @Nullable ChatStartedCallback callback
     ) {
 
@@ -245,6 +266,7 @@ public class MessageStreamImpl implements MessageStream {
                 departmentKey,
                 firstQuestion,
                 customFields,
+                forceStartChat,
                 response -> {
                     if (callback != null) {
                         callback.chatStarted();
@@ -1014,6 +1036,20 @@ public class MessageStreamImpl implements MessageStream {
     }
 
     @Override
+    public void sendResolutionSurvey(@NonNull String operatorId, int answer, @Nullable SendResolutionSurveyCallback callback) {
+        accessChecker.checkAccess();
+
+        String chatId = getChatId();
+        if (chatId != null) {
+            actions.sendResolutionSurvey(operatorId, answer, chatId, callback);
+        } else {
+            if (callback != null) {
+                callback.onFailed(new WebimErrorImpl<>(SendResolutionSurveyCallback.SendResolutionError.NO_CHAT, null));
+            }
+        }
+    }
+
+    @Override
     public void sendGeolocation(float latitude, float longitude, @Nullable GeolocationCallback callback) {
         accessChecker.checkAccess();
 
@@ -1383,6 +1419,10 @@ public class MessageStreamImpl implements MessageStream {
         setUnreadByVisitorMessageCount((chat != null) ? chat.getUnreadByVisitorMessageCount() : 0);
     }
 
+    void onChatIdUpdated(String chatId) {
+        this.chatId = chatId;
+    }
+
     void onOperatorUpdated(@Nullable ChatItem currentChat) {
         chat = currentChat;
 
@@ -1515,6 +1555,12 @@ public class MessageStreamImpl implements MessageStream {
     @Override
     public AccountConfigItem getAccountConfig() {
         return accountConfigItem;
+    }
+
+    @Nullable
+    @Override
+    public LocationSettingsItem getServerLocationSettings() {
+        return locationSettingsItem;
     }
 
     void saveLocationSettings(DeltaFullUpdate fullUpdate) {
@@ -1755,7 +1801,7 @@ public class MessageStreamImpl implements MessageStream {
             return;
         }
 
-        actions.rateOperator(operatorId, note, rateToInternal(rating), rateOperatorCallback);
+        actions.rateOperator(operatorId, note, getChatId(), rateToInternal(rating), rateOperatorCallback);
     }
 
     private DataMessageCallback.DataMessageError toPublicDataMessageError(String dataMessageError) {

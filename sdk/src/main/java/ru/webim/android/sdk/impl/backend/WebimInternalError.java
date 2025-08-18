@@ -62,6 +62,11 @@ public class WebimInternalError {
 	public static final String OPERATOR_NOT_IN_CHAT = "operator-not-in-chat";
 	public static final String OPERATOR_ALREADY_RATED = "operator-already-rated";
 	public static final String NOTE_IS_TOO_LONG = "note-is-too-long";
+	public static final String RATE_DISABLED = "rate-disabled";
+	public static final String RESOLUTION_SURVEY_VALUE_INCORRECT = "resolution-survey-value-incorrect";
+	public static final String RESOLUTION_RATE_FORM_MISMATCH = "rate-form-mismatch";
+	public static final String RESOLUTION_VISITOR_SEGMENT_MISMATCH = "visitor-segment-mismatch";
+	public static final String RESOLUTION_RATED_ENTITY_MISMATCH = "rated-entity-mismatch";
 
 	//Errors for sending keyboard
 	public static final String BUTTON_ID_NO_SET = "button-id-not-set";

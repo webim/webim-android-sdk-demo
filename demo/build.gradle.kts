@@ -18,12 +18,12 @@ repositories {
 }
 
 android {
-    compileSdk = 34
-
+    compileSdk = 35
     defaultConfig {
         applicationId = "ru.webim.demo"
         minSdk = 21
-        targetSdk = 34
+        targetSdk = 35
+        namespace = "ru.webim.android.demo"
         versionCode = project.property("versionCode").toString().toInt()
         versionName = project.property("sdkVersionName").toString()
         vectorDrawables {

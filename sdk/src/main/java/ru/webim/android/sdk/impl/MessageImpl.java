@@ -423,25 +423,31 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
     public static class AttachmentImpl implements Message.Attachment {
         private int downloadProgress;
         private @Nullable String errorMessage;
+        private @Nullable String visitorErrorMessage;
         private @Nullable String errorType;
         private @NonNull FileInfo fileInfo;
         private @NonNull List<FileInfo> filesInfo;
         private @NonNull AttachmentState state;
+        private @Nullable String extraText;
 
         public AttachmentImpl(
             int downloadProgress,
             @Nullable String errorMessage,
+            @Nullable String visitorErrorMessage,
             @Nullable String errorType,
             @NonNull FileInfo fileInfo,
             @NonNull List<FileInfo> filesInfo,
+            @Nullable String extraText,
             @NonNull AttachmentState state
         ) {
             this.downloadProgress = downloadProgress;
             this.errorMessage = errorMessage;
+            this.visitorErrorMessage = visitorErrorMessage;
             this.errorType = errorType;
             this.fileInfo = fileInfo;
             this.filesInfo = filesInfo;
             this.state = state;
+            this.extraText = extraText;
         }
 
         @Override
@@ -453,6 +459,12 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
         @Nullable
         public String getErrorMessage() {
             return errorMessage;
+        }
+
+        @Nullable
+        @Override
+        public String getVisitorErrorMessage() {
+            return visitorErrorMessage;
         }
 
         @Override
@@ -475,6 +487,12 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
         @NonNull
         public AttachmentState getState() {
             return state;
+        }
+
+        @Override
+        @Nullable
+        public String getExtraText() {
+            return extraText;
         }
 
         @Override
@@ -581,6 +599,10 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
         public int hashCode() {
             return Objects.hash(contentType, filename, imageInfo, size, guid);
         }
+
+        void setFileUrlCreator(FileUrlCreator fileUrlCreator) {
+            this.fileUrlCreator = fileUrlCreator;
+        }
     }
 
     public static class ImageInfoImpl implements ImageInfo {
@@ -642,6 +664,10 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
         @Override
         public int hashCode() {
             return Objects.hash(width, height, guid, filename);
+        }
+
+        void setFileUrlCreator(FileUrlCreator fileUrlCreator) {
+            this.fileUrlCreator = fileUrlCreator;
         }
     }
 

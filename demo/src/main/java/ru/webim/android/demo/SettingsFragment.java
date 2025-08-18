@@ -30,6 +30,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import ru.webim.android.demo.util.service.DemoWebimService;
 import ru.webim.android.demo.util.service.ServiceGenerator;
+import ru.webim.android.sdk.BuildConfig;
 import ru.webim.android.sdk.impl.InternalUtils;
 
 public class SettingsFragment extends Fragment {

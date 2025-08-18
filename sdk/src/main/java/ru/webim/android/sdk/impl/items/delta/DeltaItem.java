@@ -39,6 +39,8 @@ public class DeltaItem<T> {
     public enum Type {
         @SerializedName("CHAT")
         CHAT,
+        @SerializedName("CHAT_ID")
+        CHAT_ID,
         @SerializedName("CHAT_MESSAGE")
         CHAT_MESSAGE,
         @SerializedName("CHAT_OPERATOR")

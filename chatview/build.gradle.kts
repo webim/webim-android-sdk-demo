@@ -1,8 +1,8 @@
 plugins {
     id("com.android.library")
-    id("maven-publish")
     id("signing")
     id("org.jetbrains.kotlin.android")
+    id("com.vanniktech.maven.publish")
 }
 
 repositories {
@@ -13,12 +13,11 @@ repositories {
 val versionName = project.property("chatviewVersionName").toString()
 
 android {
-    namespace = "ru.webim.chatview"
-    compileSdk = 34
-
+    compileSdk = 35
     defaultConfig {
         minSdk = 21
-        targetSdk = 34
+        testOptions.targetSdk = 35
+        namespace = "ru.webim.chatview"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
@@ -66,66 +65,41 @@ dependencies {
 
 val siteUrl = project.property("websiteUrl").toString()
 val gitUrl = project.property("gitUrl").toString()
-val pubUsername = project.property("ossrhUsername").toString()
-val pubPassword = project.property("ossrhPassword").toString()
 
-publishing {
-    publications {
-        register<MavenPublication>("release") {
+mavenPublishing {
+    publishToMavenCentral()
+    signAllPublications()
 
-            groupId = "ru.webim.sdk"
-            artifactId = "chatview"
-            version = versionName
+    coordinates("ru.webim.sdk", "chatview", versionName)
 
-            afterEvaluate {
-                from(components["release"])
-            }
+    pom {
+        name.set("Webim Mobile ChatView for Android")
+        description.set("Webim ChatView helps to add functional chat view component with flexibly customizable UI powered by Webim SDK")
+        url.set(siteUrl)
+        packaging = "aar"
 
-            pom {
-                name.set("Webim Mobile ChatView for Android")
-                description.set("Webim ChatView helps to add functional chat view component with flexibly customizable UI powered by Webim SDK")
-                url.set(siteUrl)
-                packaging = "aar"
-
-                licenses {
-                    license {
-                        name.set("The Apache License, Version 2.0")
-                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
-                    }
-                }
-                developers {
-                    developer {
-                        id.set("mshengeliia")
-                        name.set("Maksim Shengeliia")
-                        email.set("mshengeliia@webim-team.ru")
-                    }
-                    developer {
-                        id.set("nkaberov")
-                        name.set("Nikita Kaberov")
-                        email.set("nkaberov@webim.ru")
-                    }
-                }
-                scm {
-                    connection.set(gitUrl)
-                    developerConnection.set(gitUrl)
-                    url.set(siteUrl)
-                }
+        licenses {
+            license {
+                name.set("The Apache License, Version 2.0")
+                url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
             }
         }
-        repositories {
-            maven {
-                credentials {
-                    username = pubUsername
-                    password = pubPassword
-                }
-                val releasesRepoUrl = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-                val snapshotsRepoUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-                url = if (versionName.endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
+        developers {
+            developer {
+                id.set("mshengeliia")
+                name.set("Maksim Shengeliia")
+                email.set("mshengeliia@webim-team.ru")
             }
+            developer {
+                id.set("nkaberov")
+                name.set("Nikita Kaberov")
+                email.set("nkaberov@webim.ru")
+            }
+        }
+        scm {
+            connection.set(gitUrl)
+            developerConnection.set(gitUrl)
+            url.set(siteUrl)
         }
     }
-}
-
-signing {
-    sign(publishing.publications["release"])
 }

@@ -281,7 +281,7 @@
                 android:lineSpacingExtra="@dimen/line_spacing_normal"
                 android:text="@string/default_text"
                 android:textColor="?attr/chv_received_text"
-                android:textColorLink="@android:color/holo_blue_dark"
+                android:textColorLink="?attr/chv_received_link_text"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.0"

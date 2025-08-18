@@ -48,6 +48,18 @@ public class WidgetChatFragment extends Fragment {
         return rootView;
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        chatView.setAutoScrollToLastMsgEnabled(true);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        chatView.setAutoScrollToLastMsgEnabled(false);
+    }
+
     public void setWebimSessionBuilder(Webim.SessionBuilder session) {
         if (this.sessionBuilder != null) {
             throw new IllegalStateException("Webim session is already set");

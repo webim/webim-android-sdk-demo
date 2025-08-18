@@ -35,6 +35,9 @@ class DeltaDeserializer implements JsonDeserializer<DeltaItem> {
                 case CHAT:
                     listType = new TypeToken<DeltaItem<ChatItem>>() {}.getType();
                     break;
+                case CHAT_ID:
+                    listType = new TypeToken<DeltaItem<String>>() {}.getType();
+                    break;
                 case CHAT_MESSAGE:
                     listType = new TypeToken<DeltaItem<MessageItem>>() {}.getType();
                     break;

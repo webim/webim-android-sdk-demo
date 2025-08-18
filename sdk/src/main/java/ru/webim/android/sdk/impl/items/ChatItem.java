@@ -29,6 +29,8 @@ public final class ChatItem {
     private OperatorItem operator;
     @SerializedName("operatorIdToRate")
     private Map<String, RatingItem> operatorIdToRate;
+    @SerializedName("operatorIdToResolutionSurvey")
+    private Map<String, RatingItem> operatorIdToResolutionSurvey;
     @SerializedName("operatorTyping")
     private Boolean operatorTyping;
     @SerializedName("readByVisitor")
@@ -150,6 +152,14 @@ public final class ChatItem {
             operatorIdToRate = new HashMap<>();
         }
         return operatorIdToRate;
+    }
+
+    @NonNull
+    public Map<String, RatingItem> getOperatorIdToResolutionSurvey() {
+        if (operatorIdToResolutionSurvey == null) {
+            operatorIdToResolutionSurvey = new HashMap<>();
+        }
+        return operatorIdToResolutionSurvey;
     }
 
     @Override

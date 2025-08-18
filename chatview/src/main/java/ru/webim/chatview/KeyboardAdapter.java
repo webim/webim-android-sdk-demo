@@ -14,6 +14,7 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 
 import ru.webim.android.sdk.Message;
+import ru.webim.chatview.utils.ViewUtils;
 
 public class KeyboardAdapter {
     private final KeyboardButtonClickListener keyboardButtonClickListener;
@@ -38,9 +39,9 @@ public class KeyboardAdapter {
         this.keyboardButtonClickListener = keyboardButtonClickListener;
         this.context = new WeakReference<>(keyboardLayout.getContext());
 
-        pendingTextColor = ContextCompat.getColor(context.get(), R.color.keyboard_button_pending);
-        canceledTextColor = ContextCompat.getColor(context.get(), R.color.keyboard_button_canceled);
-        completedTextColor = ContextCompat.getColor(context.get(), R.color.keyboard_button_completed);
+        pendingTextColor = ViewUtils.resolveAttr(R.attr.chv_buttons_pending, context.get());
+        canceledTextColor = ViewUtils.resolveAttr(R.attr.chv_buttons_canceled, context.get());
+        completedTextColor = ViewUtils.resolveAttr(R.attr.chv_buttons_complete, context.get());
 
         buttonTextSize = (int) context.get().getResources().getDimension(R.dimen.button_text_size);
         buttonPadding = (int) context.get().getResources().getDimension(R.dimen.button_padding);

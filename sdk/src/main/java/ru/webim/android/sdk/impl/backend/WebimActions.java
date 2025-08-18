@@ -61,11 +61,14 @@ public interface WebimActions {
         @NonNull MessageStream.AutocompleteCallback callback
     );
 
-    void startChat(@NonNull String clientSideId,
-                   @Nullable String departmentKey,
-                   @Nullable String firstQuestion,
-                   @Nullable String customFields,
-                   @NonNull DefaultCallback<DefaultResponse> callback);
+    void startChat(
+        @NonNull String clientSideId,
+        @Nullable String departmentKey,
+        @Nullable String firstQuestion,
+        @Nullable String customFields,
+        boolean forceStartChat,
+        @NonNull DefaultCallback<DefaultResponse> callback
+    );
 
     void setChatRead();
 
@@ -84,6 +87,7 @@ public interface WebimActions {
 
     void rateOperator(@Nullable String operatorId,
                       @Nullable String note,
+                      @Nullable String threadId,
                       int rate,
                       @Nullable MessageStream.RateOperatorCallback rateOperatorCallback);
 
@@ -115,6 +119,8 @@ public interface WebimActions {
     void closeSurvey(@NonNull String surveyId, @NonNull SurveyFinishCallback callback);
 
     void getLocationStatus(@NonNull String location, @NonNull DefaultCallback<LocationStatusResponse> callback);
+
+    void sendResolutionSurvey(@Nullable String id, int answer, String chatId, MessageStream.SendResolutionSurveyCallback callback);
 
     void sendGeolocation(float latitude, float longitude, @Nullable MessageStream.GeolocationCallback callback);
 }

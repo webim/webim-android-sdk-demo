@@ -245,6 +245,11 @@ public interface Message {
         @Nullable String getErrorMessage();
 
         /**
+         * @return a message with the reason for the visitor error during loading
+         */
+        @Nullable String getVisitorErrorMessage();
+
+        /**
          * @return attachment upload progress as a percentage
          */
         int getDownloadProgress();
@@ -254,6 +259,12 @@ public interface Message {
          */
         @NonNull
         AttachmentState getState();
+
+        /**
+         * @return extra text (caption) for file
+         */
+        @Nullable
+        String getExtraText();
 
         /**
          * Shows the state of the attachment.

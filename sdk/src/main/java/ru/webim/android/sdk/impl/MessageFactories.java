@@ -264,8 +264,10 @@ public final class MessageFactories {
                 0,
                 null,
                 null,
+                null,
                 fileInfo,
                 fileInfos,
+                null,
                 Message.Attachment.AttachmentState.UPLOAD
             );
 
@@ -324,8 +326,10 @@ public final class MessageFactories {
                 0,
                 null,
                 null,
+                null,
                 filesInfo.get(0),
                 filesInfo,
+                null,
                 Message.Attachment.AttachmentState.UPLOAD
             );
 

@@ -54,12 +54,25 @@ public interface MessageStream {
     AccountConfigItem getAccountConfig();
 
     /**
+     * @return current LocationSettingsItem of the MessageStream.
+     */
+    @Nullable
+    LocationSettingsItem getServerLocationSettings();
+
+    /**
      * @return previous rating of the operator or 0 if the operator was not rated before
      * @throws IllegalStateException if the WebimSession was destroyed
      * @throws RuntimeException if the method was called not from the thread the WebimSession was created in
      */
     int getLastOperatorRating(Operator.Id operatorId);
 
+    /**
+     * @return previous resolution survey answer of the operator or null if the operator was not rated before
+     * @throws IllegalStateException if the WebimSession was destroyed
+     * @throws RuntimeException if the method was called not from the thread the WebimSession was created in
+     */
+    @CustomMethod
+    Integer getLastOperatorResolutionSurveyAnswer(Operator.Id operatorId);
 
     /**
      * @return timestamp of first unread message by operator
@@ -164,12 +177,22 @@ public interface MessageStream {
     void startChat(ChatStartedCallback chatStartedCallback);
 
     /**
+     * Starts chat.
      * Changes {@link ChatState} to {@link ChatState#QUEUE}
      * @throws IllegalStateException if the WebimSession was destroyed
      * @throws RuntimeException if the method was called not from the thread {@link WebimSession}
      * was created in
      */
     void startChat();
+
+    /**
+     * Force starts chat.
+     * Changes {@link ChatState} to {@link ChatState#QUEUE}
+     * @throws IllegalStateException if the WebimSession was destroyed
+     * @throws RuntimeException if the method was called not from the thread {@link WebimSession}
+     * was created in
+     */
+    void forceStartChat();
 
     /**
      * Method returns the current chat id
@@ -197,6 +220,17 @@ public interface MessageStream {
      * was created in
      */
     void startChatWithDepartmentKey(@Nullable String departmentKey);
+
+    /**
+     * Force starts chat with particular department.
+     * Changes {@link ChatState} to {@link ChatState#QUEUE}.
+     * @see Department
+     * @param departmentKey department key
+     * @throws IllegalStateException if the WebimSession was destroyed
+     * @throws RuntimeException if the method was called not from the thread {@link WebimSession}
+     * was created in
+     */
+    void forceStartChatWithDepartmentKey(@Nullable String departmentKey);
 
     /**
      * Starts chat and sends first message simultaneously.
@@ -563,6 +597,45 @@ public interface MessageStream {
      * @param callback shows if the call to receive location config is completed or not
      * */
     void getLocationConfig(@NonNull String location, @NonNull LocationConfigCallback callback);
+
+    /**
+     * Send resolution survey
+     * @param operatorId - operator operatorId
+     * @param answer - answer 1 or 0
+     * @param callback - shows if a send resolution survey request is completed or failed
+     * @throws IllegalStateException if the WebimSession was destroyed
+     */
+    @CustomMethod
+    void sendResolutionSurvey(@NonNull String operatorId, int answer, @Nullable SendResolutionSurveyCallback callback);
+
+    /**
+     * @see MessageStream#sendResolutionSurvey(String, int, SendResolutionSurveyCallback)
+     */
+    interface SendResolutionSurveyCallback {
+        /**
+         * Invoked when request was succeed
+         */
+        void onSuccess();
+
+        /**
+         * Invoked when some error happens while request
+         */
+        void onFailed(WebimError<SendResolutionSurveyCallback.SendResolutionError> error);
+
+        /**
+         * @see SendResolutionSurveyCallback#onFailed(WebimError)
+         */
+        enum SendResolutionError {
+            RATE_DISABLED,
+            NO_CHAT,
+            OPERATOR_NOT_IN_CHAT,
+            RESOLUTION_SURVEY_VALUE_INCORRECT,
+            RATE_FORM_MISMATCH,
+            VISITOR_SEGMENT_MISMATCH,
+            RATED_ENTITY_MISMATCH,
+            UNKNOWN
+        }
+    }
 
     /**
      * Sends geolocation to server

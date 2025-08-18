@@ -33,6 +33,7 @@
         android:fadeScrollbars="false">
 
         <LinearLayout
+            android:id="@+id/webimInfo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
@@ -45,7 +46,7 @@
                 android:lineSpacingMultiplier="1.35"
                 android:text="@string/first_screen_text1"
                 android:textColor="@color/white"
-                android:textSize="@dimen/text_size_normal_header_bold"
+                android:textSize="@dimen/text_size_normal_header"
                 android:textStyle="bold" />
 
             <TextView
@@ -131,16 +132,15 @@
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="14dp"
-                android:layout_marginTop="14dp"
-                android:layout_marginEnd="14dp">
+                android:layout_marginTop="14dp">
 
                 <Button
                     android:id="@+id/buttonStartChat"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/background_button_chat"
                     android:text="@string/button_text_start_chat"
-                    android:theme="@style/AppTheme.ButtonGreen" />
+                    android:theme="@style/AppTheme.MainScreenButtons"/>
             </FrameLayout>
 
             <ProgressBar
@@ -171,11 +171,10 @@
             android:id="@+id/buttonSettings"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@drawable/background_button_settings"
             android:layout_below="@id/relLayStartChat"
-            android:layout_marginStart="14dp"
-            android:layout_marginEnd="14dp"
             android:text="@string/button_text_settings"
-            android:theme="@style/AppTheme.ButtonPurple" />
+            android:theme="@style/AppTheme.MainScreenButtons" />
 
     </RelativeLayout>
 

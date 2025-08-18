@@ -211,7 +211,7 @@ public final class InternalUtils {
                 Type mapType = new TypeToken<FileItem>(){}.getType();
                 FileItem fileItem = gson.fromJson(string, mapType);
                 return (fileItem != null)
-                    ? getAttachment(fileItem.getFile(), fileUrlCreator)
+                    ? getAttachment(fileItem, fileUrlCreator)
                     : getAttachment(messageItem.getMessage(), fileUrlCreator);
             } catch (Exception e) {
                 WebimInternalLog.getInstance().log(
@@ -234,29 +234,34 @@ public final class InternalUtils {
         return new MessageImpl.AttachmentImpl(
             attachment.getDownloadProgress(),
             attachment.getErrorMessage(),
+            attachment.getVisitorErrorMessage(),
             attachment.getErrorType(),
             attachment.getFileInfo(),
             attachment.getFilesInfo(),
+            attachment.getExtraText(),
             Message.Attachment.AttachmentState.ERROR
         );
     }
 
     @Nullable
     private static Message.Attachment getAttachment(
-        @Nullable FileItem.File fileItem,
+        @NonNull FileItem fileItem,
         @NonNull FileUrlCreator fileUrlCreator
     ) {
-        if (fileItem != null) {
-            Message.FileInfo fileInfo = getFileInfo(fileItem, fileUrlCreator);
+        FileItem.File file = fileItem.getFile();
+        if (file != null) {
+            Message.FileInfo fileInfo = getFileInfo(file, fileUrlCreator);
             List<Message.FileInfo> filesInfo = new ArrayList<>();
             filesInfo.add(fileInfo);
             return new MessageImpl.AttachmentImpl(
-                    fileItem.getDownloadProgress(),
-                    fileItem.getErrorType(),
-                    fileItem.getErrorMessage(),
-                    fileInfo,
-                    filesInfo,
-                    getFileState(fileItem.getState()));
+                file.getDownloadProgress(),
+                file.getErrorType(),
+                file.getErrorMessage(),
+                file.getVisitorErrorMessage(),
+                fileInfo,
+                filesInfo,
+                fileItem.getExtraText(),
+                getFileState(file.getState()));
         } else {
             return null;
         }
@@ -285,8 +290,10 @@ public final class InternalUtils {
             100,
             "",
             "",
+            "",
             fileInfo,
             filesInfo,
+            null,
             Message.Attachment.AttachmentState.READY
         );
     }
@@ -300,12 +307,13 @@ public final class InternalUtils {
         if (file.getState() == FileItem.File.FileState.READY) {
             return getFileInfoImpl(fileParams, fileUrlCreator);
         } else {
+            boolean cannotGenerateUrl = fileParams == null || fileParams.getFilename() == null || fileParams.getGuid() == null;
             return new MessageImpl.FileInfoImpl(
                 "",
                 (fileParams != null) ? fileParams.getFilename() : "",
                 null,
                 0,
-                fileParams == null ? null : fileUrlCreator.createFileUrl(fileParams.getFilename(), fileParams.getGuid(), false),
+                cannotGenerateUrl ? null : fileUrlCreator.createFileUrl(fileParams.getFilename(), fileParams.getGuid(), false),
                 fileParams != null ? fileParams.getGuid() : "",
                 null,
                 fileParams == null ? null : fileUrlCreator

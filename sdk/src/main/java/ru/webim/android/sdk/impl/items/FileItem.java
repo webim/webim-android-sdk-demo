@@ -5,9 +5,15 @@ import com.google.gson.annotations.SerializedName;
 public class FileItem {
     @SerializedName("file")
     private File file;
+    @SerializedName("extra_text")
+    private String extraText;
 
     public File getFile() {
         return file;
+    }
+
+    public String getExtraText() {
+        return extraText;
     }
 
     public static final class File {
@@ -19,6 +25,9 @@ public class FileItem {
 
         @SerializedName("error_message")
         private String error_message = "";
+
+        @SerializedName("visitor_error_message")
+        private String visitorErrorMessage = "";
 
         @SerializedName("progress")
         private int progress = 0;
@@ -50,6 +59,10 @@ public class FileItem {
 
         public String getErrorMessage() {
             return error_message;
+        }
+
+        public String getVisitorErrorMessage() {
+            return visitorErrorMessage;
         }
 
         public int getDownloadProgress() {

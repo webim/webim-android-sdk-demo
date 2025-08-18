@@ -115,6 +115,10 @@ public class ChatView extends FrameLayout implements FatalErrorHandler {
         return fileHelper;
     }
 
+    public void setAutoScrollToLastMsgEnabled(boolean isEnabled) {
+        chatList.setAutoScrollToLastMsgEnabled(isEnabled);
+    }
+
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
@@ -185,7 +189,7 @@ public class ChatView extends FrameLayout implements FatalErrorHandler {
                 if (!surveyDialog.isVisible()) {
                     try {
                         FragmentManager fragmentManager = ((FragmentActivity) getContext()).getSupportFragmentManager();
-                        surveyDialog.showNow(fragmentManager, "surveyDialog");
+                        surveyDialog.show(fragmentManager, "surveyDialog");
                     } catch (ClassCastException e) {
                         Log.e("WebimLog", "Can't get fragment manager");
                     }

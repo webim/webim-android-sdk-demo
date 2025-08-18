@@ -4,7 +4,7 @@
     <string name="channel_id" translatable="false">com.webimapp.android.demo.client.fcm</string>
     <string name="channel_name" translatable="false" >Webim notification</string>
 
-    <string name="first_screen_text1">Добро пожаловать в демо-приложение. Webim SDK App!</string>
+    <string name="first_screen_text1">Добро пожаловать\n в демо-приложение. Webim SDK App!</string>
     <string name="first_screen_text2">Для того, чтобы начать чат, нажмите на кнопку ниже.</string>
     <string name="first_screen_text3">Принять чат со стороны оператора вы можете на странице: https://demo.webim.ru</string>
     <string name="first_screen_text4">Логин: o@webim.ru</string>

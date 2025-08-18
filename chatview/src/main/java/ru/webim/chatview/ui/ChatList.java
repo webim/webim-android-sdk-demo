@@ -49,6 +49,7 @@ public class ChatList extends FrameLayout {
     private ProgressBar progressBar;
     private MessageStream stream;
     private ListControllerReadyCallback readyCallback;
+    private boolean isAutoScrollToLastMsgEnabled = true;
 
     private final BroadcastReceiver fileDownloadedComplete = new BroadcastReceiver() {
         public void onReceive(Context ctxt, Intent intent) {
@@ -114,6 +115,10 @@ public class ChatList extends FrameLayout {
 
     public ChatAdapter<?> getAdapter() {
         return (ChatAdapter<?>) recyclerView.getAdapter();
+    }
+
+    public void setAutoScrollToLastMsgEnabled(boolean isEnabled) {
+        isAutoScrollToLastMsgEnabled = isEnabled;
     }
 
     @Override
@@ -302,7 +307,7 @@ public class ChatList extends FrameLayout {
                 adapter.add(message);
                 adapter.notifyItemInserted(0);
 
-                if (fromVisitor || isLastVisible()) {
+                if ((fromVisitor || isLastVisible()) && isAutoScrollToLastMsgEnabled) {
                     recyclerView.stopScroll();
                     recyclerView.smoothScrollToPosition(0);
                 } else {

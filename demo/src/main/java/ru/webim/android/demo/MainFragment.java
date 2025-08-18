@@ -17,6 +17,7 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 
+import ru.webim.android.demo.util.AndroidUtils;
 import ru.webim.android.sdk.WebimSession;
 
 public class MainFragment extends Fragment {
@@ -53,12 +54,23 @@ public class MainFragment extends Fragment {
 
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
+        initTextInfo(rootView);
         initNewChatButton(rootView);
         initViewForBadge(rootView);
         initSettingButton(rootView);
         initCounter(rootView);
 
         return rootView;
+    }
+
+    private void initTextInfo(View rootView) {
+        ViewGroup webimInfoGroup = rootView.findViewById(R.id.webimInfo);
+        for (int i = 0; i < webimInfoGroup.getChildCount(); i++) {
+            View child = webimInfoGroup.getChildAt(i);
+            if (child instanceof TextView) {
+                AndroidUtils.stripUnderlines(((TextView) child));
+            }
+        }
     }
 
     public void setWebimSession(WebimSession webimSession) {
