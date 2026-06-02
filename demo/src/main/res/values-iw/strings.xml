@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="first_screen_text1">ברוכים הבאים לאפליקציית ההדגמה עבור. nWebim SDK App!</string>
-    <string name="first_screen_text2">הקש על הלחצן למטה כדי להתחיל בצ\'אט.</string>
-    <string name="first_screen_text3">היכנס כסוכן כדי לענות לצ\'אט זה בכתובת: https://demo.webim.ru</string>
-    <string name="first_screen_text4">כניסה: o@webim.ru</string>
-    <string name="first_screen_text5">סיסמה: password</string>
-    <string name="first_screen_text6">קוד המקור של אפליקציה זו ניתן למצוא ב:</string>
-    <string name="first_screen_text7">https://github.com/webim/webim-android-sdk-demo</string>
+    <string name="welcome_title">ברוכים הבאים לאפליקציית \n\u200EWebim SDK App\u200E!</string>
+    <string name="welcome_subtitle">התחילו לעבוד עם \n\u200EWebim SDK\u200E באמצעות אימות.</string>
+    <string name="welcome_description">לשם כך, לחצו על הכפתור \"התחל\" והזינו את שם החשבון שנשלח אליכם במייל בעת ההרשמה דרך אתר \u200EWebim\u200E.</string>
+    <string name="welcome_subtitle_start_chat">כדי להתחיל צ\'אט, \nלחצו על הכפתור למטה</string>
+    <string name="welcome_new_messages">הודעות חדשות: \u200E%d\u200E</string>
 
     <string name="image_logo_content_description">לוגו</string>
+    <string name="button_text_start_onboarding">התחל</string>
     <string name="button_text_start_chat">התחל צ\'אט</string>
     <string name="button_text_settings">הגדרות</string>
     <string name="action_close_chat">סגור צ\'אט</string>
@@ -65,4 +64,6 @@
     <string name="settings_account_field_hint">הזן את כתובת האתר המלאה של השרת או את שם החשבון, המתארח בשרת *.webim.ru\nלדוגמה, עבור השרת demo.webim.ru עליך להקליד \"demo\"</string >
     <string name="file_upload_connection_timeout">חרגת הזמן הקצוב להעלאת קבצים</string>
     <string name="cannot_open_file">לא ניתן למצוא אפליקציה לפתיחת הקובץ</string>
+
+    <string name="set_default_account_tint">הגדר חשבון כברירת מחדל</string>
 </resources>

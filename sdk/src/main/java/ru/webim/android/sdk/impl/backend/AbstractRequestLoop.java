@@ -3,11 +3,6 @@ package ru.webim.android.sdk.impl.backend;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import ru.webim.android.sdk.NotFatalErrorHandler;
-import ru.webim.android.sdk.Webim;
-import ru.webim.android.sdk.impl.InternalUtils;
-import ru.webim.android.sdk.impl.items.responses.ErrorResponse;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -26,12 +21,16 @@ import okhttp3.RequestBody;
 import okio.Buffer;
 import retrofit2.Call;
 import retrofit2.Response;
+import ru.webim.android.sdk.NotFatalErrorHandler;
+import ru.webim.android.sdk.Webim;
+import ru.webim.android.sdk.impl.InternalUtils;
+import ru.webim.android.sdk.impl.items.responses.ErrorResponse;
 
 public abstract class AbstractRequestLoop {
 
     protected volatile boolean running = true;
     @Nullable
-    private Thread thread;
+    protected Thread thread;
     @Nullable
     private volatile Call<?> currentRequest;
     @NonNull
@@ -165,20 +164,22 @@ public abstract class AbstractRequestLoop {
                     if (body != null && body.getError() != null) {
                         error = body.getError();
                         argumentName = body.getArgumentName();
-                        WebimInternalLog.getInstance().logResponse(log,
-                                Webim.SessionBuilder.WebimLogVerbosityLevel.WARNING
+                        WebimInternalLog.getInstance().logResponse(
+                            log,
+                            Webim.SessionBuilder.WebimLogVerbosityLevel.WARNING
                         );
                     } else {
-                        WebimInternalLog.getInstance().logResponse(log,
-                                Webim.SessionBuilder.WebimLogVerbosityLevel.DEBUG
+                        WebimInternalLog.getInstance().logResponse(
+                            log,
+                            Webim.SessionBuilder.WebimLogVerbosityLevel.DEBUG
                         );
                         return body;
                     }
                 } else {
                     try {
                         ErrorResponse errorResponse = InternalUtils.fromJson(
-                                response.errorBody().string(),
-                                ErrorResponse.class
+                            response.errorBody().string(),
+                            ErrorResponse.class
                         );
                         error = errorResponse.getError();
                         argumentName = errorResponse.getArgumentName();
@@ -186,8 +187,9 @@ public abstract class AbstractRequestLoop {
 
                     httpCode = response.code();
 
-                    WebimInternalLog.getInstance().logResponse(log,
-                            Webim.SessionBuilder.WebimLogVerbosityLevel.ERROR
+                    WebimInternalLog.getInstance().logResponse(
+                        log,
+                        Webim.SessionBuilder.WebimLogVerbosityLevel.ERROR
                     );
                 }
             } catch (FileNotFoundException exception) {
@@ -233,11 +235,25 @@ public abstract class AbstractRequestLoop {
                 throw new AbortByWebimErrorException(request, error, httpCode, argumentName);
             } else if ((httpCode != 200) && (httpCode != 502)) {
                 // 502 Bad Gateway - always the same as 'server-not-ready'
-
+                if (httpCode == 404) {
+                    throw new AbortByWebimErrorException(
+                            request,
+                            WebimInternalError.UNSUPPORTED_URL,
+                            httpCode
+                    );
+                }
                 if (httpCode == 400) {
+                    String webimError = error != null ? error : WebimInternalError.CANNOT_CREATE_RESPONSE;
                     throw new AbortByWebimErrorException(
                         request,
-                        WebimInternalError.CANNOT_CREATE_RESPONSE,
+                        webimError,
+                        httpCode
+                    );
+                }
+                if (httpCode == 403) {
+                    throw new AbortByWebimErrorException(
+                        request,
+                        WebimInternalError.VISITOR_BANNED,
                         httpCode
                     );
                 }

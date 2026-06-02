@@ -3,6 +3,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
+    android:fitsSystemWindows="true"
+    android:background="@color/colorBackgroundActivityMain"
     android:layout_height="match_parent">
 
     <com.google.android.material.appbar.AppBarLayout
@@ -40,6 +42,7 @@
 
     <FrameLayout
         android:id="@+id/container"
+        android:background="@color/color_background"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@+id/appBar">

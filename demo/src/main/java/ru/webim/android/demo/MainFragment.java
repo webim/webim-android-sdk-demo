@@ -9,7 +9,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -17,13 +16,19 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 
-import ru.webim.android.demo.util.AndroidUtils;
 import ru.webim.android.sdk.WebimSession;
 
 public class MainFragment extends Fragment {
+
+    private static final String TAG = "MainFragment";
     private WebimSession session;
-    private ProgressBar progressBar;
-    private TextView numberOfBadge;
+    private View newMessagesLayout;
+    private TextView newMessagesTextView;
+    private TextView subTitle;
+    private TextView description;
+    private Button onboardingButton;
+    private Button startChatButton;
+    private Button settingsButton;
     private MainFragmentDelegate delegate;
 
     public interface MainFragmentDelegate {
@@ -38,89 +43,138 @@ public class MainFragment extends Fragment {
         delegate = (MainFragmentDelegate) context;
     }
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        checkNotificationPermission();
+    }
+
+    private void checkNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.POST_NOTIFICATIONS}, 0);
+            }
+        }
+    }
+
     @Nullable
     @Override
     public View onCreateView(
-        @NonNull LayoutInflater inflater,
-        ViewGroup container,
-        Bundle savedInstanceState) {
-
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(requireActivity(), new String[] { Manifest.permission.POST_NOTIFICATIONS }, 0);
-            }
-        }
-
-        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-
-        initTextInfo(rootView);
-        initNewChatButton(rootView);
-        initViewForBadge(rootView);
-        initSettingButton(rootView);
-        initCounter(rootView);
-
-        return rootView;
+            @NonNull LayoutInflater inflater,
+            ViewGroup container,
+            Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_main, container, false);
     }
 
-    private void initTextInfo(View rootView) {
-        ViewGroup webimInfoGroup = rootView.findViewById(R.id.webimInfo);
-        for (int i = 0; i < webimInfoGroup.getChildCount(); i++) {
-            View child = webimInfoGroup.getChildAt(i);
-            if (child instanceof TextView) {
-                AndroidUtils.stripUnderlines(((TextView) child));
-            }
-        }
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        initViews(view);
+        initOnboardingButton(view);
+        initNewChatButton(view);
+        initViewForBadge(view);
+        initSettingButton(view);
+
+        updateButtonVisibility();
     }
 
-    public void setWebimSession(WebimSession webimSession) {
-        session = webimSession;
+    private void initViews(View rootView) {
+        subTitle = rootView.findViewById(R.id.welcomeSubtitleTextView);
+        description = rootView.findViewById(R.id.welcomeDescriptionTextView);
+    }
+
+    private void initOnboardingButton(View rootView) {
+        onboardingButton = rootView.findViewById(R.id.buttonOnboarding);
+        onboardingButton.setOnClickListener(view -> delegate.onOpenSettings());
     }
 
     private void initNewChatButton(View rootView) {
-        Button newChatButton = rootView.findViewById(R.id.buttonStartChat);
-        newChatButton.setOnClickListener(view -> delegate.onOpenChat());
+        startChatButton = rootView.findViewById(R.id.buttonStartChat);
+        startChatButton.setOnClickListener(view -> delegate.onOpenChat());
     }
 
     private void initViewForBadge(View rootView) {
-        progressBar = rootView.findViewById(R.id.progressBar);
-        numberOfBadge = rootView.findViewById(R.id.textNumberOfBadge);
+        newMessagesLayout = rootView.findViewById(R.id.linearLayoutNewMessages);
+        newMessagesTextView = rootView.findViewById(R.id.newMessagesTextView);
     }
 
     private void initSettingButton(View rootView) {
-        Button settingsButton = rootView.findViewById(R.id.buttonSettings);
+        settingsButton = rootView.findViewById(R.id.buttonSettings);
         settingsButton.setOnClickListener(view -> delegate.onOpenSettings());
     }
 
-    private void initCounter(View rootView) {
-        numberOfBadge.setVisibility(View.GONE);
-        progressBar.setVisibility(View.VISIBLE);
-        session.getStream().setUnreadByVisitorMessageCountChangeListener(newMessageCount -> {
-            if (newMessageCount > 0) {
-                numberOfBadge.setText(String.valueOf(newMessageCount));
-                numberOfBadge.setVisibility(View.VISIBLE);
-            } else {
-                numberOfBadge.setVisibility(View.GONE);
-            }
-            progressBar.setVisibility(View.GONE);
-        });
-    }
 
     @Override
     public void onStart() {
         super.onStart();
-        session.resume();
+        if (session != null) {
+            session.resume();
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (session != null) {
+            session.resume();
+        }
+        updateButtonVisibility();
+    }
+
+    private void updateButtonVisibility() {
+        boolean isOnboarding = SettingsFragment.needOnboarding(requireContext());
+
+        subTitle.setText(isOnboarding ? R.string.welcome_subtitle : R.string.welcome_subtitle_start_chat);
+        description.setVisibility(isOnboarding ? View.VISIBLE : View.GONE);
+
+        if (onboardingButton != null) {
+            onboardingButton.setVisibility(isOnboarding ? View.VISIBLE : View.GONE);
+        }
+        if (startChatButton != null) {
+            startChatButton.setVisibility(isOnboarding ? View.GONE : View.VISIBLE);
+
+            if (!isOnboarding) {
+                initCounter();
+            }
+        }
+        if (settingsButton != null) {
+            settingsButton.setVisibility(isOnboarding ? View.GONE : View.VISIBLE);
+        }
+    }
+
+    private void initCounter() {
+        if (session == null) {
+            return;
+        }
+        newMessagesLayout.setVisibility(View.GONE);
+        session.getStream().setUnreadByVisitorMessageCountChangeListener(newMessageCount -> {
+            if (newMessageCount > 0) {
+                newMessagesTextView.setText(getString(R.string.welcome_new_messages, newMessageCount));
+                newMessagesLayout.setVisibility(View.VISIBLE);
+            } else {
+                newMessagesLayout.setVisibility(View.GONE);
+            }
+        });
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        session.pause();
+        if (session != null) {
+            session.pause();
+        }
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        session.destroy();
+        if (session != null) {
+            session.destroy();
+        }
+    }
+
+    public void setWebimSession(WebimSession webimSession) {
+        session = webimSession;
     }
 }

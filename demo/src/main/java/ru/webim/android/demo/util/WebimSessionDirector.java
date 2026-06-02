@@ -11,10 +11,10 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.os.Build;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
 import androidx.annotation.RequiresApi;
+import androidx.preference.PreferenceManager;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailabilityLight;
@@ -46,7 +46,12 @@ import ru.webim.android.sdk.WebimLogEntity;
 public class WebimSessionDirector {
 
     public static void createSessionBuilderWithAnonymousVisitor(Context context, Webim.PushSystem pushSystem, OnSessionBuilderCreatedListener listener) {
-        Webim.SessionBuilder sessionBuilder = newSessionBuilder(context);
+        String accountName = getAccountNameOrNull(context);
+        if (accountName == null) {
+            listener.onError(SessionBuilderError.NO_ACCOUNT);
+            return;
+        }
+        Webim.SessionBuilder sessionBuilder = newSessionBuilder(context, accountName);
         retrieveToken(context, sessionBuilder, listener);
     }
 
@@ -56,19 +61,29 @@ public class WebimSessionDirector {
                     "\"display_name\":\"Никита\"," +
                     "\"crc\":\"ffadeb6aa3c788200824e311b9aa44cb\"}";
 
-        Webim.SessionBuilder sessionBuilder = newSessionBuilder(context).setVisitorFieldsJson(visitorFieldAuthVersion1);
+        String accountName = getAccountNameOrNull(context);
+        if (accountName == null) {
+            listener.onError(SessionBuilderError.NO_ACCOUNT);
+            return;
+        }
+        Webim.SessionBuilder sessionBuilder = newSessionBuilder(context, accountName).setVisitorFieldsJson(visitorFieldAuthVersion1);
         retrieveToken(context, sessionBuilder, listener);
     }
 
     public static void createSessionBuilderWithAuth2Visitor(Context context, OnSessionBuilderCreatedListener listener) {
-        SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         String visitorsData = prefs.getString(SettingsFragment.KEY_AUTH_VISITOR_DATA, null);
         if (visitorsData == null) {
             Log.e("Webim Demo", "Visitors fields not exists");
             listener.onError(SessionBuilderError.AUTH_USER_ERROR);
             return;
         }
-        Webim.SessionBuilder sessionBuilder = newSessionBuilder(context).setVisitorFieldsJson(visitorsData);
+        String accountName = getAccountNameOrNull(context);
+        if (accountName == null) {
+            listener.onError(SessionBuilderError.NO_ACCOUNT);
+            return;
+        }
+        Webim.SessionBuilder sessionBuilder = newSessionBuilder(context, accountName).setVisitorFieldsJson(visitorsData);
         retrieveToken(context, sessionBuilder, listener);
     }
 
@@ -103,7 +118,6 @@ public class WebimSessionDirector {
             case HPK:
                 retrieveHuaweiToken(context, builder, listener);
                 break;
-            case GCM:
             default:
                 listener.onSessionBuilderCreated(builder);
                 break;
@@ -194,15 +208,25 @@ public class WebimSessionDirector {
         return new byte[32];
     }
 
-    private static Webim.SessionBuilder newSessionBuilder(Context context) {
-        String DEFAULT_ACCOUNT_NAME = "demo";
+    private static String getAccountNameOrNull(Context context) {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
+        String account = sharedPref.getString(KEY_ACCOUNT, null);
+        if (account == null) {
+            return null;
+        }
+        String normalized = account.trim();
+        return normalized.isEmpty() ? null : normalized;
+    }
+
+    private static Webim.SessionBuilder newSessionBuilder(Context context, String accountName) {
         String DEFAULT_LOCATION = "mobile";
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
         WebimLog webimLog = null;
         String webimLogTag = "webim_demo_log";
+        String appVersion = "3.0.0";
         if (sharedPref.getBoolean(KEY_FILE_LOGGER, false)) {
             try {
-                webimLog = FileLogger.getAppSpecificDirLogger(context, "Webim.txt");
+                webimLog = FileLogger.loadLogsToDownloads(context, "Webim", webimLogTag + ".txt");
             } catch (Throwable throwable) {
                 webimLog = log -> Log.i(webimLogTag, log);
             }
@@ -217,8 +241,9 @@ public class WebimSessionDirector {
 
         return Webim.newSessionBuilder()
             .setContext(context)
-            .setAccountName(sharedPref.getString(KEY_ACCOUNT, DEFAULT_ACCOUNT_NAME))
+            .setAccountName(accountName)
             .setLocation(sharedPref.getString(KEY_LOCATION, DEFAULT_LOCATION))
+            .setAppVersion(appVersion)
             .setClearVisitorData(clearVisitorData)
             .setLoggerEntities(WebimLogEntity.SERVER)
             .setLogger(webimLog, Webim.SessionBuilder.WebimLogVerbosityLevel.VERBOSE);
@@ -317,6 +342,7 @@ public class WebimSessionDirector {
     public enum SessionBuilderError {
         FIREBASE_TOKEN_ERROR,
         HUAWEI_TOKEN_ERROR,
+        NO_ACCOUNT,
         AUTH_USER_ERROR
     }
 

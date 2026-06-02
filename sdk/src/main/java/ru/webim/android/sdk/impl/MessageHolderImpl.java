@@ -54,9 +54,9 @@ public class MessageHolderImpl implements MessageHolder {
                                      Set<String> deleted,
                                      final Runnable callback) {
         historyStorage.receiveHistoryUpdate(
-            messages,
-            deleted,
-            new UpdateHistoryCallbackImpl(callback)
+                messages,
+                deleted,
+                new UpdateHistoryCallbackImpl(callback)
         );
     }
 
@@ -101,20 +101,20 @@ public class MessageHolderImpl implements MessageHolder {
     private void getMessagesFromCurrent(@NonNull MessageImpl before,
                                         int limit,
                                         @NonNull final MessageTracker.GetMessagesCallback
-                                                    callback) {
+                                                callback) {
         int ind = currentMessages.indexOf(before);
         if (ind <= 0) {
             String sessionId = before.sessionId;
             String searchMessageId = before.getClientSideId().toString();
             String borderChatMessagesId =
                     currentMessages.get(0).getClientSideId().toString() +
-                    " / " +
-                    currentMessages.get(currentMessages.size() - 1).getClientSideId().toString();
+                            " / " +
+                            currentMessages.get(currentMessages.size() - 1).getClientSideId().toString();
             throw new IllegalStateException(
                     "Impossible: " +
-                    sessionId + " / " +
-                    searchMessageId + " / " +
-                    borderChatMessagesId);
+                            sessionId + " / " +
+                            searchMessageId + " / " +
+                            borderChatMessagesId);
         }
         respondMessages(callback, currentMessages, ind, limit);
     }
@@ -139,12 +139,12 @@ public class MessageHolderImpl implements MessageHolder {
                 private void requestMessagesFromRemoteHistory(@NonNull List<? extends Message> messages) {
                     final List<Message> result = Collections.synchronizedList(new ArrayList<>(messages));
                     requestHistoryBefore(
-                        ((MessageImpl) messages.get(0)),
-                        limit - messages.size(),
-                        remoteMessages -> {
-                            result.addAll(remoteMessages);
-                            callback.receive(unmodifiableList(result));
-                        }
+                            ((MessageImpl) messages.get(0)),
+                            limit - messages.size(),
+                            remoteMessages -> {
+                                result.addAll(remoteMessages);
+                                callback.receive(unmodifiableList(result));
+                            }
                     );
                 }
             });
@@ -165,16 +165,16 @@ public class MessageHolderImpl implements MessageHolder {
                                       final int limit,
                                       @NonNull final MessageTracker.GetMessagesCallback callback) {
         historyProvider.requestHistoryBefore(
-            timestamp,
-            (messages, hasMore) -> {
-                if (messages.isEmpty()) {
-                    isReachedEndOfRemoteHistory = true;
-                } else {
-                    isReachedEndOfRemoteHistory = false;
-                    historyStorage.receiveHistoryBefore(messages, hasMore);
+                timestamp,
+                (messages, hasMore) -> {
+                    if (messages.isEmpty()) {
+                        isReachedEndOfRemoteHistory = true;
+                    } else {
+                        isReachedEndOfRemoteHistory = false;
+                        historyStorage.receiveHistoryBefore(messages, hasMore);
+                    }
+                    respondMessages(callback, messages, limit);
                 }
-                respondMessages(callback, messages, limit);
-            }
         );
     }
 
@@ -336,9 +336,9 @@ public class MessageHolderImpl implements MessageHolder {
     public void onSendingMessage(@NonNull MessageSending message, boolean resend) {
         if (!resend) {
             historyStorage.receiveHistoryUpdate(
-                Collections.singletonList(message),
-                emptySet(),
-                new UpdateHistoryCallbackImpl()
+                    Collections.singletonList(message),
+                    emptySet(),
+                    new UpdateHistoryCallbackImpl()
             );
         }
     }
@@ -384,7 +384,8 @@ public class MessageHolderImpl implements MessageHolder {
                 message.canVisitorReact(),
                 message.canVisitorChangeReaction(),
                 message.getGroupData(),
-                Message.SendStatus.SENDING
+                Message.SendStatus.SENDING,
+                message.getTranslationInfo()
             );
             messageTracker.messageListener.messageChanged(message, newMsg);
             return message.text;
@@ -408,13 +409,14 @@ public class MessageHolderImpl implements MessageHolder {
             messageSending.timeMicros,
             messageSending.getQuote(),
             messageSending.getSticker(),
-            attachment
+            attachment,
+            messageSending.getTranslationInfo()
         );
 
         historyStorage.receiveHistoryUpdate(
-            Collections.singletonList(messageFailed),
-            emptySet(),
-            new UpdateHistoryCallbackImpl()
+                Collections.singletonList(messageFailed),
+                emptySet(),
+                new UpdateHistoryCallbackImpl()
         );
     }
 
@@ -458,7 +460,8 @@ public class MessageHolderImpl implements MessageHolder {
                 message.canVisitorReact(),
                 message.canVisitorChangeReaction(),
                 message.getGroupData(),
-                Message.SendStatus.SENT
+                Message.SendStatus.SENT,
+                message.getTranslationInfo()
             );
             messageTracker.messageListener.messageChanged(message, newMsg);
         }
@@ -584,7 +587,7 @@ public class MessageHolderImpl implements MessageHolder {
             }
             if (isMessagesLoading) {
                 throw new IllegalStateException("Messages is loading now; " +
-                    "can't load messages in parallel");
+                        "can't load messages in parallel");
             }
             isMessagesLoading = true;
 
@@ -597,8 +600,8 @@ public class MessageHolderImpl implements MessageHolder {
         }
 
         private void uncheckedGetNextMessages(
-            int limit,
-            @NonNull final GetMessagesCallback callback
+                int limit,
+                @NonNull final GetMessagesCallback callback
         ) {
             GetMessagesCallback callback2 = new GetMessagesCallbackWrapper(limit, callback);
             if (headMessage == null) {
@@ -778,16 +781,16 @@ public class MessageHolderImpl implements MessageHolder {
 
         private boolean shouldInsertInMiddle(MessageImpl newMessage, MessageImpl message, int insertIndex) {
             return
-                // If index inserts are already found, skip the condition
-                insertIndex == -1 &&
-                // If the NEW one is sending and the NEXT one is not sending, skip and push after
-                (message.isSending() || !newMessage.isSending()) &&
-                (
-                    // If the NEXT one is sending, but there is no NEW one, push before
-                    message.compareTo(newMessage) > 0 ||
-                    // If the NEXT one is sending, but there is no NEW one, push before
-                    (message.isSending() && !newMessage.isSending())
-                );
+                    // If index inserts are already found, skip the condition
+                    insertIndex == -1 &&
+                            // If the NEW one is sending and the NEXT one is not sending, skip and push after
+                            (message.isSending() || !newMessage.isSending()) &&
+                            (
+                                    // If the NEXT one is sending, but there is no NEW one, push before
+                                    message.compareTo(newMessage) > 0 ||
+                                            // If the NEXT one is sending, but there is no NEW one, push before
+                                            (message.isSending() && !newMessage.isSending())
+                            );
         }
 
         void onCurrentMessageAdded(MessageImpl before, MessageImpl msg) {
@@ -828,18 +831,18 @@ public class MessageHolderImpl implements MessageHolder {
             isLoadingFromClosedChat = true;
             long timestamp = TimeUnit.MILLISECONDS.toMicros(new Date().getTime());
             getMessagesFromHistory(
-                timestamp,
-                cachedLimit,
-                messages -> {
-                    if (cachedCallback != null) {
-                        GetMessagesCallback callback = cachedCallback;
-                        int limit = cachedLimit;
-                        cachedCallback = null;
-                        cachedLimit = 0;
-                        new MessageTrackerImpl.GetMessagesCallbackWrapper(limit, callback).receive(messages);
-                        isLoadingFromClosedChat = false;
+                    timestamp,
+                    cachedLimit,
+                    messages -> {
+                        if (cachedCallback != null) {
+                            GetMessagesCallback callback = cachedCallback;
+                            int limit = cachedLimit;
+                            cachedCallback = null;
+                            cachedLimit = 0;
+                            new MessageTrackerImpl.GetMessagesCallbackWrapper(limit, callback).receive(messages);
+                            isLoadingFromClosedChat = false;
+                        }
                     }
-                }
             );
         }
 

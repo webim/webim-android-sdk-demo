@@ -5,15 +5,18 @@ import androidx.annotation.Nullable;
 
 
 public class MessageFailed extends MessageImpl {
-    public MessageFailed(@NonNull String serverUrl,
-                          @NonNull Id id,
-                          @NonNull String senderName,
-                          @NonNull Type type,
-                          @NonNull String text,
-                          long timeMicros,
-                          @Nullable Quote quote,
-                          @Nullable Sticker sticker,
-                          @Nullable Attachment attachment
+
+    public MessageFailed(
+        @NonNull String serverUrl,
+        @NonNull Id id,
+        @NonNull String senderName,
+        @NonNull Type type,
+        @NonNull String text,
+        long timeMicros,
+        @Nullable Quote quote,
+        @Nullable Sticker sticker,
+        @Nullable Attachment attachment,
+        @Nullable TranslationInfo translationInfo
     ) {
         super(
             serverUrl,
@@ -41,7 +44,8 @@ public class MessageFailed extends MessageImpl {
             false,
             false,
             null,
-            SendStatus.FAILED
+            SendStatus.FAILED,
+            translationInfo
         );
     }
 }

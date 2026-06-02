@@ -34,6 +34,7 @@ import ru.webim.android.sdk.WebimSession;
 import ru.webim.android.sdk.impl.backend.callbacks.DeltaCallback;
 import ru.webim.android.sdk.impl.items.delta.DeltaFullUpdate;
 import ru.webim.android.sdk.impl.items.delta.DeltaItem;
+import ru.webim.android.sdk.impl.items.responses.AuthResponse;
 
 public class WebimClientBuilder {
 
@@ -70,6 +71,7 @@ public class WebimClientBuilder {
     private ServerConfigsCallback serverConfigsCallback;
     private Map<String, String> requestHeader;
     private List<String> extraDomains;
+    private boolean isLightModeEnabled;
 
     public WebimClientBuilder() {
     }
@@ -203,7 +205,7 @@ public class WebimClientBuilder {
         final ClientInterceptor clientInterceptor,
         final HostSelectionInterceptor hostSelectionInterceptor
     ) {
-        OkHttpClient.Builder builder = new OkHttpClient.Builder();
+        OkHttpClient.Builder builder = new OkHttpClient.Builder().fastFallback(false);
         builder.addInterceptor(clientInterceptor);
         builder.addInterceptor(hostSelectionInterceptor);
         builder.readTimeout(isDelta
@@ -245,6 +247,11 @@ public class WebimClientBuilder {
         return this;
     }
 
+    public WebimClientBuilder setLightModeEnabled(boolean isLightModeEnabled) {
+        this.isLightModeEnabled = isLightModeEnabled;
+        return this;
+    }
+
     public WebimClient build() {
         if ((baseUrl == null)
                 || (location == null)
@@ -270,9 +277,10 @@ public class WebimClientBuilder {
         ActionRequestLoop pollerLoop = new ActionRequestLoop(callbackExecutor, new IgnoreFatalErrorListener(errorListener));
         pollerLoop.setAuthData(authData);
 
+        MetaUrlProvider metaUrlProvider = new MetaUrlProvider();
         DeltaRequestLoop delta = new DeltaRequestLoop(
             deltaCallback,
-            new SessionParamsListenerWrapper(sessionParamsListener, requestLoop, pollerLoop),
+            new SessionParamsListenerWrapper(sessionParamsListener, requestLoop, pollerLoop, isLightModeEnabled),
             callbackExecutor,
             errorListener,
             deltaService,
@@ -291,16 +299,19 @@ public class WebimClientBuilder {
             sessionId,
             authData,
             sessionCallback,
-            serverConfigsCallback
+            serverConfigsCallback,
+            isLightModeEnabled,
+            metaUrlProvider
         );
 
         return new WebimClientImpl(
             requestLoop,
             delta,
             pollerLoop,
-            new WebimActionsImpl(actionsService, requestLoop, pollerLoop),
+            new WebimActionsImpl(actionsService, requestLoop, pollerLoop, metaUrlProvider),
             clientInterceptor,
-            hostSelectionInterceptor
+            hostSelectionInterceptor,
+            isLightModeEnabled
         );
     }
 
@@ -308,6 +319,7 @@ public class WebimClientBuilder {
         return new GsonBuilder()
             .registerTypeAdapter(DeltaItem.class, new DeltaDeserializer())
             .registerTypeAdapter(DeltaFullUpdate.class, new DeltaFullUpdateDeserializer())
+            .registerTypeAdapter(AuthResponse.class, new AuthResponseDeserializer())
             .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
             .create();
     }
@@ -349,6 +361,7 @@ public class WebimClientBuilder {
         private final ClientInterceptor clientInterceptor;
         @NonNull
         private final HostSelectionInterceptor hostSelectionInterceptor;
+        private final boolean isLightModeEnabled;
 
         private WebimClientImpl(
             @NonNull ActionRequestLoop requestLoop,
@@ -356,7 +369,8 @@ public class WebimClientBuilder {
             @NonNull ActionRequestLoop pollerLoop,
             @NonNull WebimActionsImpl actions,
             @NonNull ClientInterceptor clientInterceptor,
-            @NonNull HostSelectionInterceptor hostSelectionInterceptor
+            @NonNull HostSelectionInterceptor hostSelectionInterceptor,
+            boolean isLightModeEnabled
         ) {
             this.requestLoop = requestLoop;
             this.deltaLoop = deltaLoop;
@@ -364,35 +378,43 @@ public class WebimClientBuilder {
             this.actions = actions;
             this.clientInterceptor = clientInterceptor;
             this.hostSelectionInterceptor = hostSelectionInterceptor;
+            this.isLightModeEnabled = isLightModeEnabled;
         }
 
         @Override
         public void start() {
             requestLoop.start();
             deltaLoop.start();
-            pollerLoop.start();
+            if (!isLightModeEnabled) {
+                pollerLoop.start();
+            }
         }
 
         @Override
         public void pause() {
             requestLoop.pause();
             deltaLoop.pause();
-            pollerLoop.pause();
+            if (!isLightModeEnabled) {
+                pollerLoop.pause();
+            }
         }
 
         @Override
         public void resume() {
             requestLoop.resume();
             deltaLoop.resume();
-            pollerLoop.resume();
-
+            if (!isLightModeEnabled) {
+                pollerLoop.resume();
+            }
         }
 
         @Override
         public void stop() {
-            deltaLoop.stop();
             requestLoop.stop();
-            pollerLoop.stop();
+            deltaLoop.stop();
+            if (!isLightModeEnabled) {
+                pollerLoop.stop();
+            }
         }
 
         @NonNull
@@ -499,13 +521,18 @@ public class WebimClientBuilder {
         private final ActionRequestLoop requestLoop;
         @NonNull
         private final ActionRequestLoop pollerLoop;
+        private boolean isLightModeEnabled;
 
-        private SessionParamsListenerWrapper(@Nullable SessionParamsListener wrapped,
-                                             @NonNull ActionRequestLoop requestLoop,
-                                             @NonNull ActionRequestLoop pollerLoop) {
+        private SessionParamsListenerWrapper(
+            @Nullable SessionParamsListener wrapped,
+            @NonNull ActionRequestLoop requestLoop,
+            @NonNull ActionRequestLoop pollerLoop,
+            boolean isLightModeEnabled
+        ) {
             this.wrapped = wrapped;
             this.requestLoop = requestLoop;
             this.pollerLoop = pollerLoop;
+            this.isLightModeEnabled = isLightModeEnabled;
         }
 
         @Override
@@ -514,7 +541,7 @@ public class WebimClientBuilder {
                                            @NonNull AuthData authData) {
             requestLoop.setAuthData(authData);
             pollerLoop.setAuthData(authData);
-            if (wrapped != null) {
+            if (wrapped != null && !isLightModeEnabled) {
                 wrapped.onSessionParamsChanged(visitorJson, sessionId, authData);
             }
         }

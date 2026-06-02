@@ -6,6 +6,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -243,7 +244,8 @@ public class WebimSessionImpl implements WebimSession {
             long requestLocationFrequency,
             @Nullable MessageParsingErrorHandler messageParsingErrorHandler,
             @Nullable Map<String, String> requestHeader,
-            @NonNull List<String> extraDomains
+            @NonNull List<String> extraDomains,
+            boolean isLightSessionMode
     ) {
         context.getClass(); // NPE
         accountName.getClass(); // NPE
@@ -271,9 +273,8 @@ public class WebimSessionImpl implements WebimSession {
 
         Handler handler = new Handler();
 
-        String pageId = preferences.getString(PREFS_KEY_PAGE_ID, null);
-
-        String authToken = preferences.getString(PREFS_KEY_AUTH_TOKEN, null);
+        String pageId = isLightSessionMode ? null : preferences.getString(PREFS_KEY_PAGE_ID, null);
+        String authToken = isLightSessionMode ? null : preferences.getString(PREFS_KEY_AUTH_TOKEN, null);
 
         MessageFactories.Mapper<MessageImpl> historyMessageMapper =
                 new MessageFactories.MapperHistory(serverUrl, messageParsingErrorHandler);
@@ -295,6 +296,7 @@ public class WebimSessionImpl implements WebimSession {
 
         final WebimClient client = new WebimClientBuilder()
             .setBaseUrl(serverUrl)
+            .setLightModeEnabled(isLightSessionMode)
             .setLocation(location).setAppVersion(appVersion)
             .setVisitorFieldsJson((visitorFields == null) ? null : visitorFields.getJson())
             .setDeltaCallback(deltaCallback)
@@ -480,6 +482,7 @@ public class WebimSessionImpl implements WebimSession {
                 "Error while opening EncryptedSharedPreferences: " + exception.getMessage(),
                 Webim.SessionBuilder.WebimLogVerbosityLevel.ERROR);
             if (errorHandler != null) {
+                Log.d("WebimSessionImpl", "SharedPreferences getSharedPreferences");
                 errorHandler.onError(new WebimErrorImpl<>(FatalErrorType.GENERAL_SECURITY_ERROR, exception.getMessage()));
             }
             preferences = context.getSharedPreferences(SHARED_PREFS_NAME_DEPRECATED + visitorSuffix, Context.MODE_PRIVATE);
@@ -1286,6 +1289,10 @@ public class WebimSessionImpl implements WebimSession {
                         handleVisitSessionStateDelta(deltaItem);
                         break;
                     }
+                    case VISIT_SESSION_LANG: {
+                        handleVisitSessionLang(deltaItem);
+                        break;
+                    }
                     case SURVEY: {
                         handleSurveyDelta(deltaItem);
                     }
@@ -1294,6 +1301,11 @@ public class WebimSessionImpl implements WebimSession {
                     }
                 }
             }
+        }
+
+        private void handleVisitSessionLang(DeltaItem<?> deltaItem) {
+            String sessionLang = (String) deltaItem.getData();
+            messageStream.setSessionLanguage(sessionLang);
         }
 
         private void handleChatDelta(DeltaItem<?> deltaItem) {
@@ -1656,7 +1668,16 @@ public class WebimSessionImpl implements WebimSession {
 
         @Override
         public void onError(@NonNull String url, @Nullable String error, int httpCode) {
+
+            //TODO: тоже пока что для теста игнорирование url /api/history/v2/m/visitor
+            Log.d("WebimSessionImpl", "ErrorHandlerToInternalAdapter onError");
+            if (WebimInternalError.UNSUPPORTED_URL.equals(error) && url.contains("/api/history/v2/m/visitor")) {
+                android.util.Log.w("WebimSessionImpl", "Ignoring unsupported history endpoint: " + url);
+                return;
+            }
+
             if (errorHandler != null) {
+                Log.d("WebimSessionImpl", "Server responded HTTP code: " + httpCode + " from URL: " + url);
                 errorHandler.onError(new WebimErrorImpl<>(toPublicErrorType(error),
                         error != null
                                 ? error
@@ -1675,6 +1696,9 @@ public class WebimSessionImpl implements WebimSession {
             }
             if (error.equals(WebimInternalError.ACCOUNT_BLOCKED)) {
                 return FatalErrorType.ACCOUNT_BLOCKED;
+            }
+            if (error.equals(WebimInternalError.SSL_ERROR)) {
+                return FatalErrorType.SSL_ERROR;
             }
             if (error.equals(WebimInternalError.VISITOR_BANNED)) {
                 return FatalErrorType.VISITOR_BANNED;

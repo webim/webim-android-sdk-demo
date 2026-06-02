@@ -23,8 +23,6 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -45,7 +43,8 @@ public class ChatList extends FrameLayout {
     private ChatPrompt chatPrompt;
     private RecyclerView recyclerView;
     private TextView chatEmptyText;
-    private FloatingActionButton scrollButton;
+    private View scrollContainer;
+    private TextView scrollCounter;
     private ProgressBar progressBar;
     private MessageStream stream;
     private ListControllerReadyCallback readyCallback;
@@ -82,12 +81,13 @@ public class ChatList extends FrameLayout {
         chatPrompt = rootView.findViewById(R.id.chv_notification_bar);
         recyclerView = rootView.findViewById(R.id.chv_chat_view);
         chatEmptyText = rootView.findViewById(R.id.chv_empty_chat);
-        scrollButton = rootView.findViewById(R.id.chv_scroll_button);
+        scrollContainer = rootView.findViewById(R.id.chv_scroll_container);
+        scrollCounter = rootView.findViewById(R.id.chv_scroll_counter);
         progressBar = rootView.findViewById(R.id.chat_progress_bar);
 
         syncedWithServerCallbacks.add(chatPrompt);
         syncedWithServerCallbacks.add(() -> stream.setChatRead());
-   }
+    }
 
     public ListController getListController() {
         return listController;
@@ -97,12 +97,16 @@ public class ChatList extends FrameLayout {
         this.readyCallback = readyCallback;
     }
 
+    public void setSSLError() {
+        chatPrompt.setState(ChatPrompt.State.SSL_ERROR);
+    }
+
     public RecyclerView getRecyclerView() {
         return recyclerView;
     }
 
-    public FloatingActionButton getScrollButton() {
-        return scrollButton;
+    public View getScrollButton() {
+        return scrollContainer;
     }
 
     public TextView getChatEmptyText() {
@@ -128,10 +132,10 @@ public class ChatList extends FrameLayout {
         if (isInEditMode()) return;
 
         ContextCompat.registerReceiver(
-            getContext(),
-            fileDownloadedComplete,
-            new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
-            ContextCompat.RECEIVER_EXPORTED
+                getContext(),
+                fileDownloadedComplete,
+                new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
+                ContextCompat.RECEIVER_EXPORTED
         );
 
         listController = new ListController();
@@ -205,8 +209,11 @@ public class ChatList extends FrameLayout {
         private boolean requestingMessages;
         private boolean chatWasRead = false;
 
+        private int newMessagesCount = 0;
+
         private ListController() {
-            messagesCountListener = empty -> chatEmptyText.setVisibility(empty ? VISIBLE : GONE);;
+            messagesCountListener = empty -> chatEmptyText.setVisibility(empty ? VISIBLE : GONE);
+
             layoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, true);
             layoutManager.setStackFromEnd(false);
             recyclerView.setLayoutManager(layoutManager);
@@ -221,11 +228,18 @@ public class ChatList extends FrameLayout {
             };
             tracker.setMessagesSyncedListener(syncedListener);
 
-            scrollButton.setOnClickListener(view1 -> {
-                scrollButton.setVisibility(View.GONE);
-                recyclerView.smoothScrollToPosition(0);
+            scrollContainer.setOnClickListener(view1 -> {
+                scrollContainer.setVisibility(View.GONE);
+
+                if (newMessagesCount > 0) {
+                    recyclerView.smoothScrollToPosition(newMessagesCount - 1);
+                } else {
+                    recyclerView.smoothScrollToPosition(0);
+                }
+
+                resetNewMessagesCount();
             });
-            scrollButton.bringToFront();
+            scrollContainer.bringToFront();
 
             scrollListener = new EndlessScrollListener(10) {
                 @Override
@@ -236,8 +250,8 @@ public class ChatList extends FrameLayout {
                 @Override
                 public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                     super.onScrolled(recyclerView, dx, dy);
-                    if (dy < 0 && scrollButton.isShown()) {
-                        scrollButton.setVisibility(View.GONE);
+                    if (dy < 0 && scrollContainer.isShown()) {
+                        scrollContainer.setVisibility(View.GONE);
                     }
                 }
 
@@ -246,11 +260,12 @@ public class ChatList extends FrameLayout {
                     if (!chatWasRead) {
                         chatWasRead = true;
                         stream.setChatRead();
+                        resetNewMessagesCount();
                     }
                 }
             };
             scrollListener.setLoading(true);
-            scrollListener.setDownButton(scrollButton);
+            scrollListener.setDownButton(scrollContainer);
             scrollListener.setAdapter(adapter);
             recyclerView.addOnScrollListener(scrollListener);
             requestMore(true);
@@ -310,12 +325,41 @@ public class ChatList extends FrameLayout {
                 if ((fromVisitor || isLastVisible()) && isAutoScrollToLastMsgEnabled) {
                     recyclerView.stopScroll();
                     recyclerView.smoothScrollToPosition(0);
+                    resetNewMessagesCount();
                 } else {
-                    scrollButton.setVisibility(View.VISIBLE);
+                    if (!fromVisitor) {
+                        newMessagesCount++;
+                        updateScrollButtonBadge();
+                    }
+                    scrollContainer.setVisibility(View.VISIBLE);
                 }
             } else {
                 adapter.add(ind, message);
                 adapter.notifyItemInserted(adapter.getItemCount() - ind - 1);
+            }
+        }
+
+        /**
+         * Reset new messages count.
+         */
+        private void resetNewMessagesCount() {
+            newMessagesCount = 0;
+            if (scrollCounter != null) {
+                scrollCounter.setVisibility(View.GONE);
+            }
+        }
+
+        /**
+         * Update scroll button badge.
+         */
+        private void updateScrollButtonBadge() {
+            if (scrollCounter != null) {
+                if (newMessagesCount > 0) {
+                    scrollCounter.setText(String.valueOf(newMessagesCount));
+                    scrollCounter.setVisibility(View.VISIBLE);
+                } else {
+                    scrollCounter.setVisibility(View.GONE);
+                }
             }
         }
 
@@ -329,6 +373,14 @@ public class ChatList extends FrameLayout {
         public void messageRemoved(@NonNull Message message) {
             int pos = adapter.indexOf(message);
             if (pos != -1) {
+                int recyclerViewPos = adapter.getItemCount() - pos - 1;
+                boolean notFromVisitor = message.getType() != VISITOR && message.getType() != FILE_FROM_VISITOR;
+
+                if (notFromVisitor && recyclerViewPos < newMessagesCount) {
+                    newMessagesCount = Math.max(0, newMessagesCount - 1);
+                    updateScrollButtonBadge();
+                }
+
                 adapter.remove(pos, message.getServerSideId());
                 adapter.notifyItemRemoved(adapter.getItemCount() - pos);
             }

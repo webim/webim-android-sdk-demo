@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="first_screen_text1">Welcome to the Demo App for. Webim SDK App!</string>
-    <string name="first_screen_text2">Tap the button below to start chatting.</string>
-    <string name="first_screen_text3">Sign in as an agent to answer this chat at: https://demo.webim.ru</string>
-    <string name="first_screen_text4">Login: o@webim.ru</string>
-    <string name="first_screen_text5">Password: password</string>
-    <string name="first_screen_text6">Source code of this app can be found at:</string>
-    <string name="first_screen_text7">https://github.com/webim/webim-android-sdk-demo</string>
+    <string name="welcome_title">Welcome to the \nWebim SDK App!!</string>
+    <string name="welcome_subtitle">Start working with Webim SDK via authorization.</string>
+    <string name="welcome_description">To do this, click the \"Start\" button and enter the account name sent to your email upon registration via the Webim website.</string>
+    <string name="welcome_subtitle_start_chat">To start a chat, \nclick the button below</string>
+    <string name="welcome_new_messages">New messages: %d</string>
 
     <string name="image_logo_content_description">Logo</string>
+    <string name="button_text_start_onboarding">Start</string>
     <string name="button_text_start_chat">Start chat</string>
     <string name="button_text_settings">Settings</string>
     <string name="action_close_chat">Close chat</string>
@@ -66,4 +65,6 @@
     <string name="file_upload_connection_timeout">File upload timeout exceeded</string>
 
     <string name="cannot_open_file">Cannot find an app for opening the file</string>
+
+    <string name="set_default_account_tint">Set default account</string>
 </resources>

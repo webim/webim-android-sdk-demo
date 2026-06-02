@@ -2,6 +2,7 @@ package ru.webim.android.demo;
 
 import android.content.Intent;
 import android.graphics.drawable.AnimationDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -18,8 +19,14 @@ import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 
+import coil.ComponentRegistry;
+import coil.ImageLoader;
+import coil.decode.SvgDecoder;
+import coil.request.ImageRequest;
 import ru.webim.android.sdk.Operator;
 import ru.webim.android.sdk.Webim;
 import ru.webim.android.sdk.WebimSession;
@@ -27,6 +34,8 @@ import ru.webim.chatview.ui.ChatView;
 import ru.webim.chatview.utils.FileHelper;
 
 public class WidgetChatFragment extends Fragment {
+
+    private final static String SVG_EXTENSION = ".svg";
     private Webim.SessionBuilder sessionBuilder;
     private WebimSession session;
     private ChatView chatView;
@@ -161,20 +170,44 @@ public class WidgetChatFragment extends Fragment {
     }
 
     protected void setOperatorAvatar(View view, @Nullable Operator operator) {
+        ImageView senderPhoto = view.findViewById(R.id.sender_photo);
         if (operator != null) {
             if (operator.getAvatarUrl() != null) {
-                Glide.with(requireActivity())
-                    .load(operator.getAvatarUrl())
-                    .into((ImageView) view.findViewById(R.id.sender_photo));
+                loadProfileImage(operator.getAvatarUrl(), senderPhoto);
             } else {
                 if (getContext() != null) {
-                    ((ImageView) view.findViewById(R.id.sender_photo)).setImageDrawable(
-                        requireActivity().getResources().getDrawable(R.drawable.default_operator_avatar));
+                    Drawable drawable = requireActivity()
+                            .getResources()
+                            .getDrawable(R.drawable.default_operator_avatar);
+                    senderPhoto.setImageDrawable(drawable);
                 }
             }
-            view.findViewById(R.id.sender_photo).setVisibility(View.VISIBLE);
+            senderPhoto.setVisibility(View.VISIBLE);
         } else {
-            view.findViewById(R.id.sender_photo).setVisibility(View.GONE);
+            senderPhoto.setVisibility(View.GONE);
+        }
+    }
+
+    private void loadProfileImage(String url, ImageView imageView) {
+        try {
+            String path = new URL(url).getPath().toLowerCase();
+            if (path.endsWith(SVG_EXTENSION)) {
+                ComponentRegistry componentRegistry = new ComponentRegistry.Builder()
+                        .add(new SvgDecoder.Factory())
+                        .build();
+                ImageLoader imageLoader = new ImageLoader.Builder(requireActivity())
+                        .components(componentRegistry)
+                        .build();
+                ImageRequest request = new ImageRequest.Builder(requireActivity())
+                        .data(url)
+                        .target(imageView)
+                        .build();
+                imageLoader.enqueue(request);
+            } else {
+                Glide.with(requireActivity()).load(url).into(imageView);
+            }
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
         }
     }
 

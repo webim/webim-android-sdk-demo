@@ -15,8 +15,11 @@ import retrofit2.http.Path;
 import retrofit2.http.Query;
 import retrofit2.http.Url;
 import ru.webim.android.sdk.impl.items.requests.AutocompleteRequest;
+import ru.webim.android.sdk.impl.items.responses.AuthResponse;
 import ru.webim.android.sdk.impl.items.responses.AutocompleteResponse;
 import ru.webim.android.sdk.impl.items.responses.ErrorResponse;
+import ru.webim.android.sdk.impl.items.responses.GetInfoResponse;
+import ru.webim.android.sdk.impl.items.responses.MetaResponse;
 import ru.webim.android.sdk.impl.items.responses.ServerConfigsResponse;
 import ru.webim.android.sdk.impl.items.responses.DefaultResponse;
 import ru.webim.android.sdk.impl.items.responses.DeltaResponse;
@@ -31,6 +34,8 @@ public interface WebimService {
     String PARAMETER_ACTION = "action";
     String PARAMETER_APP_VERSION = "app-version";
     String PARAMETER_AUTHORIZATION_TOKEN = "auth-token";
+    String PARAMETER_AUTHORIZATION_HEADER = "Authorization";
+    String PARAMETER_AUTHORIZATION_BEARER_SUFFIX = "Bearer ";
     String PARAMETER_BUTTON_ID = "button-id";
     String PARAMETER_CHAT_DEPARTMENT_KEY = "department-key";
     String PARAMETER_CHAT_FIRST_QUESTION = "first-question";
@@ -90,7 +95,13 @@ public interface WebimService {
     String URL_SUFFIX_HISTORY = "l/v/m/history";
     String URL_SUFFIX_SEARCH_MESSAGES = "l/v/m/search-messages";
     String URL_SUFFIX_GET_ONLINE_STATUS = "l/v/get-online-status";
-    String URL_SUFFIX_GET_CONFIG = "api/visitor/v1/configs/";
+    String URL_SUFFIX_GET_CONFIG = "api/visitor/v1/configs";
+    String URL_SUFFIX_AUTH = "l/v/m/auth";
+    String URL_SUFFIX_GET_INFO = "l/v/m/info";
+    String URL_SUFFIX_META = "api/visitor/meta";
+
+    @GET(URL_SUFFIX_META)
+    Call<MetaResponse> getMeta();
 
     @Multipart
     @POST(URL_SUFFIX_FILE_UPLOAD)
@@ -137,15 +148,36 @@ public interface WebimService {
             @Query(PARAMETER_PRECHAT_KEY_INDEPENDENT_FIELDS) String prechatFields
     );
 
-    @GET(URL_SUFFIX_HISTORY)
+    @FormUrlEncoded
+    @POST(URL_SUFFIX_AUTH)
+    Call<AuthResponse> getAuth(
+        @Header(PARAMETER_SDK_VERSION) String sdkVersion,
+        @Field(PARAMETER_PUSH_SERVICE) String pushService,
+        @Field(PARAMETER_PUSH_TOKEN) String pushToken,
+        @Field(PARAMETER_PLATFORM) String platform,
+        @Field(PARAMETER_VISITOR_EXT) String visitorExtJsonString,
+        @Field(PARAMETER_VISITOR_FIELDS) String visitorFieldsJsonString,
+        @Field(PARAMETER_PROVIDED_AUTHORIZATION_TOKEN) String providedAuthorizationToken,
+        @Field(PARAMETER_APP_VERSION) String appVersion,
+        @Field(PARAMETER_DEVICE_ID) String deviceId
+    );
+
+    @GET(URL_SUFFIX_GET_INFO)
+    Call<GetInfoResponse> getInfo(
+        @Header(PARAMETER_AUTHORIZATION_HEADER) String authToken
+    );
+
+    @GET("{endpoint}")
     Call<HistoryBeforeResponse> getHistoryBefore(
+        @Path(value = "endpoint", encoded = true) String endpoint,
             @Query(PARAMETER_PAGE_ID) String pageId,
             @Query(PARAMETER_AUTHORIZATION_TOKEN) String authorizationToken,
             @Query(PARAMETER_TIMESTAMP_BEFORE) long timestampBefore // ms
     );
 
-    @GET(URL_SUFFIX_HISTORY)
+    @GET("{endpoint}")
     Call<HistorySinceResponse> getHistorySince(
+            @Path(value = "endpoint", encoded = true) String endpoint,
             @Query(PARAMETER_PAGE_ID) String pageId,
             @Query(PARAMETER_AUTHORIZATION_TOKEN) String authorizationToken,
             @Query(PARAMETER_SINCE) String since
@@ -345,8 +377,9 @@ public interface WebimService {
         @Query(PARAMETER_LOCATION) String location
     );
 
-    @GET(URL_SUFFIX_GET_CONFIG + "{locationName}")
+    @GET("{endpoint}/" + "{locationName}")
     Call<ServerConfigsResponse> getAccountConfig(
+        @Path(value = "endpoint", encoded = true) String endpoint,
         @Path("locationName") String location
     );
 

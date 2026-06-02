@@ -3,6 +3,8 @@ package ru.webim.android.sdk;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.util.List;
 
 import ru.webim.android.sdk.impl.MessageReaction;
@@ -84,6 +86,12 @@ public interface Message {
     Attachment getAttachment();
 
     /**
+     * @return information about the message translation.
+     */
+    @Nullable
+    TranslationInfo getTranslationInfo();
+
+    /**
      * @return true if this message is history.
      */
     boolean isSavedInHistory();
@@ -145,13 +153,15 @@ public interface Message {
         /**
          * A message from operator which requests some actions from a visitor.
          * E.g. choose an operator group by clicking on a button in this message.
-         * @see Message#getAttachment()
+         * @see Message#getType()
          */
+        @SerializedName("ACTION_REQUEST")
         ACTION_REQUEST,
         /**
          * A message from operator which requests some information about a visitor.
          * @see Message#getAttachment()
          */
+        @SerializedName("CONTACT_REQUEST")
         CONTACT_REQUEST,
         /**
          * A message sent by an operator which contains an attachment.
@@ -159,6 +169,7 @@ public interface Message {
          * if a file is being sent.
          * @see Attachment#getAttachment()
          */
+        @SerializedName("FILE_FROM_OPERATOR")
         FILE_FROM_OPERATOR,
         /**
          * A message sent by a visitor which contains an attachment.
@@ -166,35 +177,43 @@ public interface Message {
          * if a file is being sent.
          * @see Attachment#getAttachment()
          */
+        @SerializedName("FILE_FROM_VISITOR")
         FILE_FROM_VISITOR,
         /**
          * A system information message. Messages of this type are automatically sent at specific events.
          * For example when starting a chat, closing a chat or when an operator joins a chat.
 		 */
+        @SerializedName("INFO")
         INFO,
         /**
          * The system message that the chat bot sends.
          */
+        @SerializedName("KEYBOARD")
         KEYBOARD,
         /**
          * A system message from the chat bot containing information about the button that the user selected.
          */
+        @SerializedName("KEYBOARD_RESPONSE")
         KEYBOARD_RESPONSE,
         /**
          * A text message sent by an operator.
          */
+        @SerializedName("OPERATOR")
         OPERATOR,
         /**
          * A system information message which indicates that an operator is busy and can not reply at the moment.
          */
+        @SerializedName("OPERATOR_BUSY")
         OPERATOR_BUSY,
         /**
          * A sticker message sent by a visitor.
          */
+        @SerializedName("STICKER_VISITOR")
         STICKER_VISITOR,
         /**
          * A text message sent by a visitor.
          */
+        @SerializedName("VISITOR")
         VISITOR
     }
 
@@ -227,7 +246,7 @@ public interface Message {
         /**
          * @return the fileInfo of the attachment
          */
-        @NonNull FileInfo getFileInfo();
+        @Nullable FileInfo getFileInfo();
 
         /**
          * @return the filesInfo of the attachment
@@ -274,21 +293,25 @@ public interface Message {
             /**
              * Some error occurred during loading
              */
+            @SerializedName("ERROR")
             ERROR,
 
             /**
              * Sile is available for download
              */
+            @SerializedName("READY")
             READY,
 
             /**
              * The file is uploaded to the server
              */
+            @SerializedName("UPLOAD")
             UPLOAD,
 
             /**
             * The file is verified on server
             */
+            @SerializedName("EXTERNAL_CHECKS")
             EXTERNAL_CHECKS
         }
     }
@@ -372,10 +395,17 @@ public interface Message {
      * @see Message#getQuote()
      */
     interface Quote {
+
+        /**
+         * @return information about the quote translation.
+         */
+        @Nullable
+        TranslationInfo getTranslationInfo();
+
         /**
          * @return the status in which quoted message may be.
          */
-        @NonNull State getState();
+        @Nullable State getState();
 
         /**
          * Messages of the types {@link Type#FILE_FROM_OPERATOR} and {@link Type#FILE_FROM_VISITOR} can contain attachments.
@@ -638,5 +668,36 @@ public interface Message {
          * @return sticker id
          */
         int getStickerId();
+    }
+
+    /**
+     * Contains information about message translation.
+     * @see Message#getTranslationInfo()
+     */
+    interface TranslationInfo {
+
+        /**
+         * @return the translated message text
+         */
+        @Nullable
+        String getTranslatedText();
+
+        /**
+         * @return the source language
+         */
+        @Nullable
+        String getSourceLang();
+
+        /**
+         * @return the target language of the translation
+         */
+        @Nullable
+        String getTargetLang();
+
+        /**
+         * @return the error
+         */
+        @Nullable
+        String getError();
     }
 }

@@ -1,18 +1,15 @@
 package ru.webim.chatview.utils;
 
-import android.util.Log;
 import android.view.View;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-
 public abstract class EndlessScrollListener extends RecyclerView.OnScrollListener {
     private static final int DEFAULT_THRESHOLD = 5;
     private final int visibleThreshold;
     private boolean loading = false;
-    private FloatingActionButton downButton = null;
+    private View downButton = null;
     private RecyclerView.Adapter<?> adapter = null;
     private boolean chatWasScrolledToEnd = true;
 
@@ -54,7 +51,7 @@ public abstract class EndlessScrollListener extends RecyclerView.OnScrollListene
         }
     }
 
-    public void setDownButton(FloatingActionButton downButton) {
+    public void setDownButton(View downButton) {
         this.downButton = downButton;
     }
 

@@ -1,6 +1,3 @@
-import org.apache.commons.io.FileUtils
-import java.io.FileInputStream
-import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -56,17 +53,24 @@ android {
     }
 }
 
+configurations.all {
+    resolutionStrategy {
+        force("androidx.lifecycle:lifecycle-process:2.5.1")
+        force("androidx.appcompat:appcompat:1.6.1")
+    }
+}
+
 dependencies {
     implementation(project(":chatview"))
 
     implementation("com.astuetz:pagerslidingtabstrip:1.0.1")
-    implementation("com.github.bumptech.glide:glide:4.12.0")
-    implementation("com.github.bumptech.glide:okhttp3-integration:4.12.0@aar")
+    implementation("com.github.bumptech.glide:glide:4.15.1")
+    implementation("com.github.bumptech.glide:okhttp3-integration:4.15.1@aar")
     implementation("de.hdodenhof:circleimageview:3.1.0")
-    implementation("androidx.appcompat:appcompat:1.1.0")
-    implementation("com.google.android.material:material:1.1.0")
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("com.google.android.material:material:1.9.0")
 
-    implementation("com.google.firebase:firebase-messaging:23.0.0")
+    implementation("com.google.firebase:firebase-messaging:23.1.0")
     implementation("com.google.firebase:firebase-crashlytics:18.3.7")
     implementation("com.google.firebase:firebase-analytics:21.2.2")
 
@@ -75,10 +79,14 @@ dependencies {
 
     implementation("com.github.thijsk:TouchImageView:v1.3.1")
 
-    implementation("androidx.recyclerview:recyclerview:1.1.0")
-    implementation("androidx.constraintlayout:constraintlayout:1.1.3")
+    implementation("androidx.recyclerview:recyclerview:1.3.0")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.cardview:cardview:1.0.0")
-    implementation("androidx.preference:preference:1.1.1")
+    implementation("androidx.preference:preference:1.2.0")
+
+    implementation("io.coil-kt:coil:2.4.0")
+    implementation("io.coil-kt:coil-svg:2.4.0")
+    implementation("io.coil-kt:coil-base:2.4.0")
 }
 
 java {

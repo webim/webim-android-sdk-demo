@@ -165,7 +165,7 @@ public class MessageHolder extends RecyclerView.ViewHolder {
     }
 
     private CharSequence handleHyperlinksTemplate(CharSequence originalString) {
-        Pattern templatePattern = Pattern.compile("\\[(\\S+)\\]\\((\\S+://\\S+)\\)");
+        Pattern templatePattern = Pattern.compile("\\[([^]]+)]\\((\\S+://\\S+)\\)");
         Matcher matcher = templatePattern.matcher(originalString);
 
         if (!matcher.find()) {

@@ -56,6 +56,7 @@ public final class MessageFactories {
             }
 
             Message.Quote quote = InternalUtils.getQuote(message.getQuote(), fileUrlCreator);
+            Message.TranslationInfo translationInfo = InternalUtils.getTranslationInfo(message.getData());
 
             Object json;
             if (kind == MessageItem.WMMessageKind.FILE_FROM_VISITOR || kind == MessageItem.WMMessageKind.FILE_FROM_OPERATOR) {
@@ -130,7 +131,8 @@ public final class MessageFactories {
                 message.getCanVisitorReact(),
                 message.getCanVisitorChangeReaction(),
                 groupData,
-                Message.SendStatus.SENT
+                Message.SendStatus.SENT,
+                translationInfo
             );
         } catch (Exception exception) {
             if (errorHandler != null) {

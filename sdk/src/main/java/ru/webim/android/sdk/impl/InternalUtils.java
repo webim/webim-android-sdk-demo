@@ -39,12 +39,14 @@ import ru.webim.android.sdk.impl.items.KeyboardRequestItem;
 import ru.webim.android.sdk.impl.items.MessageItem;
 import ru.webim.android.sdk.impl.items.StickerItem;
 import ru.webim.android.sdk.impl.items.SurveyItem;
+import ru.webim.android.sdk.impl.items.TranslationInfoItem;
 
 public final class InternalUtils {
     private static final Gson gson = new GsonBuilder()
         .registerTypeAdapter(Message.FileInfo.class, (JsonDeserializer<Message.FileInfo>) (json, typeOfT, context) -> context.deserialize(json, MessageImpl.FileInfoImpl.class))
         .registerTypeAdapter(Message.ImageInfo.class, (JsonDeserializer<Message.ImageInfo>) (json, typeOfT, context) -> context.deserialize(json, MessageImpl.ImageInfoImpl.class))
         .registerTypeAdapter(Message.Attachment.class, (JsonDeserializer<Message.Attachment>) (json, typeOfT, context) -> context.deserialize(json, MessageImpl.AttachmentImpl.class))
+        .registerTypeAdapter(Message.TranslationInfo.class, (JsonDeserializer<Message.TranslationInfo>) (json, typeOfT, context) -> context.deserialize(json, MessageImpl.TranslationInfoImpl.class))
         .create();
 
     public static boolean equals(Object a, Object b) {
@@ -228,6 +230,26 @@ public final class InternalUtils {
             }
         }
         return null;
+    }
+
+    @Nullable
+    public static Message.TranslationInfo getTranslationInfo(
+        @Nullable Object myJson
+    ) {
+        String rawText = gson.toJson(myJson);
+        Type mapType = new TypeToken<TranslationInfoItem>() {}.getType();
+        TranslationInfoItem translationInfoItem = gson.fromJson(rawText, mapType);
+        if (translationInfoItem != null && translationInfoItem.getTranslationInfo() != null) {
+            TranslationInfoItem.TranslationInfo translationInfo = translationInfoItem.getTranslationInfo();
+            return new MessageImpl.TranslationInfoImpl(
+                    translationInfo.getTranslatedText(),
+                    translationInfo.getSourceLang(),
+                    translationInfo.getTargetLang(),
+                    translationInfo.getError()
+            );
+        } else {
+            return null;
+        }
     }
 
     public static Message.Attachment failedAttachment(Message.Attachment attachment) {
@@ -575,7 +597,8 @@ public final class InternalUtils {
         String quotedMessageId,
         Message.Type quoteType,
         String quoteSenderName,
-        String quoteText
+        String quoteText,
+        Message.TranslationInfo translationInfo
     ) {
         return new MessageImpl.QuoteImpl(
             null,
@@ -585,7 +608,8 @@ public final class InternalUtils {
             quoteSenderName,
             Message.Quote.State.PENDING,
             quoteText,
-            0
+            0,
+            translationInfo
         );
     }
 
@@ -616,14 +640,16 @@ public final class InternalUtils {
                 quoteTimeSeconds = quotedMessage.getTsSeconds();
             }
             return new MessageImpl.QuoteImpl(
-                    fileInfo,
-                    quoteAuthorId,
-                    quoteId,
-                    quoteState,
-                    quoteSenderName,
-                    extractState(quote.getState()),
-                    quoteText,
-                    quoteTimeSeconds);
+                fileInfo,
+                quoteAuthorId,
+                quoteId,
+                quoteState,
+                quoteSenderName,
+                extractState(quote.getState()),
+                quoteText,
+                quoteTimeSeconds,
+                getTranslationInfo(quote.getData())
+            );
         }
         return null;
     }

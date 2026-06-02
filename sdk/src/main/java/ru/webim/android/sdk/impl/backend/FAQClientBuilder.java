@@ -63,7 +63,7 @@ public class FAQClientBuilder {
 
     private static OkHttpClient setupHttpClient(final SSLSocketFactory sslSocketFactory,
                                                 final X509TrustManager trustManager) {
-        OkHttpClient.Builder builder = new OkHttpClient.Builder();
+        OkHttpClient.Builder builder = new OkHttpClient.Builder().fastFallback(false);
         builder.addInterceptor(new Interceptor() {
             @Override
             public Response intercept(Interceptor.Chain chain) throws IOException {

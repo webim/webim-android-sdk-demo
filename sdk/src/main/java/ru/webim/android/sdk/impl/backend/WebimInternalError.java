@@ -2,6 +2,7 @@ package ru.webim.android.sdk.impl.backend;
 
 public class WebimInternalError {
 	public static final String ACCOUNT_BLOCKED = "account-blocked";
+	public static final String SSL_ERROR = "ssl_error";
 	public static final String CHAT_REQUIRED = "chat-required";
 	public static final String CONNECTION_TIMEOUT = "connection-timeout";
 	public static final String CONTENT_TYPE_NOT_RECOGNIZED = "content_type_not_recognized";
@@ -90,4 +91,7 @@ public class WebimInternalError {
 
 	//Geo errors
 	public static final String INVALID_COORDINATES = "invalid-coordinates-received";
+
+	//Meta errors
+	public static final String UNSUPPORTED_URL = "unsupported_url";
 }

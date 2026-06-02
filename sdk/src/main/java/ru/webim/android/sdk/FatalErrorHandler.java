@@ -62,6 +62,11 @@ public interface FatalErrorHandler {
         * This error occurs when any security-related exception has happened while creating encrypted preference file.
         * It means you cannot use the session in secure mode, which means the data in SharedPreferences will not be encrypted.
         * */
-        GENERAL_SECURITY_ERROR
+        GENERAL_SECURITY_ERROR,
+
+        /**
+         * This error occurs when there are problems establishing a secure (HTTPS) connection.
+         */
+        SSL_ERROR
     }
 }

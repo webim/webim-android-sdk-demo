@@ -92,6 +92,7 @@ public class ChatPrompt extends AppCompatTextView implements MessageTracker.Mess
                 nextColor = ViewUtils.resolveAttr(R.attr.chv_prompt_syncing, getContext());
                 break;
             }
+            case SSL_ERROR:
             case CONN_LOST: {
                 setVisibility(View.VISIBLE);
                 setTextColor(Color.WHITE);
@@ -151,7 +152,7 @@ public class ChatPrompt extends AppCompatTextView implements MessageTracker.Mess
     }
 
     public enum State {
-        SYNCING, CONN_LOST, CONN_LOOSING, HIDDEN;
+        SYNCING, CONN_LOST, CONN_LOOSING, HIDDEN, SSL_ERROR;
     }
 
     private class ConnectionListener extends BroadcastReceiver {

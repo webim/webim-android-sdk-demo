@@ -253,6 +253,12 @@ public final class MessageItem implements Comparable<MessageItem> {
         private QuotedMessage message;
         @SerializedName("state")
         private State state;
+        @SerializedName("data")
+        private Object data;
+
+        public Object getData() {
+            return data;
+        }
 
         public QuotedMessage getMessage() {
             return message;

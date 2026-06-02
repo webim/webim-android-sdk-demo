@@ -76,8 +76,8 @@ public class SQLiteHistoryStorage implements HistoryStorage {
             "WHERE client_side_id=?";
     private static final String GET_SENDING_MESSAGES_QUERY = "SELECT * FROM history " +
         "WHERE status='SENDING' ORDER BY ts";
-    private static final int VERSION = 15;
-    private static final int MIGRATION_VERSION = 15;
+    private static final int VERSION = 16;
+    private static final int MIGRATION_VERSION = 16;
 
     private final MyDBHelper dbHelper;
     private final Handler handler;
@@ -321,9 +321,11 @@ public class SQLiteHistoryStorage implements HistoryStorage {
         String status = cursor.getString(12);
 
         Message.Attachment attachment = null;
+        Message.TranslationInfo translationInfo = null;
         if (type == Message.Type.FILE_FROM_OPERATOR || type == Message.Type.FILE_FROM_VISITOR) {
             try {
                 attachment = InternalUtils.fromJson(rawText, MessageImpl.AttachmentImpl.class);
+                translationInfo = InternalUtils.getTranslationInfo(rawText);
                 if (attachment != null) {
                     provideUrlCreatorToAttach(attachment);
                 }
@@ -416,10 +418,10 @@ public class SQLiteHistoryStorage implements HistoryStorage {
                 return createSendingMessage(cursor, clientSideId, timestamp, type, text, attachment, quote, sticker);
             }
             case FAILED: {
-                return createFailedMessage(cursor, clientSideId, timestamp, type, text, attachment, quote, sticker);
+                return createFailedMessage(cursor, clientSideId, timestamp, type, text, attachment, quote, sticker, translationInfo);
             }
             default: {
-                return createSentMessage(cursor, clientSideId, serverSideId, timestamp, avatar, type, text, rawText, canBeReplied, reaction, attachment, quote, keyboardButton, keyboardRequest, sticker, isRead, groupData, sendStatus);
+                return createSentMessage(cursor, clientSideId, serverSideId, timestamp, avatar, type, text, rawText, canBeReplied, reaction, attachment, quote, keyboardButton, keyboardRequest, sticker, isRead, groupData, sendStatus, translationInfo);
             }
         }
     }
@@ -454,7 +456,17 @@ public class SQLiteHistoryStorage implements HistoryStorage {
     }
 
     @NonNull
-    private MessageFailed createFailedMessage(Cursor cursor, String clientSideId, long timestamp, Message.Type type, String text, Message.Attachment attachment, Message.Quote quote, Message.Sticker sticker) {
+    private MessageFailed createFailedMessage(
+        Cursor cursor,
+        String clientSideId,
+        long timestamp,
+        Message.Type type,
+        String text,
+        Message.Attachment attachment,
+        Message.Quote quote,
+        Message.Sticker sticker,
+        Message.TranslationInfo translationInfo
+    ) {
         return new MessageFailed(
             serverUrl,
             StringId.forMessage(clientSideId),
@@ -464,12 +476,33 @@ public class SQLiteHistoryStorage implements HistoryStorage {
             timestamp,
             quote,
             sticker,
-            attachment
+            attachment,
+            translationInfo
         );
     }
 
     @NonNull
-    private MessageImpl createSentMessage(Cursor cursor, String clientSideId, String serverSideId, long timestamp, String avatar, Message.Type type, String text, String rawText, boolean canBeReplied, MessageReaction reaction, Message.Attachment attachment, Message.Quote quote, Message.Keyboard keyboardButton, Message.KeyboardRequest keyboardRequest, Message.Sticker sticker, boolean isRead, MessageGroup.GroupData groupData, Message.SendStatus sendStatus) {
+    private MessageImpl createSentMessage(
+        Cursor cursor,
+        String clientSideId,
+        String serverSideId,
+        long timestamp,
+        String avatar,
+        Message.Type type,
+        String text,
+        String rawText,
+        boolean canBeReplied,
+        MessageReaction reaction,
+        Message.Attachment attachment,
+        Message.Quote quote,
+        Message.Keyboard keyboardButton,
+        Message.KeyboardRequest keyboardRequest,
+        Message.Sticker sticker,
+        boolean isRead,
+        MessageGroup.GroupData groupData,
+        Message.SendStatus sendStatus,
+        Message.TranslationInfo translationInfo
+    ) {
         return new MessageImpl(
             serverUrl,
             StringId.forMessage(clientSideId),
@@ -498,7 +531,8 @@ public class SQLiteHistoryStorage implements HistoryStorage {
             false,
             false,
             groupData,
-            sendStatus
+            sendStatus,
+            translationInfo
         );
     }
 

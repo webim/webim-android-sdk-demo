@@ -8,7 +8,6 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 
@@ -122,7 +121,6 @@ public class WebimPushSender {
             builder.setContentIntent(contentIntent);
         }
         builder.setSmallIcon(R.drawable.logo_webim_status_bar)
-            .setLargeIcon(BitmapFactory.decodeResource(res, R.drawable.default_operator_avatar))
             .setTicker(res.getString(R.string.app_name))
             .setWhen(System.currentTimeMillis())
             .setAutoCancel(true)

@@ -29,6 +29,7 @@ import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.Nullable;
 
 import com.bumptech.glide.Glide;
@@ -64,6 +65,10 @@ public class ChatEditBar extends LinearLayout {
     private TextView textReplyId;
 
     private ImageButton chatMenuButton;
+    private ImageButton imageButtonEditMessage;
+    private ImageButton imageButtonReplyMessage;
+    private ImageButton imageButtonEditCancel;
+    private ImageButton imageButtonReplyCancel;
     private AnchorMenuDialog chatMenuDialog = null;
     private AlertDialog ratingDialog;
     private RatingBar ratingBar;
@@ -125,9 +130,9 @@ public class ChatEditBar extends LinearLayout {
 
             FilePickerFragment currentFragment = FilePickerFragment.this;
             currentFragment.getFragmentManager()
-                .beginTransaction()
-                .remove(currentFragment)
-                .commit();
+                    .beginTransaction()
+                    .remove(currentFragment)
+                    .commit();
         }
 
         @Override
@@ -146,9 +151,9 @@ public class ChatEditBar extends LinearLayout {
             FilePickerFragment filePickerFragment = new FilePickerFragment();
             filePickerFragment.setCallback(callback);
             requiredActivity.getFragmentManager()
-                .beginTransaction()
-                .add(filePickerFragment, "FilePickerFragment")
-                .commit();
+                    .beginTransaction()
+                    .add(filePickerFragment, "FilePickerFragment")
+                    .commit();
 
             return filePickerFragment;
         }
@@ -180,6 +185,10 @@ public class ChatEditBar extends LinearLayout {
         replyThumbnail = rootView.findViewById(R.id.replyThumbnail);
         textReplyId = rootView.findViewById(R.id.quote_Id);
         chatMenuButton = rootView.findViewById(R.id.imageButtonChatMenu);
+        imageButtonEditMessage = rootView.findViewById(R.id.imageButtonEditMessage);
+        imageButtonReplyMessage = rootView.findViewById(R.id.imageButtonReplyMessage);
+        imageButtonEditCancel = rootView.findViewById(R.id.imageButtonEditDelete);
+        imageButtonReplyCancel = rootView.findViewById(R.id.imageButtonReplyDelete);
 
         initRemoveBar(rootView);
         initSendButton(rootView);
@@ -189,6 +198,31 @@ public class ChatEditBar extends LinearLayout {
         initOperatorRateDialog();
 
         updateUI(State.SENDING);
+    }
+
+    public void setChatMenuButtonColorFilter(@ColorInt int color) {
+        chatMenuButton.setColorFilter(color);
+    }
+
+    public void setImageButtonEditMessageColorFilter(@ColorInt int color) {
+        imageButtonEditMessage.setColorFilter(color);
+    }
+
+    public void setImageButtonReplyMessageColorFilter(@ColorInt int color) {
+        imageButtonReplyMessage.setColorFilter(color);
+    }
+
+    public void setImageButtonCancelColorFilter(@ColorInt int color) {
+        imageButtonEditCancel.setColorFilter(color);
+        imageButtonReplyCancel.setColorFilter(color);
+    }
+
+    public void setImageButtonSendMessageColorFilter(@ColorInt int color) {
+        sendButton.setColorFilter(color);
+    }
+
+    public void setImageButtonAcceptChangesColorFilter(@ColorInt int color) {
+        editButton.setColorFilter(color);
     }
 
     public void setListController(ChatList.ListController listController) {
@@ -231,7 +265,6 @@ public class ChatEditBar extends LinearLayout {
     }
 
     private void initChatMenuDialog(final View rootView) {
-        chatMenuButton = rootView.findViewById(R.id.imageButtonChatMenu);
         chatMenuButton.setOnClickListener(view -> {
             if (!isDialogShown()) {
                 showChatDialog();
@@ -257,8 +290,8 @@ public class ChatEditBar extends LinearLayout {
         Animation animationRotateHide = AnimationUtils.loadAnimation(getContext(), R.anim.rotate_hide);
         chatMenuDialog.setOnShowListener(dialog -> {
             chatMenuDialog.enableItem(
-                R.id.relLay_rate_operator,
-                stream.getCurrentOperator() != null && stream.getAccountConfig() != null && stream.getAccountConfig().isRateOperator()
+                    R.id.relLay_rate_operator,
+                    stream.getCurrentOperator() != null && stream.getAccountConfig() != null && stream.getAccountConfig().isRateOperator()
             );
             chatMenuButton.startAnimation(animationRotateShow);
         });
@@ -339,9 +372,9 @@ public class ChatEditBar extends LinearLayout {
         updateUI(State.REPLYING);
 
         textSenderName.setText(
-            (quotedMessage.getType() == VISITOR || quotedMessage.getType() == FILE_FROM_VISITOR)
-                ? this.getResources().getString(R.string.visitor_sender_name)
-                : quotedMessage.getSenderName()
+                (quotedMessage.getType() == VISITOR || quotedMessage.getType() == FILE_FROM_VISITOR)
+                        ? this.getResources().getString(R.string.visitor_sender_name)
+                        : quotedMessage.getSenderName()
         );
         textReplyId.setText(quotedMessage.getServerSideId());
         Message.Attachment quotedMessageAttachment = quotedMessage.getAttachment();
@@ -354,9 +387,9 @@ public class ChatEditBar extends LinearLayout {
             Message.FileInfo fileInfo = quotedMessageAttachment.getFileInfo();
             String imageUrl = fileInfo.getImageInfo().getThumbUrl();
             Glide.with(getContext())
-                .load(imageUrl)
-                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
-                .into(replyThumbnail);
+                    .load(imageUrl)
+                    .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                    .into(replyThumbnail);
         } else {
             replyMessage = quotedMessage.getText();
             replyThumbnail.setVisibility(View.GONE);

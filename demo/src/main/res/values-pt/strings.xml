@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="first_screen_text1">Bem-vindo ao aplicativo de demonstração do. Webim SDK App!</string>
-    <string name="first_screen_text2">Toque no botão abaixo para começar a conversar.</string>
-    <string name="first_screen_text3">Faça login como agente para responder a este bate-papo em: first_screen_text4</string>
-    <string name="first_screen_text4">Login: o@webim.ru</string>
-    <string name="first_screen_text5">Senha: password</string>
-    <string name="first_screen_text6">O código-fonte deste aplicativo pode ser encontrado em:</string>
-    <string name="first_screen_text7">https://github.com/webim/webim-android-sdk-demo</string>
+    <string name="welcome_title">Bem-vindo ao aplicativo \nWebim SDK App!</string>
+    <string name="welcome_subtitle">Comece a trabalhar com o Webim SDK via autorização.</string>
+    <string name="welcome_description">Para isso, clique no botão \"Começar\" e insira o nome da conta enviado para seu e-mail ao se registrar pelo site Webim.</string>
+    <string name="welcome_subtitle_start_chat">Para iniciar um bate-papo, \nclique no botão abaixo</string>
+    <string name="welcome_new_messages">Novas mensagens: %d</string>
 
     <string name="image_logo_content_description">Logotipo</string>
+    <string name="button_text_start_onboarding">Iniciar</string>
     <string name="button_text_start_chat">Iniciar bate-papo</string>
     <string name="button_text_settings">Configurações</string>
     <string name="action_close_chat">Fechar bate-papo</string>
@@ -64,4 +63,6 @@
     <string name="cannot_open_file">Não é possível encontrar um aplicativo para abrir o arquivo</string>
     <string name="reset_visitor_title">Atualizar detalhes do usuário</string>
     <string name="reset_visitor_toast">Dados do usuário apagados</string>
+
+    <string name="set_default_account_tint">Definir conta padrão</string>
 </resources>

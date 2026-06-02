@@ -6,10 +6,12 @@ import androidx.annotation.Nullable;
 import okhttp3.RequestBody;
 import ru.webim.android.sdk.MessageStream;
 import ru.webim.android.sdk.impl.backend.callbacks.DefaultCallback;
+import ru.webim.android.sdk.impl.backend.callbacks.DefaultCallbackWithError;
 import ru.webim.android.sdk.impl.backend.callbacks.SendOrDeleteMessageInternalCallback;
 import ru.webim.android.sdk.impl.backend.callbacks.SurveyFinishCallback;
 import ru.webim.android.sdk.impl.backend.callbacks.SurveyQuestionCallback;
 import ru.webim.android.sdk.impl.items.requests.AutocompleteRequest;
+import ru.webim.android.sdk.impl.items.responses.GetInfoResponse;
 import ru.webim.android.sdk.impl.items.responses.ServerConfigsResponse;
 import ru.webim.android.sdk.impl.items.responses.DefaultResponse;
 import ru.webim.android.sdk.impl.items.responses.HistoryBeforeResponse;
@@ -123,4 +125,6 @@ public interface WebimActions {
     void sendResolutionSurvey(@Nullable String id, int answer, String chatId, MessageStream.SendResolutionSurveyCallback callback);
 
     void sendGeolocation(float latitude, float longitude, @Nullable MessageStream.GeolocationCallback callback);
+
+    void getInfo(DefaultCallbackWithError<GetInfoResponse> callback);
 }

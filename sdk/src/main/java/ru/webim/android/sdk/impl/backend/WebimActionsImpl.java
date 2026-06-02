@@ -2,6 +2,8 @@ package ru.webim.android.sdk.impl.backend;
 
 import static ru.webim.android.sdk.impl.backend.WebimService.PARAMETER_FILE_UPLOAD;
 
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -17,6 +19,7 @@ import ru.webim.android.sdk.NotFatalErrorHandler.NotFatalErrorType;
 import ru.webim.android.sdk.WebimSession;
 import ru.webim.android.sdk.impl.WebimErrorImpl;
 import ru.webim.android.sdk.impl.backend.callbacks.DefaultCallback;
+import ru.webim.android.sdk.impl.backend.callbacks.DefaultCallbackWithError;
 import ru.webim.android.sdk.impl.backend.callbacks.SendOrDeleteMessageInternalCallback;
 import ru.webim.android.sdk.impl.backend.callbacks.SurveyFinishCallback;
 import ru.webim.android.sdk.impl.backend.callbacks.SurveyQuestionCallback;
@@ -25,6 +28,7 @@ import ru.webim.android.sdk.impl.items.requests.AutocompleteRequest;
 import ru.webim.android.sdk.impl.items.responses.AutocompleteResponse;
 import ru.webim.android.sdk.impl.items.responses.DefaultResponse;
 import ru.webim.android.sdk.impl.items.responses.ErrorResponse;
+import ru.webim.android.sdk.impl.items.responses.GetInfoResponse;
 import ru.webim.android.sdk.impl.items.responses.HistoryBeforeResponse;
 import ru.webim.android.sdk.impl.items.responses.HistorySinceResponse;
 import ru.webim.android.sdk.impl.items.responses.LocationStatusResponse;
@@ -63,11 +67,19 @@ public class WebimActionsImpl implements WebimActions {
     private final ActionRequestLoop pollerLoop;
     @NonNull
     private final WebimService webim;
+    @NonNull
+    private final MetaUrlProvider metaUrlProvider;
 
-    WebimActionsImpl(@NonNull WebimService webim, @NonNull ActionRequestLoop requestLoop, @NonNull ActionRequestLoop pollerLoop) {
+    WebimActionsImpl(
+        @NonNull WebimService webim,
+        @NonNull ActionRequestLoop requestLoop,
+        @NonNull ActionRequestLoop pollerLoop,
+        @NonNull MetaUrlProvider metaUrlProvider
+    ) {
         this.webim = webim;
         this.requestLoop = requestLoop;
         this.pollerLoop = pollerLoop;
+        this.metaUrlProvider = metaUrlProvider;
     }
 
     private void enqueueRequestLoop(ActionRequestLoop.WebimRequest<?> request) {
@@ -359,9 +371,9 @@ public class WebimActionsImpl implements WebimActions {
             @Override
             public Call<DefaultResponse> makeRequest(AuthData authData) {
                 return webim.clearChatHistory(
-                    ACTION_CHAT_CLEAR_HISTORY,
-                    authData.getPageId(),
-                    authData.getAuthToken()
+                        ACTION_CHAT_CLEAR_HISTORY,
+                        authData.getPageId(),
+                        authData.getAuthToken()
                 );
             }
 
@@ -377,7 +389,8 @@ public class WebimActionsImpl implements WebimActions {
         enqueueRequestLoop(new ActionRequestLoop.WebimRequest<ServerConfigsResponse>(true) {
             @Override
             public Call<ServerConfigsResponse> makeRequest(AuthData authData) {
-                return webim.getAccountConfig(location);
+                String URL_SUFFIX_GET_CONFIG = metaUrlProvider.getConfigsUrl();
+                return webim.getAccountConfig(URL_SUFFIX_GET_CONFIG, location);
             }
 
             @Override
@@ -412,7 +425,7 @@ public class WebimActionsImpl implements WebimActions {
             @Override
             public void handleError(@NonNull String error) {
                 callback.onFailure(
-                    new WebimErrorImpl<>(MessageStream.AutocompleteCallback.AutocompleteError.UNKNOWN, null)
+                        new WebimErrorImpl<>(MessageStream.AutocompleteCallback.AutocompleteError.UNKNOWN, null)
                 );
             }
         });
@@ -494,11 +507,11 @@ public class WebimActionsImpl implements WebimActions {
             @Override
             public Call<DefaultResponse> makeRequest(AuthData authData) {
                 return webim.reactMessage(
-                    ACTION_REACT_MESSAGE,
-                    clientSideId,
-                    reaction,
-                    authData.getPageId(),
-                    authData.getAuthToken());
+                        ACTION_REACT_MESSAGE,
+                        clientSideId,
+                        reaction,
+                        authData.getPageId(),
+                        authData.getAuthToken());
             }
 
             @Override
@@ -670,13 +683,37 @@ public class WebimActionsImpl implements WebimActions {
         enqueueRequestLoop(new ActionRequestLoop.WebimRequest<HistoryBeforeResponse>(true) {
             @Override
             public Call<HistoryBeforeResponse> makeRequest(AuthData authData) {
-                return webim.getHistoryBefore(authData.getPageId(),
-                        authData.getAuthToken(), beforeTs);
+                String endpoint = metaUrlProvider.getHistoryUrl();
+                Log.d("WebimActionsImpl", "requestHistoryBefore endpoint " + endpoint + " go to getHistoryBefore");
+                return webim.getHistoryBefore(endpoint, authData.getPageId(), authData.getAuthToken(), beforeTs);
             }
 
             @Override
             public void runCallback(HistoryBeforeResponse response) {
                 callback.onSuccess(response);
+            }
+
+            /**
+             * Checks if the provided error should be handled locally by this callback
+             * instead of being propagated as a failure.
+             * @param error the error code string received from the SDK
+             * @return {@code true} if the error is {@code UNSUPPORTED_URL} and should be handled silently;
+             *         {@code false} otherwise
+             */
+            @Override
+            public boolean isHandleError(@NonNull String error) {
+                return error.equals(WebimInternalError.UNSUPPORTED_URL);
+            }
+
+            /**
+             * Handles the intercepted error by converting it into a successful response.
+             * @param error the error code string to handle
+             */
+            @Override
+            public void handleError(@NonNull String error) {
+                if(error.equals(WebimInternalError.UNSUPPORTED_URL)){
+                    callback.onSuccess(new HistoryBeforeResponse());
+                }
             }
         });
     }
@@ -688,7 +725,9 @@ public class WebimActionsImpl implements WebimActions {
         enqueueRequestLoop(new ActionRequestLoop.WebimRequest<HistorySinceResponse>(true) {
             @Override
             public Call<HistorySinceResponse> makeRequest(AuthData authData) {
-                return webim.getHistorySince(authData.getPageId(), authData.getAuthToken(), since);
+                String endpoint = metaUrlProvider.getHistoryUrl();
+                Log.d("WebimActionsImpl", "requestHistorySince endpoint " + endpoint + " go to requestHistorySince");
+                return webim.getHistorySince(endpoint, authData.getPageId(), authData.getAuthToken(), since);
             }
 
             @Override
@@ -699,13 +738,17 @@ public class WebimActionsImpl implements WebimActions {
     }
 
     @Override
-    public void requestHistorySinceForPoller(final @Nullable String since,
-                                    @NonNull final DefaultCallback<HistorySinceResponse> callback) {
+    public void requestHistorySinceForPoller(
+        final @Nullable String since,
+        @NonNull final DefaultCallback<HistorySinceResponse> callback
+    ) {
         callback.getClass(); // NPE
         enqueuePollerLoop(new ActionRequestLoop.WebimRequest<HistorySinceResponse>(true) {
             @Override
             public Call<HistorySinceResponse> makeRequest(AuthData authData) {
-                return webim.getHistorySince(authData.getPageId(), authData.getAuthToken(), since);
+                String endpoint = metaUrlProvider.getHistoryUrl();
+                Log.d("WebimActionsImpl", "requestHistorySinceForPoller endpoint " + endpoint + " go to requestHistorySinceForPoller");
+                return webim.getHistorySince(endpoint, authData.getPageId(), authData.getAuthToken(), since);
             }
 
             @Override
@@ -753,7 +796,7 @@ public class WebimActionsImpl implements WebimActions {
             @Override
             public boolean isHandleError(@NonNull String error) {
                 return error.equals(WebimInternalError.SENT_TOO_MANY_TIMES) ||
-                    error.equals(WebimInternalError.NO_CHAT);
+                        error.equals(WebimInternalError.NO_CHAT);
             }
 
             @Override
@@ -831,7 +874,7 @@ public class WebimActionsImpl implements WebimActions {
             @Override
             public Call<DefaultResponse> makeRequest(AuthData authData) {
                 return webim.sendSurveyAnswer(
-                    ACTION_SURVEY_ANSWER,
+                        ACTION_SURVEY_ANSWER,
                         formId,
                         questionId,
                         surveyId,
@@ -868,10 +911,10 @@ public class WebimActionsImpl implements WebimActions {
             @Override
             public Call<DefaultResponse> makeRequest(AuthData authData) {
                 return webim.closeSurvey(
-                    ACTION_SURVEY_CANCEL,
-                    surveyId,
-                    authData.getPageId(),
-                    authData.getAuthToken()
+                        ACTION_SURVEY_CANCEL,
+                        surveyId,
+                        authData.getPageId(),
+                        authData.getAuthToken()
                 );
             }
 
@@ -977,11 +1020,11 @@ public class WebimActionsImpl implements WebimActions {
             @Override
             public Call<DefaultResponse> makeRequest(AuthData authData) {
                 return webim.sendGeolocation(
-                    ACTION_GEOLOCATION,
-                    authData.getPageId(),
-                    authData.getAuthToken(),
-                    latitude,
-                    longitude
+                        ACTION_GEOLOCATION,
+                        authData.getPageId(),
+                        authData.getAuthToken(),
+                        latitude,
+                        longitude
                 );
             }
 
@@ -1015,6 +1058,32 @@ public class WebimActionsImpl implements WebimActions {
         });
     }
 
+    @Override
+    public void getInfo(DefaultCallbackWithError<GetInfoResponse> callback) {
+        enqueueRequestLoop(new ActionRequestLoop.WebimRequest<GetInfoResponse>(true) {
+            @Override
+            public Call<GetInfoResponse> makeRequest(AuthData authData) {
+                String authToken = WebimService.PARAMETER_AUTHORIZATION_BEARER_SUFFIX + authData.getAuthToken();
+                return webim.getInfo(authToken);
+            }
+
+            @Override
+            public void runCallback(GetInfoResponse response) {
+                callback.onSuccess(response);
+            }
+
+            @Override
+            public boolean isHandleError(@NonNull String error) {
+                return true;
+            }
+
+            @Override
+            public void handleError(@NonNull String error) {
+                callback.onFailure(error);
+            }
+        });
+    }
+
     private static String percentEncode(String input) {
         if ((input == null) || input.isEmpty()) {
             return input;
@@ -1037,10 +1106,10 @@ public class WebimActionsImpl implements WebimActions {
 
     private String getReferenceToMessage(@NonNull String quotedMessage) {
         return "{\"ref\":{" +
-                    "\"msgId\":\"" + quotedMessage + "\"," +
-                    "\"msgChannelSideId\":null," +
-                    "\"chatId\":null" +
-                    "}" +
+                "\"msgId\":\"" + quotedMessage + "\"," +
+                "\"msgChannelSideId\":null," +
+                "\"chatId\":null" +
+                "}" +
                 "}";
     }
 }

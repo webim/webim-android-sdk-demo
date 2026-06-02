@@ -23,6 +23,7 @@ import ru.webim.android.demo.util.SettingDialogCallback;
 
 public class SettingDialog extends DialogFragment {
 
+    private static final String TAG = "SettingDialog";
     private final String dialogTitle;
     private final String dialogHint;
     private final String dialogValue;

@@ -9,7 +9,7 @@ public class ServiceGenerator {
         Retrofit.Builder builder = new Retrofit.Builder()
             .baseUrl(baseDomain)
             .addConverterFactory(GsonConverterFactory.create())
-            .client(new OkHttpClient.Builder().build());
+            .client(new OkHttpClient.Builder().fastFallback(false).build());
 
         return builder.build().create(DemoWebimService.class);
     }

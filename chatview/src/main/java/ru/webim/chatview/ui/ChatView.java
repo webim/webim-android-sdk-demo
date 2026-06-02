@@ -40,6 +40,7 @@ import ru.webim.chatview.utils.SurveyDialog;
 import ru.webim.chatview.utils.ViewUtils;
 
 public class ChatView extends FrameLayout implements FatalErrorHandler {
+    private static final String TAG = "ChatView";
     private ChatList chatList;
     private ChatEditBar editBar;
     private ViewGroup chatLayout;
@@ -154,6 +155,13 @@ public class ChatView extends FrameLayout implements FatalErrorHandler {
 
     @Override
     public void onError(@NonNull WebimError<FatalErrorType> error) {
+
+        Log.d(TAG,"onError error" + " errorType" + error.getErrorType() + "errorString" + error.getErrorString());
+        if (error.getErrorType().equals(FatalErrorType.SSL_ERROR)) {
+            chatList.setSSLError();
+            return;
+        }
+
         chatLayout.setVisibility(View.GONE);
         errorLayout.setVisibility(View.VISIBLE);
 

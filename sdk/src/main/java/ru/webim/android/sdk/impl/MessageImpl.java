@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 import java.util.Objects;
@@ -30,6 +31,7 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
 
     private final @Nullable Attachment attachment;
     protected final @Nullable String rawText;
+    private final @Nullable TranslationInfo translationInfo;
 
     @Nullable
     private final String serverSideId;
@@ -71,7 +73,8 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
             boolean canVisitorReact,
             boolean canVisitorChangeReaction,
             @Nullable MessageGroup.GroupData groupData,
-            SendStatus sendStatus
+            SendStatus sendStatus,
+            @Nullable TranslationInfo translationInfo
     ) {
         serverUrl.getClass(); // NPE
         clientSideId.getClass(); // NPE
@@ -105,6 +108,7 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
         this.canVisitorChangeReaction = canVisitorChangeReaction;
         this.groupData = groupData;
         this.sendStatus = sendStatus;
+        this.translationInfo = translationInfo;
     }
 
     @Override
@@ -182,6 +186,12 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
     @Nullable
     public Attachment getAttachment() {
         return attachment;
+    }
+
+    @Nullable
+    @Override
+    public TranslationInfo getTranslationInfo() {
+        return translationInfo;
     }
 
     @Override
@@ -358,7 +368,8 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
             canVisitorReact,
             canVisitorChangeReaction,
             groupData,
-            sendStatus
+            sendStatus,
+            history.translationInfo
         );
     }
 
@@ -372,7 +383,8 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
             timeMicros,
             history.getQuote(),
             history.getSticker(),
-            history.getAttachment()
+            history.getAttachment(),
+            history.getTranslationInfo()
         );
     }
 
@@ -421,14 +433,29 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
     }
 
     public static class AttachmentImpl implements Message.Attachment {
+        @SerializedName("downloadProgress")
         private int downloadProgress;
-        private @Nullable String errorMessage;
-        private @Nullable String visitorErrorMessage;
-        private @Nullable String errorType;
-        private @NonNull FileInfo fileInfo;
-        private @NonNull List<FileInfo> filesInfo;
-        private @NonNull AttachmentState state;
-        private @Nullable String extraText;
+        @Nullable
+        @SerializedName("errorMessage")
+        private String errorMessage;
+        @Nullable
+        @SerializedName("visitorErrorMessage")
+        private String visitorErrorMessage;
+        @Nullable
+        @SerializedName("errorType")
+        private String errorType;
+        @NonNull
+        @SerializedName("fileInfo")
+        private FileInfo fileInfo;
+        @NonNull
+        @SerializedName("filesInfo")
+        private List<FileInfo> filesInfo;
+        @NonNull
+        @SerializedName("state")
+        private AttachmentState state;
+        @Nullable
+        @SerializedName("extraText")
+        private String extraText;
 
         public AttachmentImpl(
             int downloadProgress,
@@ -510,13 +537,26 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
     }
 
     public static class FileInfoImpl implements Message.FileInfo {
-        private @Nullable String contentType;
-        private @NonNull String filename;
-        private @Nullable ImageInfo imageInfo;
+        @Nullable
+        @SerializedName("contentType")
+        private String contentType;
+        @NonNull
+        @SerializedName("filename")
+        private String filename;
+        @Nullable
+        @SerializedName("imageInfo")
+        private ImageInfo imageInfo;
+        @SerializedName("size")
         private long size;
-        private @Nullable String url;
-        private @Nullable String guid;
-        private @Nullable String localPath;
+        @Nullable
+        @SerializedName("url")
+        private String url;
+        @Nullable
+        @SerializedName("guid")
+        private String guid;
+        @Nullable
+        @SerializedName("localPath")
+        private String localPath;
 
         @Expose
         private transient FileUrlCreator fileUrlCreator;
@@ -606,11 +646,19 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
     }
 
     public static class ImageInfoImpl implements ImageInfo {
-        private @NonNull String thumbUrl;
+        @NonNull
+        @SerializedName("thumbUrl")
+        private String thumbUrl;
+        @SerializedName("width")
         private int width;
+        @SerializedName("height")
         private int height;
-        private @NonNull String guid;
-        private @NonNull String filename;
+        @NonNull
+        @SerializedName("guid")
+        private String guid;
+        @NonNull
+        @SerializedName("filename")
+        private String filename;
 
         @Expose
         private transient FileUrlCreator fileUrlCreator;
@@ -686,31 +734,42 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
 
     public static class QuoteImpl implements Message.Quote {
         @Nullable
+        @SerializedName("attachment")
         private final FileInfo attachment;
         @Nullable
+        @SerializedName("quotedMessageId")
         private final String quotedMessageId;
         @Nullable
+        @SerializedName("id")
         private final String id;
         @Nullable
+        @SerializedName("type")
         private final Type type;
         @Nullable
+        @SerializedName("senderName")
         private final String senderName;
         @NonNull
+        @SerializedName("status")
         private final State status;
         @Nullable
+        @SerializedName("text")
         private final String text;
-        private final
-        long timeSeconds;
+        @SerializedName("timeSeconds")
+        private final long timeSeconds;
+        @SerializedName("translationInfo")
+        private final @Nullable TranslationInfo translationInfo;
 
         public QuoteImpl(
-                @Nullable FileInfo attachment,
-                @Nullable String serverSideId,
-                @Nullable String id,
-                @Nullable Type type,
-                @Nullable String senderName,
-                @NonNull State status,
-                @Nullable String text,
-                long timeSeconds) {
+            @Nullable FileInfo attachment,
+            @Nullable String serverSideId,
+            @Nullable String id,
+            @Nullable Type type,
+            @Nullable String senderName,
+            @NonNull State status,
+            @Nullable String text,
+            long timeSeconds,
+            @Nullable TranslationInfo translationInfo
+        ) {
             this.attachment = attachment;
             this.quotedMessageId = serverSideId;
             this.id = id;
@@ -719,6 +778,13 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
             this.status = status;
             this.text = text;
             this.timeSeconds = timeSeconds;
+            this.translationInfo = translationInfo;
+        }
+
+        @Nullable
+        @Override
+        public TranslationInfo getTranslationInfo() {
+            return translationInfo;
         }
 
         @Nullable
@@ -1055,6 +1121,7 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
     }
 
     public static class StickerImpl implements Message.Sticker {
+        @SerializedName("stickerId")
         private int stickerId;
 
         public StickerImpl(int stickerId) {
@@ -1064,6 +1131,58 @@ public class MessageImpl implements Message, TimeMicrosHolder, Comparable<Messag
         @Override
         public int getStickerId() {
             return stickerId;
+        }
+    }
+
+    public static class TranslationInfoImpl implements TranslationInfo {
+
+        @Nullable
+        @SerializedName("translatedText")
+        private final String translatedText;
+        @Nullable
+        @SerializedName("sourceLang")
+        private final String sourceLang;
+        @Nullable
+        @SerializedName("targetLang")
+        private final String targetLang;
+        @Nullable
+        @SerializedName("error")
+        private final String error;
+
+        public TranslationInfoImpl(
+            @Nullable String translatedText,
+            @Nullable String sourceLang,
+            @Nullable String targetLang,
+            @Nullable String error
+        ) {
+            this.translatedText = translatedText;
+            this.sourceLang = sourceLang;
+            this.targetLang = targetLang;
+            this.error = error;
+        }
+
+        @Nullable
+        @Override
+        public String getTranslatedText() {
+            return translatedText;
+        }
+
+        @Nullable
+        @Override
+        public String getSourceLang() {
+            return sourceLang;
+        }
+
+        @Nullable
+        @Override
+        public String getTargetLang() {
+            return targetLang;
+        }
+
+        @Nullable
+        @Override
+        public String getError() {
+            return error;
         }
     }
 }

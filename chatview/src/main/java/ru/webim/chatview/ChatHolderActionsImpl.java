@@ -187,9 +187,16 @@ public class ChatHolderActionsImpl implements MessageHolder.ChatHolderActions {
 
     @Override
     public void onOpenFile(File file, Message.FileInfo fileInfo) {
-        String packageName = context.getApplicationContext().getPackageName();
-        Uri uri = FileProvider.getUriForFile(context, packageName + ".provider", file);
-        String mime = fileInfo.getContentType();
+        Uri uri;
+        String mime;
+        try {
+            String packageName = context.getApplicationContext().getPackageName();
+            uri = FileProvider.getUriForFile(context, packageName + ".webim.provider.chatview", file);
+            mime = fileInfo.getContentType();
+        } catch (IllegalArgumentException exception) {
+            Log.e("Webim", "Error while opening the file: " + exception.getMessage());
+            return;
+        }
 
         if (mime != null && mime.contains("/")) {
             int dividerIndex = mime.indexOf('/');

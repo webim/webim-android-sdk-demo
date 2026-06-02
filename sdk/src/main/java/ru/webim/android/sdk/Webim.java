@@ -2,14 +2,12 @@ package ru.webim.android.sdk;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.google.gson.JsonObject;
 import ru.webim.android.sdk.impl.FAQImpl;
 import ru.webim.android.sdk.impl.InternalUtils;
-import ru.webim.android.sdk.impl.MagicConstants;
 import ru.webim.android.sdk.impl.MessageParsingErrorHandler;
 import ru.webim.android.sdk.impl.ProvidedVisitorFields;
 import ru.webim.android.sdk.impl.StringId;
@@ -49,24 +47,6 @@ public final class Webim {
     }
 
     /**
-     * If GCM push-notifications ({@link SessionBuilder#setPushSystem}) are enabled for the session, then via {@link android.content.BroadcastReceiver}
-     * you can receive pushes belonging to this session. This method is used to deserialize the received push-notifications:
-     * <code><pre>
-     *     WebimPushNotification push = Webim.parseGcmPushNotification(intent.getExtras());
-     * </pre></code>
-     *
-     * @param bundle serialized push data (obtained via {@link android.content.Intent#getExtras})
-     * @return a push notification object
-     * @see SessionBuilder#setPushSystem
-     * @see Webim#getGcmSenderId
-     */
-    @Nullable
-    @Deprecated
-    public static WebimPushNotification parseGcmPushNotification(@NonNull Bundle bundle) {
-        return null;
-    }
-
-    /**
      * If FCM push-notifications ({@link SessionBuilder#setPushSystem}) are enabled for the session, then via {@link android.content.BroadcastReceiver}
      * you can receive pushes belonging to this session. This method is used to deserialize the received push-notifications:
      * <code><pre>
@@ -100,28 +80,6 @@ public final class Webim {
     }
 
     /**
-     * If push-notifications ({@link SessionBuilder#setPushSystem})are enabled for the session, then via {@link android.content.BroadcastReceiver}
-     * you can receive pushes belonging to this session. This method returns "sender id" which is used to separate Webim notifications
-     * from the ones of your application.
-     * <code><pre>
-     *     if(intent.getStringExtra("from").equals(Webim.getGcmSenderId())) {
-     *         // process webim push-notification
-     *     } else {
-     *         // process your application push-notification
-     *     }
-     * </pre></code>
-     *
-     * @return GCM sender id of Webim push-notifications
-     * @see SessionBuilder#setPushSystem
-     * @see Webim#parseGcmPushNotification
-     */
-    @NonNull
-    @Deprecated
-    public static String getGcmSenderId() {
-        return MagicConstants.WEBIM_GCM_SENDER_ID;
-    }
-
-    /**
      * @see SessionBuilder#setPushSystem
      */
     public enum PushSystem {
@@ -136,12 +94,7 @@ public final class Webim {
         /**
          * Use Huawei Push Kit as push system
          */
-        HPK("hpk"),
-        /**
-         * Use Google Cloud Messaging as push system
-         */
-        @Deprecated
-        GCM("gcm");
+        HPK("hpk");
 
         @NonNull
         private final String pushName;
@@ -196,6 +149,7 @@ public final class Webim {
         @Nullable
         private String prechatFields;
         private long requestFrequency;
+        private boolean isLightModeEnabled;
         private List<String> extraDomains = Arrays.asList(
             "webim2.ru",
             "webim.chat"
@@ -484,20 +438,7 @@ public final class Webim {
          */
         public SessionBuilder setPushSystem(@NonNull PushSystem pushSystem) {
             pushSystem.getClass(); // NPE
-            this.pushSystem = pushSystem == PushSystem.GCM ? PushSystem.NONE : pushSystem;
-            return this;
-        }
-
-        /**
-         * Installs GCMSenderId.
-         *
-         * @param senderId
-         * @return this builder object
-         */
-        @Deprecated
-        public SessionBuilder setGCMSenderId(@NonNull String senderId) {
-            senderId.getClass();
-            MagicConstants.WEBIM_GCM_SENDER_ID = senderId;
+            this.pushSystem = pushSystem;
             return this;
         }
 
@@ -601,6 +542,11 @@ public final class Webim {
             return this;
         }
 
+        public SessionBuilder setLightModeEnabled(boolean lightModeEnabled) {
+            isLightModeEnabled = lightModeEnabled;
+            return this;
+        }
+
         /**
          * Builds new {@link WebimSession} object. This method must be called from the thread
          * {@link android.os.Looper}
@@ -673,30 +619,31 @@ public final class Webim {
             }
 
             return WebimSessionImpl.newInstance(
-                    context,
-                    preferences,
-                    accountName,
-                    location,
-                    appVersion,
-                    visitorFields,
-                    prechatFields,
-                    providedAuthorizationTokenStateListener,
-                    providedAuthorizationToken,
-                    title,
-                    errorHandler,
-                    notFatalErrorHandler,
-                    pushSystem,
-                    pushToken,
-                    storeHistoryLocally,
-                    clearVisitorData,
-                    sslSocketFactory,
-                    trustManager,
-                    multivisitorSection,
-                    sessionCallback,
-                    requestFrequency,
-                    messageParsingErrorHandler,
-                    requestHeader,
-                    extraDomains
+                context,
+                preferences,
+                accountName,
+                location,
+                appVersion,
+                visitorFields,
+                prechatFields,
+                providedAuthorizationTokenStateListener,
+                providedAuthorizationToken,
+                title,
+                errorHandler,
+                notFatalErrorHandler,
+                pushSystem,
+                pushToken,
+                storeHistoryLocally,
+                clearVisitorData,
+                sslSocketFactory,
+                trustManager,
+                multivisitorSection,
+                sessionCallback,
+                requestFrequency,
+                messageParsingErrorHandler,
+                requestHeader,
+                extraDomains,
+                isLightModeEnabled
             );
         }
 

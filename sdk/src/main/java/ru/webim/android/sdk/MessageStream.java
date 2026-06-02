@@ -12,11 +12,16 @@ import ru.webim.android.sdk.impl.MessageReaction;
 import ru.webim.android.sdk.impl.items.AccountConfigItem;
 import ru.webim.android.sdk.impl.items.LocationSettingsItem;
 import ru.webim.android.sdk.impl.items.SuggestionItem;
+import ru.webim.android.sdk.impl.items.responses.GetInfoResponse;
 
 /**
  * @see WebimSession#getStream()
  */
 public interface MessageStream {
+
+    @Nullable
+    String getChatLanguage();
+
     /**
      * @see VisitSessionState
      * @return current session state
@@ -701,6 +706,13 @@ public interface MessageStream {
     void setVisitSessionStateListener(@NonNull VisitSessionStateListener visitSessionStateListener);
 
     /**
+     * Sets {@link SessionLanguageListener} object.
+     * @see SessionLanguageListener
+     * @param sessionLanguageListener {@link SessionLanguageListener} object
+     */
+    void setSessionLanguageListener(@NonNull SessionLanguageListener sessionLanguageListener);
+
+    /**
      * Adds {@link VisitSessionStateListener} object.
      * @see VisitSessionStateListener
      * @see VisitSessionState
@@ -869,6 +881,20 @@ public interface MessageStream {
         @NonNull String email,
         @NonNull SendDialogToEmailAddressCallback sendDialogToEmailAddressCallback
     );
+
+    void getInfo(GetInfoListener listener);
+
+    interface GetInfoListener {
+        void onSuccess(GetInfoResponse response);
+        void onFailure(@NonNull WebimError<GetInfoError> error);
+
+        enum GetInfoError {
+            ACCOUNT_BLOCKED,
+            WRONG_PROVIDED_VISITOR_HASH_VALUE,
+            PROVIDED_AUTH_TOKEN_NOT_FOUND,
+            UNKNOWN
+        }
+    }
 
     /**
      * Adds listener for rating operator action
@@ -1182,6 +1208,11 @@ public interface MessageStream {
              * Received error is not supported by current WebimClientLibrary version.
              */
             UNKNOWN,
+
+            /**
+             * Send message is empty.
+             */
+            MESSAGE_EMPTY,
 
             // Quoted message errors.
 
@@ -1672,6 +1703,11 @@ public interface MessageStream {
         QUEUE,
 
         /**
+         * Means that a chat has been hold by operator.
+         */
+        HOLD,
+
+        /**
          * The state is undefined. This state is set as the initial when creating a new session, until the first response of the server containing the
          * actual state is got. This state is also used as a fallback if SDK can not identify
          * the server state (for instance, if the server has been updated to a version that contains new states).
@@ -1808,6 +1844,15 @@ public interface MessageStream {
          * @param departmentList received (current) department list
          */
         void receivedDepartmentList(@NonNull List<Department> departmentList);
+    }
+
+    interface SessionLanguageListener {
+
+        /**
+         * Called when the session language changes.
+         * @param language new session language
+         */
+        void onSessionLanguageChanged(@NonNull String language);
     }
 
     /**

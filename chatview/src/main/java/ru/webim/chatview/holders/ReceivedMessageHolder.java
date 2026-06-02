@@ -10,10 +10,18 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import coil.ComponentRegistry;
+import coil.ImageLoader;
+import coil.decode.SvgDecoder;
+import coil.request.ImageRequest;
 import ru.webim.android.sdk.Message;
 import ru.webim.chatview.R;
-
 public class ReceivedMessageHolder extends FileMessageHolder {
+
+    private final static String SVG_EXTENSION = ".svg";
     boolean showSenderInfo = true;
     TextView timeText;
     TextView nameText;
@@ -60,7 +68,7 @@ public class ReceivedMessageHolder extends FileMessageHolder {
             profileImage.setVisibility(View.VISIBLE);
             if (avatarUrl != null) {
                 if (!avatarUrl.equals(profileImage.getTag(R.id.avatarUrl))) {
-                    Glide.with(context).load(avatarUrl).into(profileImage);
+                    loadProfileImage(avatarUrl,profileImage);
                     profileImage.setTag(R.id.avatarUrl, avatarUrl);
                 }
             } else {
@@ -73,6 +81,29 @@ public class ReceivedMessageHolder extends FileMessageHolder {
             nameTextForImage.setVisibility(View.GONE);
             profileImage.setVisibility(View.GONE);
             showSenderInfo = true;
+        }
+    }
+
+    private void loadProfileImage(String url, ImageView imageView) {
+        try {
+            String path = new URL(url).getPath().toLowerCase();
+            if (path.endsWith(SVG_EXTENSION)) {
+                ComponentRegistry componentRegistry = new ComponentRegistry.Builder()
+                        .add(new SvgDecoder.Factory())
+                        .build();
+                ImageLoader imageLoader = new ImageLoader.Builder(context)
+                        .components(componentRegistry)
+                        .build();
+                ImageRequest request = new ImageRequest.Builder(context)
+                        .data(url)
+                        .target(imageView)
+                        .build();
+                imageLoader.enqueue(request);
+            } else {
+                Glide.with(context).load(url).into(profileImage);
+            }
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
         }
     }
 

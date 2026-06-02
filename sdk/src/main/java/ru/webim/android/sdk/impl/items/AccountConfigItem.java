@@ -24,6 +24,8 @@ public class AccountConfigItem {
     private RatedEntity ratedEntity;
     @SerializedName("visitor_segment")
     private VisitorSegment visitorSegment;
+    @SerializedName("messages_translator")
+    private boolean messagesTranslator;
 
     public String getHintsEndpoint() {
         return hintsEndpoint;
@@ -43,6 +45,10 @@ public class AccountConfigItem {
 
     public boolean isQuotingEnable() {
         return quotingEnable;
+    }
+
+    public boolean getMessagesTranslator() {
+        return messagesTranslator;
     }
 
     public int getMaxVisitorUploadFileSize() {

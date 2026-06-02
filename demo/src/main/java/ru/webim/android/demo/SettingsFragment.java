@@ -1,6 +1,7 @@
 package ru.webim.android.demo;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -42,23 +43,36 @@ public class SettingsFragment extends Fragment {
     public static final String KEY_RESET_VISITOR_CACHE = "reset_visitor_cache";
     public static final String KEY_AUTH_VISITOR = "auth_visitor";
     public static final String KEY_AUTH_VISITOR_DATA = "auth_visitor_data";
-    private static final String DEFAULT_ACCOUNT = "demo";
     private static final String DEFAULT_LOCATION = "mobile";
     private static final int PERMISSION_PUSH = 1;
     private static final Uri LINK_PRIVACY = Uri.parse("https://webim.ru/doc/privacy/");
+    private static final String TAG = "SettingsFragment";
     private SharedPreferences sharedPreferences;
     private TextView textAccount;
     private TextView textLocation;
     private SettingDialog settingDialog;
     private DemoWebimService demoWebimService;
+    private boolean isOnboarding;
+    private View rootView;
+
+    public static boolean needOnboarding(Context context) {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+        String account = sharedPreferences.getString(KEY_ACCOUNT, null);
+        return account == null || account.trim().isEmpty();
+    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireContext());
-        String serverUrl = InternalUtils.createServerUrl(sharedPreferences.getString(KEY_ACCOUNT, DEFAULT_ACCOUNT));
-        demoWebimService = ServiceGenerator.createService(serverUrl);
+        String account = sharedPreferences.getString(KEY_ACCOUNT, null);
+
+        isOnboarding = account == null || account.trim().isEmpty();
+        if (!isOnboarding) {
+            String serverUrl = InternalUtils.createServerUrl(account);
+            demoWebimService = ServiceGenerator.createService(serverUrl);
+        }
     }
 
     @Override
@@ -66,6 +80,13 @@ public class SettingsFragment extends Fragment {
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_settings, container, false);
+        rootView = view;
+        return view;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
 
         initLayoutAccount(view);
         initLayoutLocation(view);
@@ -75,7 +96,44 @@ public class SettingsFragment extends Fragment {
         initTextVersion(view);
         initAuthVisitor(view);
 
-        return view;
+        if (isOnboarding) {
+            showOnboardingViews(view);
+        }
+    }
+
+    private void showOnboardingViews(View rootView) {
+        rootView.findViewById(R.id.layoutLocation).setVisibility(View.GONE);
+        rootView.findViewById(R.id.layoutNotification).setVisibility(View.GONE);
+        rootView.findViewById(R.id.layoutFileLogger).setVisibility(View.GONE);
+        rootView.findViewById(R.id.spinnerVisitors).setVisibility(View.GONE);
+        rootView.findViewById(R.id.authVisitorBtn).setVisibility(View.GONE);
+        rootView.findViewById(R.id.divider2).setVisibility(View.GONE);
+        rootView.findViewById(R.id.divider3).setVisibility(View.GONE);
+        rootView.findViewById(R.id.divider4).setVisibility(View.GONE);
+    }
+
+    private void showAuthorizedViews(View rootView) {
+        rootView.findViewById(R.id.layoutLocation).setVisibility(View.VISIBLE);
+        rootView.findViewById(R.id.layoutNotification).setVisibility(View.VISIBLE);
+        rootView.findViewById(R.id.layoutFileLogger).setVisibility(View.VISIBLE);
+        rootView.findViewById(R.id.spinnerVisitors).setVisibility(View.VISIBLE);
+        rootView.findViewById(R.id.authVisitorBtn).setVisibility(View.VISIBLE);
+        rootView.findViewById(R.id.divider2).setVisibility(View.VISIBLE);
+        rootView.findViewById(R.id.divider3).setVisibility(View.VISIBLE);
+        rootView.findViewById(R.id.divider4).setVisibility(View.VISIBLE);
+    }
+
+    private void onAccountConfigured(String account) {
+        String normalized = account == null ? "" : account.trim();
+        if (normalized.isEmpty()) {
+            return;
+        }
+        isOnboarding = false;
+        String serverUrl = InternalUtils.createServerUrl(normalized);
+        demoWebimService = ServiceGenerator.createService(serverUrl);
+        if (rootView != null) {
+            showAuthorizedViews(rootView);
+        }
     }
 
     private void initAuthVisitor(View view) {
@@ -112,33 +170,37 @@ public class SettingsFragment extends Fragment {
         LinearLayout layoutAccount = rootView.findViewById(R.id.layoutAccount);
         layoutAccount.setOnClickListener(view -> {
             settingDialog = new SettingDialog(
-                getString(R.string.prefs_account_title),
-                getString(R.string.settings_account_field_hint),
-                textAccount.getText().toString(),
-                true,
-                newAccount -> {
-                    sharedPreferences.edit().putString(KEY_ACCOUNT, newAccount).apply();
-                    textAccount.setText(newAccount);
-                });
+                    getString(R.string.prefs_account_title),
+                    getString(R.string.settings_account_field_hint),
+                    isOnboarding ? "" : textAccount.getText().toString(),
+                    true,
+                    newAccount -> {
+                        String normalized = newAccount == null ? "" : newAccount.trim();
+                        sharedPreferences.edit().putString(KEY_ACCOUNT, normalized).apply();
+                        textAccount.setText(normalized);
+                        if (isOnboarding) {
+                            onAccountConfigured(normalized);
+                        }
+                    });
             settingDialog.show(getParentFragmentManager(), null);
         });
 
         textAccount = rootView.findViewById(R.id.textAccount);
-        textAccount.setText(sharedPreferences.getString(KEY_ACCOUNT, DEFAULT_ACCOUNT));
+        textAccount.setText(sharedPreferences.getString(KEY_ACCOUNT, requireContext().getString(R.string.set_default_account_tint)));
     }
 
     private void initLayoutLocation(View rootView) {
         LinearLayout layoutLocation = rootView.findViewById(R.id.layoutLocation);
         layoutLocation.setOnClickListener(view -> {
             settingDialog = new SettingDialog(
-                getString(R.string.prefs_location_title),
-                null,
-                textLocation.getText().toString(),
-                false,
-                newLocation -> {
-                    sharedPreferences.edit().putString(KEY_LOCATION, newLocation).apply();
-                    textLocation.setText(newLocation);
-                });
+                    getString(R.string.prefs_location_title),
+                    null,
+                    textLocation.getText().toString(),
+                    false,
+                    newLocation -> {
+                        sharedPreferences.edit().putString(KEY_LOCATION, newLocation).apply();
+                        textLocation.setText(newLocation);
+                    });
             settingDialog.show(getParentFragmentManager(), null);
         });
 
@@ -172,7 +234,8 @@ public class SettingsFragment extends Fragment {
                 boolean granted = grantResults[i] == PackageManager.PERMISSION_GRANTED;
                 switch (permission) {
                     case Manifest.permission.POST_NOTIFICATIONS:
-                        if (granted) sharedPreferences.edit().putBoolean(KEY_NOTIFICATION, true).apply();
+                        if (granted)
+                            sharedPreferences.edit().putBoolean(KEY_NOTIFICATION, true).apply();
                         return;
                 }
             }
@@ -217,7 +280,7 @@ public class SettingsFragment extends Fragment {
                     } catch (Throwable throwable) {
                     }
                 } else {
-                    Toast.makeText(getContext(), response.errorBody().toString(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Server Error: " + response.errorBody(), Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -230,16 +293,16 @@ public class SettingsFragment extends Fragment {
 
     private void saveCurrentWebimVisitor(String testWebimVisitorData, int testVisitor) {
         sharedPreferences.edit()
-            .putInt(KEY_AUTH_VISITOR, testVisitor)
-            .putString(KEY_AUTH_VISITOR_DATA, testWebimVisitorData)
-            .apply();
+                .putInt(KEY_AUTH_VISITOR, testVisitor)
+                .putString(KEY_AUTH_VISITOR_DATA, testWebimVisitorData)
+                .apply();
     }
 
     private void resetAnonymityUser() {
         sharedPreferences.edit()
-            .putInt(KEY_AUTH_VISITOR, DEFAULT_VISITOR)
-            .putBoolean(KEY_RESET_VISITOR_CACHE, true)
-            .remove(KEY_AUTH_VISITOR_DATA)
-            .apply();
+                .putInt(KEY_AUTH_VISITOR, DEFAULT_VISITOR)
+                .putBoolean(KEY_RESET_VISITOR_CACHE, true)
+                .remove(KEY_AUTH_VISITOR_DATA)
+                .apply();
     }
 }

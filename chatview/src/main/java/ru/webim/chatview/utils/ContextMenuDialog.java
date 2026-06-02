@@ -15,13 +15,15 @@ import android.view.View;
 
 import androidx.cardview.widget.CardView;
 
+import ru.webim.chatview.R;
+
 public class ContextMenuDialog extends AnchorMenuDialog {
     private Matrix matrix = new Matrix();
     private Paint bitmapPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private float dimAmount;
 
     public ContextMenuDialog(Context context) {
-        super(context, androidx.appcompat.R.style.Base_Theme_AppCompat_Dialog);
+        super(context, R.style.AppTheme_AppBarOverlay);
     }
 
     @Override

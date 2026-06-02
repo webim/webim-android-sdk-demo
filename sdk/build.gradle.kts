@@ -36,9 +36,9 @@ android {
 }
 
 dependencies {
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    api("com.squareup.retrofit2:converter-gson:2.9.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.10")
+    implementation("com.squareup.retrofit2:retrofit:3.0.0")
+    api("com.squareup.retrofit2:converter-gson:3.0.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:5.1.0")
     implementation("net.zetetic:sqlcipher-android:4.7.2@aar")
     implementation("androidx.sqlite:sqlite:2.3.1")
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
@@ -70,11 +70,6 @@ mavenPublishing {
             }
         }
         developers {
-            developer {
-                id.set("mshengeliia")
-                name.set("Maksim Shengeliia")
-                email.set("mshengeliia@webim-team.ru")
-            }
             developer {
                 id.set("nkaberov")
                 name.set("Nikita Kaberov")

@@ -49,6 +49,8 @@ public final class ChatItem {
     private double unreadByVisitorTimestamp;
     @SerializedName("visitorTyping")
     private Boolean visitorTyping;
+    @SerializedName("translationOptions")
+    private TranslationOptionsItem translationOptions;
 
     public ChatItem() {
         creationTimestamp = System.currentTimeMillis() / 1000L;
@@ -130,6 +132,11 @@ public final class ChatItem {
         return operator;
     }
 
+    @Nullable
+    public TranslationOptionsItem getTranslationOptions() {
+        return translationOptions;
+    }
+
     public void setOperator(OperatorItem operator) {
         this.operator = operator;
     }
@@ -177,11 +184,11 @@ public final class ChatItem {
         CHATTING_WITH_ROBOT("chatting_with_robot"),
         CLOSED("closed"),
         CLOSED_BY_OPERATOR("closed_by_operator"),
-        CLOSED_BY_VISITOR("closed_by_visitor"),
         DELETED("deleted"),
         INVITATION("invitation"),
         ROUTING("routing"),
         QUEUE("queue"),
+        HOLD("hold"),
         UNKNOWN("unknown");
 
         private String typeValue;
@@ -193,7 +200,6 @@ public final class ChatItem {
         public boolean isClosed() {
             return this == CLOSED
                     || this == CLOSED_BY_OPERATOR
-                    || this == CLOSED_BY_VISITOR
                     || this == DELETED
                     || this == UNKNOWN;
         }

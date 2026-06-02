@@ -59,4 +59,26 @@
     <style name="WebimLoaderBar" parent="Widget.AppCompat.ProgressBar.Horizontal">
         <item name="android:progressDrawable">@drawable/webim_loader</item>
     </style>
+
+    <!-- STYLE FOR TEXT VIEW -->
+    <!-- 700 -> bold -->
+    <style name="TextView_700_18">
+        <item name="android:fontFamily">@font/roboto_bold</item>
+        <item name="android:textSize">18sp</item>
+    </style>
+
+    <!-- 600 -> semi_bold -->
+
+    <!-- 500 -> medium -->
+    <style name="TextView_500_14">
+        <item name="android:fontFamily">@font/roboto_medium</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <!-- 400 -> regular -->
+    <style name="TextView_400_15">
+        <item name="android:fontFamily">@font/roboto_regular</item>
+        <item name="android:textSize">18sp</item>
+    </style>
+
 </resources>

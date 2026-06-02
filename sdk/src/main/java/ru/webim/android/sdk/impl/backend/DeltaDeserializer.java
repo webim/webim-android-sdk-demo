@@ -66,6 +66,9 @@ class DeltaDeserializer implements JsonDeserializer<DeltaItem> {
                 case VISIT_SESSION_STATE:
                     listType = new TypeToken<DeltaItem<String>>() {}.getType();
                     break;
+                case VISIT_SESSION_LANG:
+                    listType = new TypeToken<DeltaItem<String>>() {}.getType();
+                    break;
                 case SURVEY:
                     listType = new TypeToken<DeltaItem<SurveyItem>>() {}.getType();
                     break;

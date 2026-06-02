@@ -40,7 +40,8 @@ public class MessageSending extends MessageImpl {
             false,
             false,
             null,
-            SendStatus.SENDING
+            SendStatus.SENDING,
+            null
         );
     }
 }

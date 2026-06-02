@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="first_screen_text1">Ласкаво просимо до демонстраційної програми для. Webim SDK App!</string>
-    <string name="first_screen_text2">Натисніть кнопку нижче перед початком чату.</string>
-    <string name="first_screen_text3">Зателефонуйте як агент до повідомлення цього чату: https://demo.webim.ru</string>
-    <string name="first_screen_text4">Логін: o@webim.ru</string>
-    <string name="first_screen_text5">Пароль: пароль</string>
-    <string name="first_screen_text6">Вихідний код цієї програми можна знайти за адресою:</string>
-    <string name="first_screen_text7">https://github.com/webim/webim-android-sdk-demo</string>
+    <string name="welcome_title">Ласкаво просимо до додатку \nWebim SDK App!</string>
+    <string name="welcome_subtitle">Почніть роботу з Webim SDK через авторизацію.</string>
+    <string name="welcome_description">Для цього натисніть кнопку \"Почати\" та введіть назву акаунта, надіслану вам на пошту, при реєстрації через сайт Webim.</string>
+    <string name="welcome_subtitle_start_chat">Щоб розпочати чат, \nнатисніть кнопку нижче</string>
+    <string name="welcome_new_messages">Нових повідомлень: %d</string>
 
     <string name="image_logo_content_description">Логотип</string>
+    <string name="button_text_start_onboarding">Почати</string>
     <string name="button_text_start_chat">Почати чат</string>
     <string name="button_text_settings">Налаштування</string>
     <string name="action_close_chat">Закрити чат</string>
@@ -64,4 +63,6 @@
     <string name="cannot_open_file">Не вдається знайти програму для відкриття файлу</string>
     <string name="reset_visitor_title">Оновити дані користувача</string>
     <string name="reset_visitor_toast">Дані користувача очищені</string>
+
+    <string name="set_default_account_tint">Установити обліковий запис за замовчуванням</string>
 </resources>
